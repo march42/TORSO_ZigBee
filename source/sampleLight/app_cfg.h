@@ -40,19 +40,19 @@ extern "C" {
  * Product Information
  */
 /* Debug mode config */
-#define	UART_PRINTF_MODE				0
+#define	UART_PRINTF_MODE				1
 #define USB_PRINTF_MODE         		0
 
 /* HCI interface */
 #define	ZBHCI_UART						0
 
 /* RGB or CCT */
-#define COLOR_RGB_SUPPORT				0
+#define COLOR_RGB_SUPPORT				1
 #define COLOR_CCT_SUPPORT				1
 
 /* BDB */
 #define TOUCHLINK_SUPPORT				1
-#define FIND_AND_BIND_SUPPORT			0
+#define FIND_AND_BIND_SUPPORT			1
 
 /* Board ID */
 #define BOARD_826x_EVK					0
@@ -75,6 +75,14 @@ extern "C" {
 #if defined(MCU_CORE_826x)
 	#define BOARD						BOARD_826x_DONGLE
 	#define CLOCK_SYS_CLOCK_HZ  		32000000
+#elif defined(TUYA_ZT3L)
+#	if !defined(MCU_CORE_8258)
+#		define	MCU_CORE_8258			1
+#	endif
+#	define FLASH_CAP_SIZE_1M			1
+#	define BOARD						BOARD_8258_DONGLE	// I'd rather not use BOARD definition
+#	define CLOCK_SYS_CLOCK_HZ  			48000000
+#	define ROUTER						1
 #elif defined(MCU_CORE_8258)
 #if (CHIP_TYPE == TLSR_8258_1M)
 	#define FLASH_CAP_SIZE_1M			1
@@ -110,6 +118,8 @@ extern "C" {
 	#include "board_826x_evk.h"
 #elif(BOARD == BOARD_826x_DONGLE)
 	#include "board_826x_dongle.h"
+#elif defined(TUYA_ZT3L)
+#	include "../board_8258_zt3l.h"
 #elif(BOARD == BOARD_8258_DONGLE)
 	#include "board_8258_dongle.h"
 #elif(BOARD == BOARD_8258_EVK)
@@ -156,7 +166,7 @@ extern "C" {
 /* Only the firmware area will be locked, the NV data area will not be locked.
  * For details, please refer to drv_flash.c file.
  */
-#define FLASH_PROTECT_ENABLE						1
+#define FLASH_PROTECT_ENABLE						0
 
 /* Watch dog module */
 #define MODULE_WATCHDOG_ENABLE						0

@@ -33,6 +33,8 @@
 	#else
 		#define CHIP_TYPE					TLSR_8267
 	#endif
+#elif defined(TUYA_ZT3L)
+		#define CHIP_TYPE					TLSR_8258_1M
 #elif defined(MCU_CORE_8258)
 		#define CHIP_TYPE					TLSR_8258_512K//TLSR_8258_1M
 #elif defined(MCU_CORE_8278)
@@ -59,6 +61,10 @@
 #define MANUFACTURER_CODE_TELINK           	0x1141//Telink ID
 #define	IMAGE_TYPE							((CHIP_TYPE << 8) | IMAGE_TYPE_LIGHT)
 #define	FILE_VERSION					  	((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)
+
+#define ZCL_BASIC_MFG_NAME     		{7,'m','a','r','c','h','4','2'}
+#define ZCL_BASIC_MODEL_ID	   		{5,'T','O','R','S','O'}
+#define ZCL_BASIC_SW_BUILD_ID     	{10,'0','1','2','0','2','4','1','2','2','0'}
 
 /* Pre-compiled link configuration. */
 #define IS_BOOT_LOADER_IMAGE				0
