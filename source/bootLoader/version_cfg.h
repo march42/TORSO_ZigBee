@@ -34,7 +34,7 @@
 		#define CHIP_TYPE					TLSR_8267
 	#endif
 #elif defined(MCU_CORE_8258)
-#	if defined(TUYA_ZT3L)
+#	if defined(MODULE_ZT3L)
 		#define CHIP_TYPE					TLSR_8258_1M
 #	else
 		#define CHIP_TYPE					TLSR_8258_512K//TLSR_8258_1M

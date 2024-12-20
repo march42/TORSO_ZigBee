@@ -75,7 +75,7 @@ extern "C" {
 #if defined(MCU_CORE_826x)
 	#define BOARD						BOARD_826x_DONGLE
 	#define CLOCK_SYS_CLOCK_HZ  		32000000
-#elif defined(TUYA_ZT3L)
+#elif defined(MODULE_ZT3L)
 #	if !defined(MCU_CORE_8258)
 #		define	MCU_CORE_8258			1
 #	endif
@@ -118,7 +118,7 @@ extern "C" {
 	#include "board_826x_evk.h"
 #elif(BOARD == BOARD_826x_DONGLE)
 	#include "board_826x_dongle.h"
-#elif defined(TUYA_ZT3L)
+#elif defined(MODULE_ZT3L)
 #	include "../board_8258_zt3l.h"
 #elif(BOARD == BOARD_8258_DONGLE)
 	#include "board_8258_dongle.h"

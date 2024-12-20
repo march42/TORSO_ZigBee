@@ -33,7 +33,7 @@
 	#else
 		#define CHIP_TYPE					TLSR_8267
 	#endif
-#elif defined(TUYA_ZT3L)
+#elif defined(MODULE_ZT3L)
 		#define CHIP_TYPE					TLSR_8258_1M
 #elif defined(MCU_CORE_8258)
 		#define CHIP_TYPE					TLSR_8258_512K//TLSR_8258_1M
@@ -64,7 +64,7 @@
 
 #define ZCL_BASIC_MFG_NAME     		{7,'m','a','r','c','h','4','2'}
 #define ZCL_BASIC_MODEL_ID	   		{5,'T','O','R','S','O'}
-#define ZCL_BASIC_SW_BUILD_ID     	{10,'0','1','2','0','2','4','1','2','2','0'}
+#define ZCL_BASIC_SW_BUILD_ID     	{10,'0','2','2','0','2','4','1','2','2','0'}
 
 /* Pre-compiled link configuration. */
 #define IS_BOOT_LOADER_IMAGE				0
