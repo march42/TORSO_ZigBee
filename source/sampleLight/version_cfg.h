@@ -35,6 +35,8 @@
 	#endif
 #elif defined(MODULE_ZT3L)
 		#define CHIP_TYPE					TLSR_8258_1M
+#elif defined(MODULE_ZYZB010)
+		#define CHIP_TYPE					TLSR_8258_512K
 #elif defined(MCU_CORE_8258)
 		#define CHIP_TYPE					TLSR_8258_512K//TLSR_8258_1M
 #elif defined(MCU_CORE_8278)
