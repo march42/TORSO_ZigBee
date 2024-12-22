@@ -30,3 +30,11 @@
 *.exe
 *.out
 *.app
+
+# built/generated files
+source/config.mk
+
+# build directories
+build/
+telink_zigbee_sdk/
+tl_zigbee_sdk/

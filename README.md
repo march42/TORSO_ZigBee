@@ -1,7 +1,8 @@
 # TORSO lamp
 
 The TORSO lamp is an artwork LED lamp.
-The white plastic cover is a semishell torso for hanging and presenting underwear.
+The baseplate is cut from stainless steel.
+The white plastic cover is a female semishell torso for hanging and presenting underwear.
 
 It's designed to be wall mounted. It can also be mounted on the ceiling, if wished.
 There are two (independend) light modules.
@@ -18,21 +19,15 @@ Mounting plates are designed, to fit the LED modules, power supply connector and
 
 ## Controller for TORSO lamp
 
-### tuya ZT3L controller
+### ZT3L module by Tuya
 
-- tuya ZT3L controller module
-- TeLink TLSR8258 controller (1 MB flash)
+- TeLink TLSR8258 MCU (1 MB flash)
 - 5 channel PWM CW,R,G,B,WW
 - 1 button input
 - 1 channel IR in
 
-#### SDK zigbee settings
+### ZYZB010 module by eWeLight
 
-- MCU_CORE_8258
-- CHIP_TYPE=TLSR_8258_1M
-
-### EasyIOT ZYZB010 module
-
-- TeLink TLSR8258 controller (1 MB flash)
-- 5 channel PWM CW,R,G,B,WW
+- TeLink TLSR8258 MCU (512 KB flash)
+- 5 channel PWM CW,WW,R,G,B
 - 1 button input (for factory reset and pairing mode)
