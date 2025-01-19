@@ -155,10 +155,10 @@ extern "C" {
 #	error	you need to specify your project
 #endif
 
-//#define LED_POWER					NULL
-//#define LED_PERMIT					NULL
+#define LED_POWER					NULL
+#define LED_PERMIT					NULL
 
-//#define VOLTAGE_DETECT_PIN			GPIO_PC5
+#define VOLTAGE_DETECT_PIN			GPIO_PC5
 
 // UART
 #if ZBHCI_UART || UART_ENABLE

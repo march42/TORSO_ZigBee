@@ -42,22 +42,22 @@ extern "C" {
  * PWR	5-24V DC
  *	***	pinout
  * 1	RST (RESET, active low, connected to EN)
- * 2	C4
+ * 2	C4	(ADC)
  * 3	EN	(ENABLE, active high, connected to RST)
  * 4	D7	IR_IN
- * 5	D2	LED_B
- * 6	C3	LED_G
- * 7	C2	LED_WW
+ * 5	D2	(PWM) LED_B
+ * 6	C3	(PWM) LED_G
+ * 7	C2	(PWM) LED_WW
  * 8	+3V3 voltage, power supply
  * 
  * 9	GND ground, power supply
  * 10	C0	BUTTON1
  * 11	D4	BUTTON2
  * 12	A0
- * 13	B4	LED_R
- * 14	B5	LED_W
- * 15	B7	UART_RX
- * 16	B1	UART_TX
+ * 13	B4	(PWM) LED_R
+ * 14	B5	(PWM) LED_W
+ * 15	B7	(UART) RX
+ * 16	B1	(UART) TX
  * 
  * 17	A7	SWS
 */
@@ -153,13 +153,14 @@ extern "C" {
 #elif (__PROJECT_TL_CONTACT_SENSOR__)
 #elif (__PROJECT_TL_SWITCH__)
 #else
-#	error	you need to specify your project
+/*#	error	you need to specify your project*/
 #endif
 
-//#define LED_POWER					NULL
-//#define LED_PERMIT					NULL
+#define LED_POWER					NULL
+#define LED_PERMIT					NULL
 
-//#define VOLTAGE_DETECT_PIN			GPIO_PC5
+//	ADC PIN C4 is fed out on module pin 2
+#define VOLTAGE_DETECT_PIN			GPIO_PC5
 
 // UART
 #if ZBHCI_UART || UART_ENABLE

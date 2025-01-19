@@ -152,7 +152,7 @@ check tl_zigbee_sdk\proj\drivers\drv_nv.h
 
 ##### burning
 
-python TLSR825xComFlasher.py --port com10 --tact 300 rf 0x00000 0x10000 dump-flash.bin
+python TLSR825xComFlasher.py --port com10 --tact 300 rf 0x00000 0x100000 dump-flash.bin
 
 python TLSR825xComFlasher.py --port com10 --tact 300 rf 0x00000 32768 dump-bootloader.bin
 python TLSR825xComFlasher.py --port com10 --tact 300 rf 0x08000 454656 dump-application.bin
