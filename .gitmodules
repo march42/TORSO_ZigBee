@@ -1,3 +1,9 @@
 [submodule "telink_zigbee_sdk"]
 	path = telink_zigbee_sdk
 	url = https://github.com/march42/telink_zigbee_sdk
+[submodule "TlsrComSwireWriter"]
+	path = TlsrComSwireWriter
+	url = https://github.com/march42/TlsrComSwireWriter
+[submodule "Telink-Zigbee-serial-flash-tool"]
+	path = Telink-Zigbee-serial-flash-tool
+	url = https://github.com/march42/Telink-Zigbee-serial-flash-tool
