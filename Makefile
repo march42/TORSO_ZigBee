@@ -86,7 +86,7 @@ ifeq ($(MODULE),ZT3L)
 	MCU_CHIP			:= TLSR_8258
 	MCU_CORE_8258		:= 1
 	CPPFLAGS			+= -DMODULE_ZT3L=1 -DMCU_CORE_8258=1
-#	CHIP_TYPE			:= TLSR_8258_1M
+	CHIP_TYPE			:= TLSR_8258_1M
 #	CPPFLAGS			+= -DCHIP_TYPE=$(CHIP_TYPE)
 	BOOT_LOADER_MODE	:= 1
 	LED_RGBCCT_MODE		:= 1
@@ -95,7 +95,7 @@ else ifeq ($(MODULE),ZYZB010)
 	MCU_CHIP			:= TLSR_8258
 	MCU_CORE_8258		:= 1
 	CPPFLAGS			+= -DMODULE_ZYZB010=1 -DMCU_CORE_8258=1
-#	CHIP_TYPE			:= TLSR_8258_512K
+	CHIP_TYPE			:= TLSR_8258_512K
 #	CPPFLAGS			+= -DCHIP_TYPE=$(CHIP_TYPE)
 	BOOT_LOADER_MODE	:= 0
 	LED_RGBCCT_MODE		:= 1
@@ -232,6 +232,30 @@ ifndef TOOLSPATH
 else
 	echo 'TOOLSPATH        := $(TOOLSPATH)' >> config.mk
 endif
+ifndef FLASHER
+	echo '#FLASHER' >> config.mk
+else
+	echo 'FLASHER          := $(FLASHER)' >> config.mk
+endif
+endif
+
+###
+# write firmware
+.PHONY: write_firmware
+write_firmware: $(bin_files)
+ifeq ($(CHIP_TYPE),TLSR_8258_1M)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) rf 0xFE000 0x02000 dump_FCFG_MAC.bin)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x00000 0xFE000)
+else ifeq ($(CHIP_TYPE),TLSR_8258_512K)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) rf 0x76000 0x02000 dump_MAC_FCFG.bin)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x00000 0x76000)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x78000 0x08000)
+endif
+ifeq ($(BOOT_LOADER_MODE),1)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/bootloader.bin)
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x08000 $(BUILDDIR)/led_rgbcct.bin)
+else
+	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/led_rgbcct.bin)
 endif
 
 ###
@@ -266,6 +290,9 @@ $(BUILDDIR)/led_rgbcct.lst: $(BUILDDIR)/led_rgbcct.elf
 	$(info Creating	$@)
 	$(OBJDUMP) -x -D -l -S $< >$@
 
+.PHONY:	led_rgbcct
+led_rgbcct: $(BUILDDIR)/led_rgbcct.bin
+	$(info building $@)
 $(BUILDDIR)/led_rgbcct.bin: $(BUILDDIR)/led_rgbcct.elf $(BUILDDIR)/led_rgbcct.lst
 	$(info Creating	$@)
 #	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32
@@ -313,6 +340,9 @@ $(BUILDDIR)/bootloader.lst: $(BUILDDIR)/bootloader.elf
 	$(info Creating	$@)
 	$(OBJDUMP) -x -D -l -S $< >$@
 
+.PHONY:	bootloader
+bootloader: $(BUILDDIR)/bootloader.bin
+	$(info building $@)
 $(BUILDDIR)/bootloader.bin: $(BUILDDIR)/bootloader.elf $(BUILDDIR)/bootloader.lst
 	$(info Creating	$@)
 #	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32

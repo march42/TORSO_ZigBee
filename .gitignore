@@ -1,10 +1,12 @@
 # built environment
 build_env.cmd
 build_env.sh
+
 # built/generated files
 config.mk
 
 # build directories
 build/
-build-ZT3L/
-build-ZYZB010/
+
+# firmware images
+*.bin
