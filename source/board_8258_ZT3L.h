@@ -53,7 +53,7 @@ extern "C" {
  * 9	GND ground, power supply
  * 10	C0	BUTTON1
  * 11	D4	BUTTON2
- * 12	A0
+ * 12	A0	LED_POWER
  * 13	B4	(PWM) LED_R
  * 14	B5	(PWM) LED_W
  * 15	B7	(UART) RX
@@ -79,6 +79,9 @@ extern "C" {
 #define UART_RX_PIN				 UART_RX_PB7
 #define UART_SWS					GPIO_PA7
 
+#define LED_POWER					GPIO_PA0
+//#define LED_PERMIT					NULL
+
 //	setting IO functions
 // BUTTON1
 #define PC0_FUNC						AS_GPIO
@@ -90,6 +93,10 @@ extern "C" {
 #define PD4_OUTPUT_ENABLE				0
 #define PD4_INPUT_ENABLE				1
 #define	PULL_WAKEUP_SRC_PD4				PM_PIN_PULLUP_10K
+// POWER_LED
+#define PA0_FUNC						AS_GPIO
+#define PA0_OUTPUT_ENABLE				1
+#define PA0_INPUT_ENABLE				0
 
 #if (__PROJECT_TL_BOOT_LOADER__)
 	// LED_W
@@ -155,9 +162,6 @@ extern "C" {
 #else
 /*#	error	you need to specify your project*/
 #endif
-
-#define LED_POWER					NULL
-#define LED_PERMIT					NULL
 
 //	ADC PIN C4 is fed out on module pin 2
 #define VOLTAGE_DETECT_PIN			GPIO_PC5

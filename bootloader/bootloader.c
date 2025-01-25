@@ -126,6 +126,30 @@ static bool is_valid_fw_bootloader(u32 addr_fw){
     return ((startup_flag == FW_START_UP_FLAG_WHOLE) ? TRUE : FALSE);
 }
 
+void led_shutdown(void) {
+#	if defined(LED_POWER)
+	gpio_shutdown(LED_POWER);
+#	endif
+#	if defined(LED_PERMIT)
+	gpio_shutdown(LED_PERMIT);
+#	endif
+#	if defined(LED_W)
+	gpio_shutdown(LED_W);
+#	endif
+#	if defined(LED_R)
+	gpio_shutdown(LED_R);
+#	endif
+#	if defined(LED_G)
+	gpio_shutdown(LED_G);
+#	endif
+#	if defined(LED_B)
+	gpio_shutdown(LED_B);
+#	endif
+#	if defined(LED_WW)
+	gpio_shutdown(LED_WW);
+#	endif
+}
+
 void bootloader_with_ota_check(u32 addr_load, u32 new_image_addr){
 	drv_disable_irq();
 
@@ -187,7 +211,9 @@ void bootloader_with_ota_check(u32 addr_load, u32 new_image_addr){
 						SYSTEM_RESET();
 					}
 
+#ifdef LED_PERMIT
 					gpio_toggle(LED_PERMIT);
+#endif
 				}
 			}
 
@@ -206,6 +232,8 @@ void bootloader_with_ota_check(u32 addr_load, u32 new_image_addr){
 	}
 
     if(is_valid_fw_bootloader(addr_load)){
+		led_shutdown();		// stopp the LEDs before RESET
+
 #if defined(MCU_CORE_826x) || defined(MCU_CORE_8258) || defined(MCU_CORE_8278)
     	u32 ramcode_size = 0;
         flash_read(addr_load + 0x0c, 2, (u8 *)&ramcode_size);
@@ -499,7 +527,9 @@ void bootloader_uartRxDataProc(void){
 
 	u8 *buf = ev_queue_pop(&msgQ);
 	if(buf){
+#ifdef LED_POWER
 		gpio_toggle(LED_POWER);
+#endif
 
 		uart_msg_t *pMsg = (uart_msg_t *)buf;
 
@@ -571,8 +601,12 @@ void bootloader_keyPressProc(void){
 
 void bootloader_init(bool isBoot){
 	if(isBoot){
+#ifdef LED_POWER
 		drv_gpio_write(LED_POWER, 1);
+#endif
+#ifdef LED_PERMIT
 		drv_gpio_write(LED_PERMIT, 1);
+#endif
 
 #if UART_ENABLE
 		UART_PIN_CFG();
@@ -597,10 +631,81 @@ void bootloader_init(bool isBoot){
 	}
 }
 
+#if defined(LED_W) || defined(LED_R) || defined(LED_G) || defined(LED_B) || defined(LED_WW)
+void led_setoutput(void) {
+#	if defined(LED_W)
+	drv_gpio_func_set(LED_W);
+	drv_gpio_output_en(LED_W, true);
+	drv_gpio_input_en(LED_W, false);
+#	endif
+#	if defined(LED_R)
+	drv_gpio_func_set(LED_R);
+	drv_gpio_output_en(LED_R, true);
+	drv_gpio_input_en(LED_R, false);
+#	endif
+#	if defined(LED_G)
+	drv_gpio_func_set(LED_G);
+	drv_gpio_output_en(LED_G, true);
+	drv_gpio_input_en(LED_G, false);
+#	endif
+#	if defined(LED_B)
+	drv_gpio_func_set(LED_B);
+	drv_gpio_output_en(LED_B, true);
+	drv_gpio_input_en(LED_B, false);
+#	endif
+#	if defined(LED_WW)
+	drv_gpio_func_set(LED_WW);
+	drv_gpio_output_en(LED_WW, true);
+	drv_gpio_input_en(LED_WW, false);
+#	endif
+}
+
+void led_error(void) {
+	static u8 ledCnt = 0;			// counter for color LED error message
+	if (ledCnt == 0x50) {			// restart loop
+		ledCnt = 0;
+	}
+	++ledCnt;						// count loop
+	if ((ledCnt &0x0F) != 0) {
+		return;						// to slow down LEDs
+	}
+
+	static bool ledOut = false;		// LED Output enabled
+	if (!ledOut) {					// initialize LED output
+		led_setoutput();
+		ledOut = true;				// set flag
+	}
+
+	u8 ledCur = ledCnt & 0xF0;
+#	if defined(LED_W)
+	drv_gpio_write(LED_W, ((ledCur == 0x10) ?true :false));
+#	endif
+#	if defined(LED_R)
+	drv_gpio_write(LED_R, ((ledCur == 0x20) ?true :false));
+#	endif
+#	if defined(LED_G)
+	drv_gpio_write(LED_G, ((ledCur == 0x30) ?true :false));
+#	endif
+#	if defined(LED_B)
+	drv_gpio_write(LED_B, ((ledCur == 0x40) ?true :false));
+#	endif
+#	if defined(LED_WW)
+	drv_gpio_write(LED_WW, ((ledCur == 0x50) ?true :false));
+#	endif
+}
+#endif
+
 void bootloader_loop(void){
 	if(noAppFlg){
+#ifdef LED_POWER
 		gpio_toggle(LED_POWER);
+#endif
+#ifdef LED_PERMIT
 		gpio_toggle(LED_PERMIT);
+#endif
+#if defined(LED_W) || defined(LED_R) || defined(LED_G) || defined(LED_B) || defined(LED_WW)
+		led_error();
+#endif
 		WaitMs(100);
 	}
 }

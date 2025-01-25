@@ -29,7 +29,7 @@ ZigBee 3.0 LED controller
 - long press for dimming loop
 - 2x short press to switch on full
 - 3x short press to join network
-- 3x short press to leave network
+- 4x short press to leave network
 - 5x short press to factory reset
 
 
@@ -74,6 +74,7 @@ ZigBee 3.0 LED controller
 | ----------------- | --------------------------------------------------------------------- |
 | MODULE            | target hardware module (ZT3L,ZYZB010)                                 |
 | ZB_ROLE           | ZigBee device role (COORDINATOR, ROUTER, END_DEVICE)                  |
+| FLASHER           | SWire writer settings (--port COM10 --tact 300 --run)                 |
 | ----------------- | --------------------------------------------------------------------- |
 | MCU_CHIP          | target MCU (TLSR_8258)                                                |
 | MCU_CORE_8258     | target MCU is TLSR_8258                                               |
