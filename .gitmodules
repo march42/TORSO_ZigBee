@@ -4,6 +4,3 @@
 [submodule "TlsrComSwireWriter"]
 	path = TlsrComSwireWriter
 	url = https://github.com/march42/TlsrComSwireWriter
-[submodule "Telink-Zigbee-serial-flash-tool"]
-	path = Telink-Zigbee-serial-flash-tool
-	url = https://github.com/march42/Telink-Zigbee-serial-flash-tool
