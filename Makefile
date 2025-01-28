@@ -75,10 +75,18 @@ else
 	TL_ZIGBEE_SDK		:= $(PROJECTDIR)/telink_zigbee_sdk/tl_zigbee_sdk
 endif
 ###
+# the TlsrComSwireWriter git submodule
+ifdef TLSR_FLASHER
+	config_TLSR_FLASHER	:= $(TLSR_FLASHER)
+else
+	TLSR_FLASHER		:= python $(PROJECTDIR)/TlsrComSwireWriter/TLSR825xComFlasher.py
+endif
+###
 
 ###
 # build settings
 #include_dirs			+= $(SOURCEDIR) $(SOURCEDIR)/common
+CPPFLAGS				+= -D__LIGHT__MARCH42_TORSO__=1
 ###
 # board settings
 ifeq ($(MODULE),ZT3L)
@@ -87,7 +95,6 @@ ifeq ($(MODULE),ZT3L)
 	MCU_CORE_8258		:= 1
 	CPPFLAGS			+= -DMODULE_ZT3L=1 -DMCU_CORE_8258=1
 	CHIP_TYPE			:= TLSR_8258_1M
-#	CPPFLAGS			+= -DCHIP_TYPE=$(CHIP_TYPE)
 	BOOT_LOADER_MODE	:= 1
 	LED_RGBCCT_MODE		:= 1
 #	src_files			+= 
@@ -96,8 +103,7 @@ else ifeq ($(MODULE),ZYZB010)
 	MCU_CORE_8258		:= 1
 	CPPFLAGS			+= -DMODULE_ZYZB010=1 -DMCU_CORE_8258=1
 	CHIP_TYPE			:= TLSR_8258_512K
-#	CPPFLAGS			+= -DCHIP_TYPE=$(CHIP_TYPE)
-	BOOT_LOADER_MODE	:= 0
+	BOOT_LOADER_MODE	:= 1
 	LED_RGBCCT_MODE		:= 1
 endif
 CPPFLAGS		+= -DBOOT_LOADER_MODE=$(BOOT_LOADER_MODE) -D$(ZB_ROLE)=1
@@ -152,18 +158,17 @@ zigbee_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_ASMS:.S=.S.o))
 ###
 
 ###
-ifeq ($(BOOT_LOADER_MODE),1)
 	ldr_CPPFLAGS	= -D__PROJECT_TL_BOOT_LOADER__=1
 	ldr_CPPFLAGS	+= -I$(PROJECTDIR)/bootloader -I$(SOURCEDIR) -I$(TL_ZIGBEE_SDK)/platform -I$(TL_ZIGBEE_SDK)/proj/common -I$(TL_ZIGBEE_SDK)/proj
 	ldr_source		= $(PROJECTDIR)/bootloader/main.c $(PROJECTDIR)/bootloader/bootloader.c $(PROJECTDIR)/source/common/firmwareEncryptChk.c
 	ldr_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/bootloader,$(ldr_source:.c=.c.o))
 	ldr_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk-bootloader,$(sdk_SOURCES:.c=.c.o))
 	ldr_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk-bootloader,$(sdk_ASMS:.S=.S.o))
+ifeq ($(BOOT_LOADER_MODE),1)
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/bootloader.elf $(BUILDDIR)/bootloader.lst
 	bin_files		+= $(BUILDDIR)/bootloader.bin
 endif
 
-ifeq ($(LED_RGBCCT_MODE),1)
 #	sdk_DIRS		+= $(TL_ZIGBEE_SDK)/zigbee/common
 	led_CPPFLAGS	= -D__PROJECT_TL_DIMMABLE_LIGHT__=1
 	led_CPPFLAGS	+= -I$(SOURCEDIR) -I$(SOURCEDIR)/common -I$(TL_ZIGBEE_SDK)/platform -I$(TL_ZIGBEE_SDK)/proj/common -I$(TL_ZIGBEE_SDK)/proj
@@ -176,6 +181,7 @@ ifeq ($(LED_RGBCCT_MODE),1)
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_ASMS:.S=.S.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_SOURCES:.c=.c.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_ASMS:.S=.S.o))
+ifeq ($(LED_RGBCCT_MODE),1)
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgbcct.elf $(BUILDDIR)/led_rgbcct.lst
 	bin_files		+= $(BUILDDIR)/led_rgbcct.bin
 endif
@@ -231,6 +237,11 @@ ifndef TOOLSPATH
 	echo '#TOOLSPATH' >> config.mk
 else
 	echo 'TOOLSPATH        := $(TOOLSPATH)' >> config.mk
+endif
+ifndef config_TLSR_FLASHER
+	echo '#TLSR_FLASHER' >> config.mk
+else
+	echo 'TLSR_FLASHER     := $(config_TLSR_FLASHER)' >> config.mk
 endif
 ifndef FLASHER
 	echo '#FLASHER' >> config.mk
@@ -349,6 +360,26 @@ $(BUILDDIR)/bootloader.bin: $(BUILDDIR)/bootloader.elf $(BUILDDIR)/bootloader.ls
 	$(OBJCOPY) -v -O binary $< $@
 	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
 
+.PHONY: $(BUILDDIR)/bootloader
+$(BUILDDIR)/bootloader:
+	$(info Creating	$@)
+	@mkdir -p $@
+ifeq ($(BOOT_LOADER_MODE),1)
+#	building for bootloader
+else
+	$(error ERROR: Your configuration is set to build without bootloader.)
+endif
+
+$(BUILDDIR)/bootloader/%.c.o : %.c	| $(BUILDDIR)/bootloader
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/bootloader/%.S.o : %.S	| $(BUILDDIR)/bootloader
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) $(ASFLAGS) $(ldr_ASFLAGS) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
+
 .PHONY: $(BUILDDIR)/sdk-bootloader
 $(BUILDDIR)/sdk-bootloader:
 	$(info Creating	$@)
@@ -360,21 +391,6 @@ $(BUILDDIR)/sdk-bootloader/%.c.o : $(TL_ZIGBEE_SDK)/%.c	| $(BUILDDIR)/sdk-bootlo
 	$(CC) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILDDIR)/sdk-bootloader/%.S.o : $(TL_ZIGBEE_SDK)/%.S	| $(BUILDDIR)/sdk-bootloader
-	$(info Compiling	$<)
-	mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) $(ldr_ASFLAGS) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
-
-.PHONY: $(BUILDDIR)/bootloader
-$(BUILDDIR)/bootloader:
-	$(info Creating	$@)
-	@mkdir -p $@
-
-$(BUILDDIR)/bootloader/%.c.o : %.c	| $(BUILDDIR)/bootloader
-	$(info Compiling	$<)
-	mkdir -p $(dir $@)
-	$(CC) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
-
-$(BUILDDIR)/bootloader/%.S.o : %.S	| $(BUILDDIR)/bootloader
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(ASFLAGS) $(ldr_ASFLAGS) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@

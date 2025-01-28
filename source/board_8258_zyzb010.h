@@ -83,6 +83,9 @@ extern "C" {
 #define UART_RX_PIN				 UART_RX_PB7
 #define UART_SWS					GPIO_PA7
 
+//#define LED_POWER					NULL
+//#define LED_PERMIT					NULL
+
 //	setting IO functions
 // FAC_RST
 #define PD3_FUNC						AS_GPIO
@@ -90,29 +93,7 @@ extern "C" {
 #define PD3_INPUT_ENABLE				1
 #define	PULL_WAKEUP_SRC_PD3				PM_PIN_PULLUP_10K
 
-#if (__PROJECT_TL_BOOT_LOADER__)
-	// LED_W
-#	define PC2_FUNC					AS_GPIO
-#	define PC2_OUTPUT_ENABLE		1
-#	define PC2_INPUT_ENABLE			0
-	// LED_WW
-#	define PC3_FUNC					AS_GPIO
-#	define PC3_OUTPUT_ENABLE		1
-#	define PC3_INPUT_ENABLE			0
-	// LED_R
-#	define PC4_FUNC					AS_GPIO
-#	define PC4_OUTPUT_ENABLE		1
-#	define PC4_INPUT_ENABLE			0
-	// LED_G
-#	define PB4_FUNC					AS_GPIO
-#	define PB4_OUTPUT_ENABLE		1
-#	define PB4_INPUT_ENABLE			0
-	// LED_B
-#	define PB5_FUNC					AS_GPIO
-#	define PB5_OUTPUT_ENABLE		1
-#	define PB5_INPUT_ENABLE			0
-
-#elif (__PROJECT_TL_DIMMABLE_LIGHT__)
+#if (__PROJECT_TL_DIMMABLE_LIGHT__) || (__LIGHT__MARCH42_TORSO__)
 	// LED_W
 #	define PWM_W_CHANNEL			1
 #	define PWM_W_CHANNEL_SET()		do{	\
@@ -149,14 +130,33 @@ extern "C" {
 #	define B_LIGHT_PWM_CHANNEL		PWM_B_CHANNEL
 #	define B_LIGHT_PWM_SET()		PWM_B_CHANNEL_SET()
 
-#elif (__PROJECT_TL_CONTACT_SENSOR__)
-#elif (__PROJECT_TL_SWITCH__)
+#elif (__PROJECT_TL_BOOT_LOADER__)
+	// LED_W
+#	define PC2_FUNC					AS_GPIO
+#	define PC2_OUTPUT_ENABLE		1
+#	define PC2_INPUT_ENABLE			0
+	// LED_WW
+#	define PC3_FUNC					AS_GPIO
+#	define PC3_OUTPUT_ENABLE		1
+#	define PC3_INPUT_ENABLE			0
+	// LED_R
+#	define PC4_FUNC					AS_GPIO
+#	define PC4_OUTPUT_ENABLE		1
+#	define PC4_INPUT_ENABLE			0
+	// LED_G
+#	define PB4_FUNC					AS_GPIO
+#	define PB4_OUTPUT_ENABLE		1
+#	define PB4_INPUT_ENABLE			0
+	// LED_B
+#	define PB5_FUNC					AS_GPIO
+#	define PB5_OUTPUT_ENABLE		1
+#	define PB5_INPUT_ENABLE			0
+
+//#elif (__PROJECT_TL_CONTACT_SENSOR__)
+//#elif (__PROJECT_TL_SWITCH__)
 #else
 #	error	you need to specify your project
 #endif
-
-#define LED_POWER					NULL
-#define LED_PERMIT					NULL
 
 #define VOLTAGE_DETECT_PIN			GPIO_PC5
 

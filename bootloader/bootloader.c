@@ -133,19 +133,31 @@ void led_shutdown(void) {
 #	if defined(LED_PERMIT)
 	gpio_shutdown(LED_PERMIT);
 #	endif
-#	if defined(LED_W)
+
+	// the LED channels
+#	if defined(PWM_W_CHANNEL)
+	drv_pwm_stop(PWM_W_CHANNEL);
+#	elif defined(LED_W)
 	gpio_shutdown(LED_W);
 #	endif
-#	if defined(LED_R)
+#	if defined(PWM_R_CHANNEL)
+	drv_pwm_stop(PWM_R_CHANNEL);
+#	elif defined(LED_R)
 	gpio_shutdown(LED_R);
 #	endif
-#	if defined(LED_G)
+#	if defined(PWM_G_CHANNEL)
+	drv_pwm_stop(PWM_G_CHANNEL);
+#	elif defined(LED_G)
 	gpio_shutdown(LED_G);
 #	endif
-#	if defined(LED_B)
+#	if defined(PWM_B_CHANNEL)
+	drv_pwm_stop(PWM_B_CHANNEL);
+#	elif defined(LED_B)
 	gpio_shutdown(LED_B);
 #	endif
-#	if defined(LED_WW)
+#	if defined(PWM_WW_CHANNEL)
+	drv_pwm_stop(PWM_WW_CHANNEL);
+#	elif defined(LED_WW)
 	gpio_shutdown(LED_WW);
 #	endif
 }
@@ -232,7 +244,7 @@ void bootloader_with_ota_check(u32 addr_load, u32 new_image_addr){
 	}
 
     if(is_valid_fw_bootloader(addr_load)){
-		led_shutdown();		// stopp the LEDs before RESET
+		led_shutdown();		// stopp the LEDs before starting application firmware
 
 #if defined(MCU_CORE_826x) || defined(MCU_CORE_8258) || defined(MCU_CORE_8278)
     	u32 ramcode_size = 0;
@@ -596,6 +608,45 @@ void bootloader_keyPressProc(void){
 		}
 	}
 }
+
+void bootloader_uartTxAnnounce(void) {
+	WaitMs(100);
+	// announce running bootloader over UART
+	char data[] = "bootloader"
+		" v1.1-b02"
+#if   (__LIGHT__MARCH42_TORSO__)
+		" for TORSO light"
+#elif   (MODULE == ZT3L)
+		" for Tuya ZT3L module"
+#elif   (MODULE == ZYZB010)
+		" for eWeLight ZYZB010 module"
+#else
+		" for Telink SOC"
+#	if   (CHIP_TYPE == TLSR_8267)
+		" TLSR8267"
+#	elif (CHIP_TYPE == TLSR_8269)
+		" TLSR8269"
+#	elif (CHIP_TYPE == TLSR_8258_512K)
+		" TLSR8258, 512KB"
+#	elif (CHIP_TYPE == TLSR_8258_1M)
+		" TLSR8258, 1MB"
+#	elif (CHIP_TYPE == TLSR_8278)
+		" TLSR8278"
+#	elif (CHIP_TYPE == TLSR_B91)
+		" B91 family"
+#	elif (CHIP_TYPE == TLSR_B92)
+		" B92 family"
+#	elif (CHIP_TYPE == TLSR_TL721X)
+		" TL721x family"
+#	elif (CHIP_TYPE == TLSR_TL321X)
+		" TL321x family"
+#	endif
+#endif
+		"";
+	u16 len = sizeof(data);
+	bootloader_uartTx(MSG_CMD_ACKNOWLEDGE, len, (u8*)data);
+	WaitMs(100);
+}
 #endif
 
 
@@ -606,6 +657,42 @@ void bootloader_init(bool isBoot){
 #endif
 #ifdef LED_PERMIT
 		drv_gpio_write(LED_PERMIT, 1);
+#endif
+
+#if defined(PWM_W_CHANNEL) || defined(PWM_R_CHANNEL) || defined(PWM_G_CHANNEL) || defined(PWM_B_CHANNEL) || defined(PWM_WW_CHANNEL)
+#	define	PWM_MAX_TICK	(PWM_CLOCK_SOURCE / 4000)	// 4kHz frequency
+	drv_pwm_init();
+	/* pwm_set_clk(PWM_CLOCK_SOURCE, (PWM_CLOCK_SOURCE/200));	// PWM_CLK = SYS_CLK / (PWM_CLKDIV +1) */
+
+#	if defined(PWM_W_CHANNEL)
+	PWM_W_CHANNEL_SET();
+	drv_pwm_cfg(PWM_W_CHANNEL, 120, PWM_MAX_TICK);
+	drv_pwm_start(PWM_W_CHANNEL);
+#	endif
+
+#	if defined(PWM_R_CHANNEL)
+	PWM_R_CHANNEL_SET();
+	drv_pwm_cfg(PWM_R_CHANNEL, 120, PWM_MAX_TICK);
+	drv_pwm_start(PWM_R_CHANNEL);
+#	endif
+
+#	if defined(PWM_G_CHANNEL)
+	PWM_G_CHANNEL_SET();
+	drv_pwm_cfg(PWM_G_CHANNEL, 120, PWM_MAX_TICK);
+	drv_pwm_start(PWM_G_CHANNEL);
+#	endif
+
+#	if defined(PWM_B_CHANNEL)
+	PWM_B_CHANNEL_SET();
+	drv_pwm_cfg(PWM_B_CHANNEL, 120, PWM_MAX_TICK);
+	drv_pwm_start(PWM_B_CHANNEL);
+#	endif
+
+#	if defined(PWM_WW_CHANNEL)
+	PWM_WW_CHANNEL_SET();
+	drv_pwm_cfg(PWM_WW_CHANNEL, 120, PWM_MAX_TICK);
+	drv_pwm_start(PWM_WW_CHANNEL);
+#	endif
 #endif
 
 #if UART_ENABLE
@@ -621,6 +708,8 @@ void bootloader_init(bool isBoot){
 
 		drv_enable_irq();
 
+		bootloader_uartTxAnnounce();	// announce bootloader on UART
+
 		//start a timer delay for waiting for uart messages.
 		bootloader_ota_check_delay(2000);
 #else
@@ -631,67 +720,58 @@ void bootloader_init(bool isBoot){
 	}
 }
 
-#if defined(LED_W) || defined(LED_R) || defined(LED_G) || defined(LED_B) || defined(LED_WW)
-void led_setoutput(void) {
-#	if defined(LED_W)
-	drv_gpio_func_set(LED_W);
-	drv_gpio_output_en(LED_W, true);
-	drv_gpio_input_en(LED_W, false);
-#	endif
-#	if defined(LED_R)
-	drv_gpio_func_set(LED_R);
-	drv_gpio_output_en(LED_R, true);
-	drv_gpio_input_en(LED_R, false);
-#	endif
-#	if defined(LED_G)
-	drv_gpio_func_set(LED_G);
-	drv_gpio_output_en(LED_G, true);
-	drv_gpio_input_en(LED_G, false);
-#	endif
-#	if defined(LED_B)
-	drv_gpio_func_set(LED_B);
-	drv_gpio_output_en(LED_B, true);
-	drv_gpio_input_en(LED_B, false);
-#	endif
-#	if defined(LED_WW)
-	drv_gpio_func_set(LED_WW);
-	drv_gpio_output_en(LED_WW, true);
-	drv_gpio_input_en(LED_WW, false);
-#	endif
-}
-
+#if defined(PWM_W_CHANNEL) || defined(PWM_R_CHANNEL) || defined(PWM_G_CHANNEL) || defined(PWM_B_CHANNEL) || defined(PWM_WW_CHANNEL)
 void led_error(void) {
-	static u8 ledCnt = 0;			// counter for color LED error message
-	if (ledCnt == 0x50) {			// restart loop
+	static u8 ledCnt = 0xFF;			// counter for color LED error message
+	if (++ledCnt >= 0x50) {				// restart cycle
 		ledCnt = 0;
 	}
-	++ledCnt;						// count loop
-	if ((ledCnt &0x0F) != 0) {
-		return;						// to slow down LEDs
+
+	// use PWM outputs
+	u8  ledChannel;
+	if (false) { return; }	// just for the else if sections
+#	if defined(PWM_W_CHANNEL)
+	else if ((ledCnt & 0xF0) == 0x00) {		// LED_W
+		ledChannel = PWM_W_CHANNEL;
+	}
+#	endif
+#	if defined(PWM_R_CHANNEL)
+	else if ((ledCnt & 0xF0) == 0x10) {		// LED_R
+		ledChannel = PWM_R_CHANNEL;
+	}
+#	endif
+#	if defined(PWM_G_CHANNEL)
+	else if ((ledCnt & 0xF0) == 0x20) {		// LED_G
+		ledChannel = PWM_G_CHANNEL;
+	}
+#	endif
+#	if defined(PWM_B_CHANNEL)
+	else if ((ledCnt & 0xF0) == 0x30) {		// LED_B
+		ledChannel = PWM_B_CHANNEL;
+	}
+#	endif
+#	if defined(PWM_WW_CHANNEL)
+	else if ((ledCnt & 0xF0) == 0x40) {		// LED_WW
+		ledChannel = PWM_WW_CHANNEL;
+	}
+#	endif
+	else {
+		return;
 	}
 
-	static bool ledOut = false;		// LED Output enabled
-	if (!ledOut) {					// initialize LED output
-		led_setoutput();
-		ledOut = true;				// set flag
-	}
+	u16 PWM_CYCLE[] = {
+		100, 400, 900, 1600, 2500, 3600, 4900, 6400, 8100, 10000,	// 0..9 increase
+		6944, 4444, 2500, 1111, 278,	//  10..14 decrease
+		0 };	// 15 off
+	u16 ledCycle = PWM_CYCLE[(ledCnt & 0x0F)];
+	drv_pwm_cfg(ledChannel, ledCycle, PWM_MAX_TICK);
 
-	u8 ledCur = ledCnt & 0xF0;
-#	if defined(LED_W)
-	drv_gpio_write(LED_W, ((ledCur == 0x10) ?true :false));
-#	endif
-#	if defined(LED_R)
-	drv_gpio_write(LED_R, ((ledCur == 0x20) ?true :false));
-#	endif
-#	if defined(LED_G)
-	drv_gpio_write(LED_G, ((ledCur == 0x30) ?true :false));
-#	endif
-#	if defined(LED_B)
-	drv_gpio_write(LED_B, ((ledCur == 0x40) ?true :false));
-#	endif
-#	if defined(LED_WW)
-	drv_gpio_write(LED_WW, ((ledCur == 0x50) ?true :false));
-#	endif
+	if (ledCycle == 0) {
+		drv_pwm_stop(ledChannel);
+	} else {
+		drv_pwm_start(ledChannel);
+	}
+	return;
 }
 #endif
 
@@ -703,10 +783,10 @@ void bootloader_loop(void){
 #ifdef LED_PERMIT
 		gpio_toggle(LED_PERMIT);
 #endif
-#if defined(LED_W) || defined(LED_R) || defined(LED_G) || defined(LED_B) || defined(LED_WW)
+#if defined(PWM_W_CHANNEL) || defined(PWM_R_CHANNEL) || defined(PWM_G_CHANNEL) || defined(PWM_B_CHANNEL) || defined(PWM_WW_CHANNEL)
 		led_error();
 #endif
-		WaitMs(100);
+		WaitMs(250);
 	}
 }
 

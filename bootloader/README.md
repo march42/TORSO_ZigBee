@@ -22,28 +22,36 @@ Loops through the LED outputs LED_W, LED_R, LED_G, LED_B, LED_WW one at a time.
 
 Shutdown LED outputs before RESET (bootloader_with_ota_check).
 
+#### procedure
+
+1) On power-on the bootloader initializes the system.
+
+- light LED_POWER
+- light LED_PERMIT
+- light the 5 LED PWM channels
+
+2) The UART gets initialized (115200 Baud, 8 data bits, parity NONE, 1 stopp bit)
+3) button handling gets initialized
+3) bootloader sends announcement over UART (MSG_CMD_ACKNOWLEDGE with greeting in data block)
+4) 2000ms time out for UART connection is startet
+
+- on key press the time out is cancelled
+- wait for UART data transfer
+
+after time out or finished data transfer
+
+5) check for valid firmware at OTA image offset -> copy to application offset and RESET
+6) check for valid firmware at application offset -> shutdown LEDs and RESET to application
+
+7) loop until valid firmware found
+
+- toggle LED_POWER
+- toggle LED_PERMIT
+- loop through the configured LED PWM channels (increase, decrease per channel)
+
 #### specifications
 
-- UART 115k200 Baud, 8 bit data, no parity, 1 stop bit, no flow control
-
-#### technical
-
-- bootloader_uartRxDataProc     called for UART_PROC events
-- bootloader_keyPressProc       called for KEY_PRESS events
-
-##### OTA image information
-
-The images have following informations.
-
-- manufacturer code (16 bit, 0x1141 =Telink)
-- image type (16 bit, HI=chip type, LO=image type)
-- file version (32 bit, app release, app build, stack release, stack build)
-
-```
-#define MANUFACTURER_CODE_TELINK           	0x1141//Telink ID
-#define	IMAGE_TYPE							((CHIP_TYPE << 8) | IMAGE_TYPE_BOOTLOADER)
-#define	FILE_VERSION					  	((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)
-```
+- UART 115k200 Baud, 8 data bit, parity none, 1 stop bit, flow control none
 
 ###### Chip IDs
 

@@ -27,11 +27,12 @@ ZigBee 3.0 LED controller
 
 - short press to toggle on/off
 - long press for dimming loop
-- 2x short press to switch on full
+- 2x short press to switch to full on
 - 3x short press to join network
 - 4x short press to leave network
 - 5x short press to factory reset
 
+- BUTTON1 short press in bootloader (first 2000ms after reset) stopp timeout and wait for UART data transfer.
 
 #### factory reset
 

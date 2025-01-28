@@ -98,7 +98,44 @@ extern "C" {
 #define PA0_OUTPUT_ENABLE				1
 #define PA0_INPUT_ENABLE				0
 
-#if (__PROJECT_TL_BOOT_LOADER__)
+#if (__PROJECT_TL_DIMMABLE_LIGHT__) || (__LIGHT__MARCH42_TORSO__)
+	// LED_W
+#	define PWM_W_CHANNEL			5//PWM5
+#	define PWM_W_CHANNEL_SET()		do{	\
+										gpio_set_func(LED_W, AS_PWM5); 	\
+									}while(0)
+#	define COOL_LIGHT_PWM_CHANNEL	PWM_W_CHANNEL
+#	define COOL_LIGHT_PWM_SET()		PWM_W_CHANNEL_SET()
+	// LED_R
+#	define PWM_R_CHANNEL			4//PWM4
+#	define PWM_R_CHANNEL_SET()		do{	\
+										gpio_set_func(LED_R, AS_PWM4); 		\
+									}while(0)
+#	define R_LIGHT_PWM_CHANNEL		PWM_R_CHANNEL
+#	define R_LIGHT_PWM_SET()		PWM_R_CHANNEL_SET()
+	// LED_G
+#	define PWM_G_CHANNEL			1//PWM1
+#	define PWM_G_CHANNEL_SET()		do{	\
+										gpio_set_func(LED_G, AS_PWM1); 	\
+									}while(0)
+#	define G_LIGHT_PWM_CHANNEL		PWM_G_CHANNEL
+#	define G_LIGHT_PWM_SET()		PWM_G_CHANNEL_SET()
+	// LED_B
+#	define PWM_B_CHANNEL			3//PWM3
+#	define PWM_B_CHANNEL_SET()		do{	\
+										gpio_set_func(LED_B, AS_PWM3); 		\
+									}while(0)
+#	define B_LIGHT_PWM_CHANNEL		PWM_B_CHANNEL
+#	define B_LIGHT_PWM_SET()		PWM_B_CHANNEL_SET()
+	// LED_WW
+#	define PWM_WW_CHANNEL			0//PWM0
+#	define PWM_WW_CHANNEL_SET()		do{	\
+										gpio_set_func(LED_WW, AS_PWM0); 		\
+									}while(0)
+#	define WARM_LIGHT_PWM_CHANNEL	PWM_WW_CHANNEL
+#	define WARM_LIGHT_PWM_SET()		PWM_WW_CHANNEL_SET()
+
+#elif (__PROJECT_TL_BOOT_LOADER__)
 	// LED_W
 #	define PB5_FUNC					AS_GPIO
 #	define PB5_OUTPUT_ENABLE		1
@@ -119,43 +156,6 @@ extern "C" {
 #	define PC2_FUNC					AS_GPIO
 #	define PC2_OUTPUT_ENABLE		1
 #	define PC2_INPUT_ENABLE			0
-
-#elif (__PROJECT_TL_DIMMABLE_LIGHT__)
-	// LED_W
-#	define PWM_W_CHANNEL			5
-#	define PWM_W_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_W, AS_PWM5); 	\
-									}while(0)
-#	define COOL_LIGHT_PWM_CHANNEL	PWM_W_CHANNEL
-#	define COOL_LIGHT_PWM_SET()		PWM_W_CHANNEL_SET()
-	// LED_R
-#	define PWM_R_CHANNEL			4
-#	define PWM_R_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_R, AS_PWM4); 		\
-									}while(0)
-#	define R_LIGHT_PWM_CHANNEL		PWM_R_CHANNEL
-#	define R_LIGHT_PWM_SET()		PWM_R_CHANNEL_SET()
-	// LED_G
-#	define PWM_G_CHANNEL			1
-#	define PWM_G_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_G, AS_PWM1); 	\
-									}while(0)
-#	define G_LIGHT_PWM_CHANNEL		PWM_G_CHANNEL
-#	define G_LIGHT_PWM_SET()		PWM_G_CHANNEL_SET()
-	// LED_B
-#	define PWM_B_CHANNEL			3
-#	define PWM_B_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_B, AS_PWM3); 		\
-									}while(0)
-#	define B_LIGHT_PWM_CHANNEL		PWM_B_CHANNEL
-#	define B_LIGHT_PWM_SET()		PWM_B_CHANNEL_SET()
-	// LED_WW
-#	define PWM_WW_CHANNEL			0
-#	define PWM_WW_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_WW, AS_PWM0); 		\
-									}while(0)
-#	define WARM_LIGHT_PWM_CHANNEL	PWM_WW_CHANNEL
-#	define WARM_LIGHT_PWM_SET()		PWM_WW_CHANNEL_SET()
 
 #elif (__PROJECT_TL_CONTACT_SENSOR__)
 #elif (__PROJECT_TL_SWITCH__)

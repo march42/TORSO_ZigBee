@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "../source/comm_cfg.h"
+#include "comm_cfg.h"
 
 #if defined(MCU_CORE_826x)
 	#if (CHIP_8269)
@@ -54,8 +54,8 @@
 		#define CHIP_TYPE					TLSR_TL321X
 #endif
 
-#define APP_RELEASE							0x10//app release 1.0
-#define APP_BUILD							0x01//app build 01
+#define APP_RELEASE							0x11	//app release 1.1
+#define APP_BUILD							0x02	//app build 02
 #define STACK_RELEASE						0x30//stack release 3.0
 #define STACK_BUILD							0x01//stack build 01
 
