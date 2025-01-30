@@ -48,8 +48,19 @@
 
 
 #if COLOR_CCT_SUPPORT
-#define COLOR_TEMPERATURE_PHYSICAL_MIN	0x00FA//4000K
-#define COLOR_TEMPERATURE_PHYSICAL_MAX	0x01C6//2200K
+/*	color temperature calculation
+**	mired = 1,000,000 / kelvin
+**	Mired equals 1 million over Temperature in Kelvin
+**	kelvin = 1000000 / mired
+**	***
+**	0x0064  100  10000K
+**	0x0099  153   6500K
+**	0x00FA  250   4000K
+**	0x01C6  454   2200K
+**	0x01F4  500   2000K
+*/
+#define COLOR_TEMPERATURE_PHYSICAL_MIN	0x0099
+#define COLOR_TEMPERATURE_PHYSICAL_MAX	0x01F4
 #endif
 
 /**********************************************************************
@@ -113,7 +124,8 @@ const af_simple_descriptor_t sampleLight_simpleDesc =
 {
 	HA_PROFILE_ID,                      		/* Application profile identifier */
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-	HA_DEV_EXTENDED_COLOR_LIGHT,
+	HA_DEV_COLOR_DIMMABLE_LIGHT,
+	//HA_DEV_EXTENDED_COLOR_LIGHT,				/* zbDeviceId_t extended color light */
 #else
 	#ifdef ZCL_LEVEL_CTRL
 		HA_DEV_DIMMABLE_LIGHT,              	/* Application device identifier */

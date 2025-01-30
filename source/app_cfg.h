@@ -48,11 +48,13 @@ extern "C" {
 
 /* RGB or CCT */
 #define COLOR_RGB_SUPPORT				1
-#define COLOR_CCT_SUPPORT				1
+#define COLOR_CCT_SUPPORT				0
+
+#define LIGHTING_SAVE					1
 
 /* BDB */
 #define TOUCHLINK_SUPPORT				1
-#define FIND_AND_BIND_SUPPORT			1
+#define FIND_AND_BIND_SUPPORT			0
 
 /* Board ID */
 #define BOARD_826x_EVK					0

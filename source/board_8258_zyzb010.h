@@ -59,7 +59,7 @@ extern "C" {
  * 15	A1
  * 16	B4	LED_G, PWM4
  * 17	B5	LED_B, PWM5
- * 18	B1	
+ * 18	B1	(? DEBUG_INFO_TX_PIN)
  * 19	B6
  * 20	D7	UART_TX
  * 21	B7	UART_RX
@@ -173,9 +173,9 @@ extern "C" {
 #	if ZBHCI_UART || UART_ENABLE
 #		error sure to use UART_ENABLE,ZBHI_MODE and UART_PRINTF_MODE ??? need to change DEBUG_INFO_TX_PIN
 		// GPIO_PD7 can be used, but is assigned to IR_IN
-#		define	DEBUG_INFO_TX_PIN		GPIO_PD7
+#		define	DEBUG_INFO_TX_PIN		UART_TX_PB1
 #	else
-#		define	DEBUG_INFO_TX_PIN		GPIO_PB1
+#		define	DEBUG_INFO_TX_PIN		UART_TX_PIN
 #	endif
 #endif
 

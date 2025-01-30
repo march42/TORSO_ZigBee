@@ -37,7 +37,7 @@
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define PWM_FREQUENCY					1000	//1KHz
+#define PWM_FREQUENCY					4000
 #define PWM_FULL_DUTYCYCLE				100
 #define PMW_MAX_TICK		            (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
@@ -109,6 +109,10 @@ void hwLight_init(void)
 {
 	drv_pwm_init();
 
+#if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
+	COOL_LIGHT_PWM_SET();
+	pwmInit(COOL_LIGHT_PWM_CHANNEL, 0);
+#endif
 #if COLOR_RGB_SUPPORT
 	R_LIGHT_PWM_SET();
 	G_LIGHT_PWM_SET();
@@ -116,10 +120,6 @@ void hwLight_init(void)
 	pwmInit(R_LIGHT_PWM_CHANNEL, 0);
 	pwmInit(G_LIGHT_PWM_CHANNEL, 0);
 	pwmInit(B_LIGHT_PWM_CHANNEL, 0);
-#endif
-#if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
-	COOL_LIGHT_PWM_SET();
-	pwmInit(COOL_LIGHT_PWM_CHANNEL, 0);
 #endif
 #if COLOR_CCT_SUPPORT
 	WARM_LIGHT_PWM_SET();
@@ -139,28 +139,28 @@ void hwLight_init(void)
 void hwLight_onOffUpdate(u8 onOff)
 {
 	if(onOff){
+#if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
+		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
+#endif
 #if COLOR_RGB_SUPPORT
 		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
 #endif
-#if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
+#if COLOR_CCT_SUPPORT
 		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
 #endif
-#if COLOR_CCT_SUPPORT
-		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
-#endif
 	}else{
+#if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
+		drv_pwm_stop(COOL_LIGHT_PWM_CHANNEL);
+#endif
 #if COLOR_RGB_SUPPORT
 		drv_pwm_stop(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
 #endif
-#if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
-		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
-#endif
 #if COLOR_CCT_SUPPORT
-		drv_pwm_stop(COOL_LIGHT_PWM_CHANNEL);
+		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
 #endif
 	}
 }

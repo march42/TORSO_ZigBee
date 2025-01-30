@@ -86,7 +86,9 @@ static s32 heartTimerCb(void *arg){
 		return -1;
 	}
 
+#ifdef LED_POWER
 	gpio_toggle(LED_POWER);
+#endif
 
 	return heartInterval;
 }

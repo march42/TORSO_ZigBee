@@ -5,6 +5,9 @@
  *
  * @author  Zigbee Group
  * @date    2021
+ * 
+ * @author	Marc Hefter
+ * @date	2024-2025
  *
  * @par     Copyright (c) 2021, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *			All rights reserved.
@@ -53,27 +56,39 @@
  * LOCAL FUNCTIONS
  */
 void led_on(u32 pin){
+#ifdef LED_POWER
 	drv_gpio_write(pin, LED_ON);
+#endif
 }
 
 void led_off(u32 pin){
+#ifdef LED_PERMIT
 	drv_gpio_write(pin, LED_OFF);
+#endif
 }
 
 void led_init(void){
+#ifdef LED_POWER
 	led_off(LED_POWER);
+#endif
+#ifdef LED_PERMIT
 	led_off(LED_PERMIT);
+#endif
 }
 
 void localPermitJoinState(void){
 	static bool assocPermit = 0;
 	if(assocPermit != zb_getMacAssocPermit()){
 		assocPermit = zb_getMacAssocPermit();
+#ifdef LED_PERMIT
 		if(assocPermit){
 			led_on(LED_PERMIT);
 		}else{
 			led_off(LED_PERMIT);
 		}
+#else /* use the LED channels for PERMIT signalling */
+		// TODO: implement PERMIT_SIGNALLING effect
+#endif
 	}
 }
 

@@ -118,7 +118,7 @@ void sampleLight_colorInit(void)
 #if COLOR_RGB_SUPPORT && COLOR_CCT_SUPPORT
 	pColor->colorCapabilities = 0;
 	pColor->colorCapabilities |= ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION;
-	pColor->colorCapabilities |= ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE;
+	//pColor->colorCapabilities |= ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE;
 	//pColor->colorCapabilities |= ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP;
 	//pColor->colorCapabilities |= ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES;
 	pColor->colorCapabilities |= ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE;

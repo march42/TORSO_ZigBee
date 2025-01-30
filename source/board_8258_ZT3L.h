@@ -44,7 +44,7 @@ extern "C" {
  * 1	RST (RESET, active low, connected to EN)
  * 2	C4	(ADC)
  * 3	EN	(ENABLE, active high, connected to RST)
- * 4	D7	IR_IN
+ * 4	D7	IR_IN (? DEBUG_INFO_TX_PIN)
  * 5	D2	(PWM) LED_B
  * 6	C3	(PWM) LED_G
  * 7	C2	(PWM) LED_WW
@@ -65,6 +65,7 @@ extern "C" {
 //	buttons
 #define BUTTON1						GPIO_PC0	// pairing button on board
 #define BUTTON2						GPIO_PD4
+//#define	KB_ONLY_SINGLEKEY_SUPP		1
 
 //	LED channels
 #define LED_W						GPIO_PB5	// either single white or cold white
@@ -97,6 +98,7 @@ extern "C" {
 #define PA0_FUNC						AS_GPIO
 #define PA0_OUTPUT_ENABLE				1
 #define PA0_INPUT_ENABLE				0
+//#define	PULL_WAKEUP_SRC_PA0				PM_PIN_PULLDOWN_100K
 
 #if (__PROJECT_TL_DIMMABLE_LIGHT__) || (__LIGHT__MARCH42_TORSO__)
 	// LED_W
@@ -181,7 +183,7 @@ extern "C" {
 		// GPIO_PD7 can be used, but is assigned to IR_IN
 #		define	DEBUG_INFO_TX_PIN		GPIO_PD7
 #	else
-#		define	DEBUG_INFO_TX_PIN		GPIO_PB1
+#		define	DEBUG_INFO_TX_PIN		UART_TX_PIN
 #	endif
 #endif
 
