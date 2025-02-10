@@ -34,6 +34,8 @@ ZigBee 3.0 LED controller
 
 - BUTTON1 short press in bootloader (first 2000ms after reset) stopp timeout and wait for UART data transfer.
 
+- long press dimming down to minimum, long press at minimum dimming up to maximum
+
 #### factory reset
 
 - power cycle off/on the controller 5 times each under 2s (see source/common/factory_reset.c)

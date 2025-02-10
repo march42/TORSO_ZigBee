@@ -148,10 +148,12 @@ else ifeq ($(ZB_ROLE),END_DEVICE)
 	LDLIBS			+= -lzb_ed
 endif
 sdk_SOURCES 	+= $(foreach dir,$(sdk_DIRS),$(wildcard $(dir)/*.c))
+sdk_HEADERS 	+= $(foreach dir,$(sdk_DIRS),$(wildcard $(dir)/*.h))
 sdk_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_SOURCES:.c=.c.o))
 sdk_ASMS		+= $(foreach dir,$(sdk_DIRS),$(wildcard $(dir)/*.S))
 sdk_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_ASMS:.S=.S.o))
 zigbee_SOURCES 	+= $(foreach dir,$(zigbee_DIRS),$(wildcard $(dir)/*.c))
+zigbee_HEADERS 	+= $(foreach dir,$(zigbee_DIRS),$(wildcard $(dir)/*.h))
 zigbee_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_SOURCES:.c=.c.o))
 zigbee_ASMS		+= $(foreach dir,$(zigbee_DIRS),$(wildcard $(dir)/*.S))
 zigbee_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_ASMS:.S=.S.o))
@@ -161,6 +163,7 @@ zigbee_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_ASMS:.S=.S.o))
 	ldr_CPPFLAGS	= -D__PROJECT_TL_BOOT_LOADER__=1
 	ldr_CPPFLAGS	+= -I$(PROJECTDIR)/bootloader -I$(SOURCEDIR) -I$(TL_ZIGBEE_SDK)/platform -I$(TL_ZIGBEE_SDK)/proj/common -I$(TL_ZIGBEE_SDK)/proj
 	ldr_source		= $(PROJECTDIR)/bootloader/main.c $(PROJECTDIR)/bootloader/bootloader.c $(PROJECTDIR)/source/common/firmwareEncryptChk.c
+	ldr_HEADERS		= $(wildcard $(PROJECTDIR)/bootloader/*.h) $(wildcard $(PROJECTDIR)/source/*.h) $(wildcard $(PROJECTDIR)/source/common/*.h) $(sdk_HEADERS) $(zigbee_HEADERS)
 	ldr_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/bootloader,$(ldr_source:.c=.c.o))
 	ldr_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk-bootloader,$(sdk_SOURCES:.c=.c.o))
 	ldr_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk-bootloader,$(sdk_ASMS:.S=.S.o))
@@ -176,6 +179,7 @@ endif
 	led_CPPFLAGS	+= -I$(TL_ZIGBEE_SDK)/zigbee/ota
 	led_CPPFLAGS	+= -I$(TL_ZIGBEE_SDK)/zbhci
 	led_source		= $(wildcard $(SOURCEDIR)/*.c) $(wildcard $(SOURCEDIR)/common/*.c)
+	led_HEADERS		= $(wildcard $(PROJECTDIR)/source/*.h) $(wildcard $(PROJECTDIR)/source/common/*.h) $(sdk_HEADERS) $(zigbee_HEADERS)
 	led_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_rgbcct,$(led_source:.c=.c.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_SOURCES:.c=.c.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_ASMS:.S=.S.o))
@@ -255,19 +259,23 @@ endif
 .PHONY: write_firmware
 write_firmware: $(bin_files)
 ifeq ($(CHIP_TYPE),TLSR_8258_1M)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) rf 0xFE000 0x02000 dump_FCFG_MAC.bin)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x00000 0xFE000)
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) rf 0xFE000 0x02000 dump_FCFG_MAC.bin
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x00000 0xFE000
 else ifeq ($(CHIP_TYPE),TLSR_8258_512K)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) rf 0x76000 0x02000 dump_MAC_FCFG.bin)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x00000 0x76000)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x78000 0x08000)
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) rf 0x76000 0x02000 dump_MAC_FCFG.bin
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x00000 0x76000
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) es 0x78000 0x08000
 endif
 ifeq ($(BOOT_LOADER_MODE),1)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/bootloader.bin)
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x08000 $(BUILDDIR)/led_rgbcct.bin)
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/bootloader.bin
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x08000 $(BUILDDIR)/led_rgbcct.bin
 else
-	$(info python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/led_rgbcct.bin)
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/led_rgbcct.bin
 endif
+
+.PHONY: run_firmware
+run_firmware: write_firmware
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) --run
 
 ###
 # directories
@@ -315,12 +323,12 @@ $(BUILDDIR)/led_rgbcct:
 	$(info Creating	$@)
 	@mkdir -p $@
 
-$(BUILDDIR)/led_rgbcct/%.c.o : %.c	| $(BUILDDIR)/led_rgbcct
+$(BUILDDIR)/led_rgbcct/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/led_rgbcct
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BUILDDIR)/led_rgbcct/%.S.o : %.S	| $(BUILDDIR)/led_rgbcct
+$(BUILDDIR)/led_rgbcct/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/led_rgbcct
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
@@ -330,12 +338,12 @@ $(BUILDDIR)/sdk:
 	$(info Creating	$@)
 	@mkdir -p $@
 
-$(BUILDDIR)/sdk/%.c.o : $(TL_ZIGBEE_SDK)/%.c	| $(BUILDDIR)/sdk
+$(BUILDDIR)/sdk/%.c.o : $(TL_ZIGBEE_SDK)/%.c $(led_HEADERS)	| $(BUILDDIR)/sdk
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BUILDDIR)/sdk/%.S.o : $(TL_ZIGBEE_SDK)/%.S	| $(BUILDDIR)/sdk
+$(BUILDDIR)/sdk/%.S.o : $(TL_ZIGBEE_SDK)/%.S $(led_HEADERS)	| $(BUILDDIR)/sdk
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
@@ -385,12 +393,12 @@ $(BUILDDIR)/sdk-bootloader:
 	$(info Creating	$@)
 	@mkdir -p $@
 
-$(BUILDDIR)/sdk-bootloader/%.c.o : $(TL_ZIGBEE_SDK)/%.c	| $(BUILDDIR)/sdk-bootloader
+$(BUILDDIR)/sdk-bootloader/%.c.o : $(TL_ZIGBEE_SDK)/%.c $(ldr_HEADERS)	| $(BUILDDIR)/sdk-bootloader
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
 
-$(BUILDDIR)/sdk-bootloader/%.S.o : $(TL_ZIGBEE_SDK)/%.S	| $(BUILDDIR)/sdk-bootloader
+$(BUILDDIR)/sdk-bootloader/%.S.o : $(TL_ZIGBEE_SDK)/%.S $(ldr_HEADERS)	| $(BUILDDIR)/sdk-bootloader
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) $(ASFLAGS) $(ldr_ASFLAGS) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@

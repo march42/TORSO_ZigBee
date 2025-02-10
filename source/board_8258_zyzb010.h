@@ -50,7 +50,7 @@ extern "C" {
  * 7	C2	LED_W, PWM1
  * 8	n.c.
  * 9	n.c.
- * 10	D4
+ * 10	D4	BUTTON2
  * 11	n.c.
  * 12	A0
  * 
@@ -70,6 +70,7 @@ extern "C" {
 
 //	buttons
 #define FAC_RST						GPIO_PD3	// factory reset, pairing button on board
+#define BUTTON2						GPIO_PD4
 
 //	LED channels
 #define LED_W						GPIO_PC2
@@ -192,7 +193,7 @@ enum{
 #define	KB_MAP_FN		KB_MAP_NORMAL
 
 #define KB_DRIVE_PINS	{0}
-#define KB_SCAN_PINS	{BUTTON1, BUTTON2}
+#define KB_SCAN_PINS	{FAC_RST, BUTTON2}
 
 
 /* Disable C linkage for C++ Compilers: */

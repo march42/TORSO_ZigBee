@@ -697,7 +697,7 @@ void bootloader_init(bool isBoot){
 
 #if UART_ENABLE
 		UART_PIN_CFG();
-		drv_uart_init(115200, uartRxBuf, UART_RX_BUF_SIZE, bootloader_uartRxHandler);
+		drv_uart_init(BAUDRATE, uartRxBuf, UART_RX_BUF_SIZE, bootloader_uartRxHandler);
 
 		ev_queue_init(&msgQ, NULL);
 		ev_on_poll(EV_POLL_UART_PROC, bootloader_uartRxDataProc);

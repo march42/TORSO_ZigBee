@@ -150,6 +150,8 @@ void stack_init(void)
  */
 void user_app_init(void)
 {
+	DEBUG(DEBUG_TRACE, "user_app_init\r");
+
 	af_nodeDescManuCodeUpdate(MANUFACTURER_CODE_TELINK);
 
     /* Initialize ZCL layer */
@@ -250,6 +252,7 @@ void app_task(void)
 
 static void sampleLightSysException(void)
 {
+	DEBUG(DEBUG_TRACE, "sampleLightSysException\r");
 #if 1
 	SYSTEM_RESET();
 #else
@@ -270,6 +273,8 @@ static void sampleLightSysException(void)
 void user_init(bool isRetention)
 {
 	(void)isRetention;
+
+	DEBUG(DEBUG_TRACE, "user_init\r");
 
 	/* Initialize LEDs*/
 	led_init();

@@ -107,6 +107,8 @@ void pwmInit(u8 ch, u16 dutycycle)
  */
 void hwLight_init(void)
 {
+	DEBUG(DEBUG_TRACE, "hwLight_init\r");
+
 	drv_pwm_init();
 
 #if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
@@ -138,6 +140,8 @@ void hwLight_init(void)
  */
 void hwLight_onOffUpdate(u8 onOff)
 {
+	DEBUG(DEBUG_TRACE, "hwLight_onOffUpdate(%x)\r", onOff);
+
 	if(onOff){
 #if !COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
 		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
@@ -176,6 +180,8 @@ void hwLight_onOffUpdate(u8 onOff)
  */
 void hwLight_levelUpdate(u8 level)
 {
+	DEBUG(DEBUG_TRACE, "hwLight_levelUpdate(%x)\r", level);
+
 #if !defined COLOR_RGB_SUPPORT || (COLOR_RGB_SUPPORT == 0)
 	level = (level < 0x10) ? 0x10 : level;
 
@@ -350,6 +356,8 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
  */
 void light_adjust(void)
 {
+	DEBUG(DEBUG_TRACE, "light_adjust\r");
+
 #ifdef ZCL_LIGHT_COLOR_CONTROL
 	sampleLight_colorInit();
 #else
@@ -371,6 +379,8 @@ void light_adjust(void)
  */
 void light_fresh(void)
 {
+	DEBUG(DEBUG_TRACE, "light_fresh\r");
+
 #ifdef ZCL_LIGHT_COLOR_CONTROL
 	sampleLight_updateColor();
 #else

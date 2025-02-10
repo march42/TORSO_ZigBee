@@ -42,12 +42,16 @@ extern "C" {
 /* Debug mode config */
 #define	UART_PRINTF_MODE				1
 #define USB_PRINTF_MODE         		0
+#define BAUDRATE						(115200)
+#define DEBUG_TRACE						1
+#define DEBUG_BUTTONS					0
+#define DEBUG_KEYHANDLER				0
 
 /* HCI interface */
 #define	ZBHCI_UART						0
 
 /* RGB or CCT */
-#define COLOR_RGB_SUPPORT				1
+#define COLOR_RGB_SUPPORT				0
 #define COLOR_CCT_SUPPORT				0
 
 #define LIGHTING_SAVE					1
