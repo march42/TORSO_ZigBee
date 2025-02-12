@@ -54,6 +54,17 @@
 kb_data_t kb_buffer;		// buffer for kb_event handling
 
 /**********************************************************************
+ * FUNCTIONS
+ */
+extern void sampleLight_updateOnOff(void);
+extern void sampleLight_updateLevel(void);
+extern void sampleLight_updateColor(void);
+
+extern void sampleLight_onOffInit(void);
+extern void sampleLight_levelInit(void);
+extern void sampleLight_colorInit(void);
+
+/**********************************************************************
  * LOCAL FUNCTIONS
  */
 void led_on(u32 pin){
@@ -215,48 +226,37 @@ void app_key_reset_startTimer(u32 t_ms)
 void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 {
 	DEBUG(DEBUG_BUTTONS, "BUTTON pressed key=%x count=%d\r", pressed_keyCode, pressed_count);
-	if (pressed_keyCode == VK_SW1) {
-		if (pressed_count == 5) {
-				DEBUG(DEBUG_BUTTONS, "BUTTON1 Factory Reset\r");
-				gLightCtx.state = APP_FACTORY_NEW_DOING;
-				zb_factoryReset();
-		} else if(pressed_count == 1 && zb_isDeviceJoinedNwk()) {
-			DEBUG(DEBUG_BUTTONS, "BUTTON1 Factory OnOff\r");
-			gLightCtx.sta = !gLightCtx.sta;					// current state in blinking
-			if (gLightCtx.sta) {
-				sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
-			} else {
-				sampleLight_onoff(ZCL_ONOFF_STATUS_OFF);
-			}
-		}
-	}
-	else if (pressed_keyCode == VK_SW2) {
+	if (pressed_keyCode == VK_SW1
+#ifdef BUTTON2
+		|| pressed_keyCode == VK_SW2
+#endif
+		) {
 		// button pressed for the pressed_count time
 		switch (pressed_count) {
 			case 1:	// On/Off toggle
-				DEBUG(DEBUG_BUTTONS, "BUTTON2 OnOff\r");
+				DEBUG(DEBUG_BUTTONS, "BUTTON OnOff\r");
 				sampleLight_onoff(ZCL_CMD_ONOFF_TOGGLE);	// toggle On/Off
 				return;
 			case 2:	// On and dim to initial default
-				DEBUG(DEBUG_BUTTONS, "BUTTON2 Full On\r");
+				DEBUG(DEBUG_BUTTONS, "BUTTON Full On\r");
 				zcl_levelAttr_t *pLevel		= zcl_levelAttrGet();
 				pLevel->curLevel			= ZCL_LEVEL_ATTR_MAX_LEVEL;
 				sampleLight_updateLevel();					// set level
 				sampleLight_onoff(ZCL_CMD_ONOFF_ON);		// turn on
 				return;
 			case 3:
-				DEBUG(DEBUG_BUTTONS, "BUTTON2 Join Network\r");
+				DEBUG(DEBUG_BUTTONS, "BUTTON Join Network\r");
 				// join network
 				/* toggle local permit Joining */
 				zb_nlmePermitJoiningRequest(zb_getMacAssocPermit() ? 0 : 180);
 				gpsCommissionModeInvork();
 				return;
 			case 4:
-				DEBUG(DEBUG_BUTTONS, "BUTTON2 Leave Network\r");
+				DEBUG(DEBUG_BUTTONS, "BUTTON Leave Network\r");
 				// leave network
 				return;
 			case 5:
-				DEBUG(DEBUG_BUTTONS, "BUTTON2 Factory Reset\r");
+				DEBUG(DEBUG_BUTTONS, "BUTTON Factory Reset\r");
 				// factory reset
 				gLightCtx.state = APP_FACTORY_NEW_DOING;
 				zb_factoryReset();

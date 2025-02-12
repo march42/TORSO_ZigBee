@@ -222,8 +222,6 @@ void sampleLight_leaveIndHandler(nlme_leave_ind_t *pLeaveInd);
 void sampleLight_otaProcessMsgHandler(u8 evt, u8 status);
 bool sampleLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate);
 
-void sampleLight_onoff(u8 cmd);
-
 void zcl_sampleLightAttrsInit(void);
 nv_sts_t zcl_onOffAttr_save(void);
 nv_sts_t zcl_levelAttr_save(void);

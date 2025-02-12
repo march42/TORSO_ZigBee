@@ -42,7 +42,7 @@ extern "C" {
 /* Debug mode config */
 #define	UART_PRINTF_MODE				1
 #define USB_PRINTF_MODE         		0
-#define BAUDRATE						(115200)
+#define BAUDRATE						115200
 #define DEBUG_TRACE						1
 #define DEBUG_BUTTONS					0
 #define DEBUG_KEYHANDLER				0
@@ -51,6 +51,21 @@ extern "C" {
 #define	ZBHCI_UART						0
 
 /* RGB or CCT */
+#ifndef LED_DIMMER_MODE
+#	define LED_DIMMER_MODE				0
+#endif
+#ifndef LED_CCT_MODE
+#	define LED_CCT_MODE					0
+#endif
+#ifndef LED_RGB_MODE
+#	define LED_RGB_MODE					0
+#endif
+#ifndef LED_RGBW_MODE
+#	define LED_RGBW_MODE				0
+#endif
+#ifndef LED_RGBCCT_MODE
+#	define LED_RGBCCT_MODE				0
+#endif
 #define COLOR_RGB_SUPPORT				0
 #define COLOR_CCT_SUPPORT				0
 
@@ -127,6 +142,8 @@ extern "C" {
 	#include "board_826x_evk.h"
 #elif(BOARD == BOARD_826x_DONGLE)
 	#include "board_826x_dongle.h"
+#elif (BOARD == TS0501B)
+#	include "board_8258_TS050xB.h"
 #elif (MODULE == ZT3L)
 #	include "board_8258_zt3l.h"
 #elif (MODULE == ZYZB010)

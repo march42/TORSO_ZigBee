@@ -76,12 +76,12 @@ extern "C" {
 
 //	additionals
 #define IR_IN						GPIO_PD7
-#define UART_TX_PIN				 UART_TX_PB1
-#define UART_RX_PIN				 UART_RX_PB7
+#define UART_TX_PIN					UART_TX_PB1
+#define UART_RX_PIN					UART_RX_PB7
 #define UART_SWS					GPIO_PA7
 
-#define LED_POWER					GPIO_PA0
-//#define LED_PERMIT					NULL
+//#define LED_POWER					GPIO_PA0
+//#define LED_PERMIT					GPIO_PC2
 
 //	setting IO functions
 // BUTTON1
@@ -90,15 +90,26 @@ extern "C" {
 #define PC0_INPUT_ENABLE				1
 #define	PULL_WAKEUP_SRC_PC0				PM_PIN_PULLUP_10K
 // BUTTON2
-#define PD4_FUNC						AS_GPIO
-#define PD4_OUTPUT_ENABLE				0
-#define PD4_INPUT_ENABLE				1
-#define	PULL_WAKEUP_SRC_PD4				PM_PIN_PULLUP_10K
+#ifdef BUTTON2
+#   define PD4_FUNC						AS_GPIO
+#   define PD4_OUTPUT_ENABLE			0
+#   define PD4_INPUT_ENABLE				1
+#   define PULL_WAKEUP_SRC_PD4			PM_PIN_PULLUP_10K
+#endif
 // POWER_LED
-#define PA0_FUNC						AS_GPIO
-#define PA0_OUTPUT_ENABLE				1
-#define PA0_INPUT_ENABLE				0
-//#define	PULL_WAKEUP_SRC_PA0				PM_PIN_PULLDOWN_100K
+#if defined(POWER_LED) && (POWER_LED == GPIO_PA0)
+#	define PA0_FUNC						AS_GPIO
+#	define PA0_OUTPUT_ENABLE			1
+#	define PA0_INPUT_ENABLE				0
+//#	define PULL_WAKEUP_SRC_PA0			PM_PIN_PULLDOWN_100K
+#endif
+// PERMIT_LED
+#if defined(PERMIT_LED) && (PERMIT_LED != LED_WW)
+#	define PC2_FUNC					AS_GPIO
+#	define PC2_OUTPUT_ENABLE		1
+#	define PC2_INPUT_ENABLE			0
+//#	define PULL_WAKEUP_SRC_PC2		PM_PIN_PULLDOWN_100K
+#endif
 
 #if (__PROJECT_TL_DIMMABLE_LIGHT__) || (__LIGHT__MARCH42_TORSO__)
 	// LED_W
@@ -129,13 +140,16 @@ extern "C" {
 									}while(0)
 #	define B_LIGHT_PWM_CHANNEL		PWM_B_CHANNEL
 #	define B_LIGHT_PWM_SET()		PWM_B_CHANNEL_SET()
+
 	// LED_WW
-#	define PWM_WW_CHANNEL			0//PWM0
-#	define PWM_WW_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_WW, AS_PWM0); 		\
-									}while(0)
-#	define WARM_LIGHT_PWM_CHANNEL	PWM_WW_CHANNEL
-#	define WARM_LIGHT_PWM_SET()		PWM_WW_CHANNEL_SET()
+#	if defined(LED_WW) && (LED_WW == GPIO_PC2)
+#		define PWM_WW_CHANNEL			0//PWM0
+#		define PWM_WW_CHANNEL_SET()		do{	\
+											gpio_set_func(LED_WW, AS_PWM0); 		\
+										}while(0)
+#		define WARM_LIGHT_PWM_CHANNEL	PWM_WW_CHANNEL
+#		define WARM_LIGHT_PWM_SET()		PWM_WW_CHANNEL_SET()
+#	endif
 
 #elif (__PROJECT_TL_BOOT_LOADER__)
 	// LED_W
