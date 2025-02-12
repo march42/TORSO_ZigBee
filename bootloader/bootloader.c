@@ -610,7 +610,7 @@ void bootloader_keyPressProc(void){
 }
 
 void bootloader_uartTxAnnounce(void) {
-	WaitMs(100);
+	sleep_ms(100);
 	// announce running bootloader over UART
 	char data[] = "bootloader"
 		" v1.1-b02"
@@ -645,7 +645,7 @@ void bootloader_uartTxAnnounce(void) {
 		"";
 	u16 len = sizeof(data);
 	bootloader_uartTx(MSG_CMD_ACKNOWLEDGE, len, (u8*)data);
-	WaitMs(100);
+	sleep_ms(100);
 }
 #endif
 

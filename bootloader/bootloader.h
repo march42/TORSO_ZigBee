@@ -27,7 +27,7 @@
 #define _BOOTLOADER_H_
 
 #	ifndef BAUDRATE
-#		define BAUDRATE						(115200)
+#		define BAUDRATE						115200
 #	endif
 
 void bootloader_init(bool isBoot);
