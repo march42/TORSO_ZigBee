@@ -68,8 +68,22 @@
 #define	FILE_VERSION					  	((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)
 
 #define ZCL_BASIC_MFG_NAME     		{7,'m','a','r','c','h','4','2'}
-#define ZCL_BASIC_MODEL_ID	   		{5,'T','O','R','S','O'}
-#define ZCL_BASIC_SW_BUILD_ID     	{10,'0','2','2','0','2','4','1','2','2','0'}
+#if (TARGET==TORSO)
+#	define ZCL_BASIC_MODEL_ID	   	{11,'T','O','R','S','O',' ','l','i','g','h','t'}
+#elif (TARGET==TS0501B)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','1','B'}
+#elif (TARGET==TS0502B)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','2','B'}
+#elif (TARGET==TS0503B)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','3','B'}
+#elif (TARGET==TS0504B)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','4','B'}
+#elif (TARGET==TS0505B)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','5','B'}
+#else
+#	define ZCL_BASIC_MODEL_ID	   	{13,'L','E','D','c','o','n','t','r','o','l','l','e','r'}
+#endif
+#define ZCL_BASIC_SW_BUILD_ID     	{10,'0','2','2','0','2','5','0','2','1','3'}
 
 /* Pre-compiled link configuration. */
 #define IS_BOOT_LOADER_IMAGE				0
