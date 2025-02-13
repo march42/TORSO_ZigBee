@@ -37,7 +37,7 @@
 extern "C" {
 #endif
 
-/*	board specifications
+/*	board specifications ZT3L
  * MCU	TeLink TLSR8258 controller (32 pin, 1 MB flash)
  * PWR	5-24V DC
  *	***	pinout
@@ -45,17 +45,17 @@ extern "C" {
  * 2	C4	(ADC)
  * 3	EN	(ENABLE, active high, connected to RST)
  * 4	D7	IR_IN (? DEBUG_INFO_TX_PIN)
- * 5	D2	(PWM) LED_B
- * 6	C3	(PWM) LED_G
- * 7	C2	(PWM) LED_WW
+ * 5	D2	(PWM) LED_CH4, LED_B
+ * 6	C3	(PWM) LED_CH3, LED_G
+ * 7	C2	(PWM) LED_CH5, LED_WW
  * 8	+3V3 voltage, power supply
  * 
  * 9	GND ground, power supply
- * 10	C0	BUTTON1
+ * 10	C0	BUTTON1, on board, active low
  * 11	D4	BUTTON2
  * 12	A0	LED_POWER
- * 13	B4	(PWM) LED_R
- * 14	B5	(PWM) LED_W
+ * 13	B4	(PWM) LED_CH2, LED_R
+ * 14	B5	(PWM) LED_CH1, LED_W
  * 15	B7	(UART) RX
  * 16	B1	(UART) TX
  * 
@@ -63,25 +63,30 @@ extern "C" {
 */
 
 //	buttons
-#define BUTTON1						GPIO_PC0	// pairing button on board
-#define BUTTON2						GPIO_PD4
+#define BUTTON1							GPIO_PC0	// pairing button on board
+//#define BUTTON2						GPIO_PD4
 //#define	KB_ONLY_SINGLEKEY_SUPP		1
 
 //	LED channels
-#define LED_W						GPIO_PB5	// either single white or cold white
-#define LED_R						GPIO_PB4
-#define LED_G						GPIO_PC3
-#define LED_B						GPIO_PD2
-#define LED_WW						GPIO_PC2
+#define LED_CH1							GPIO_PB5	// either single white or cold white
+#define LED_CH2							GPIO_PB4	// red
+#define LED_CH3							GPIO_PC3	// green
+#define LED_CH4							GPIO_PD2	// blue
+#define LED_CH5							GPIO_PC2	// warm white
 
 //	additionals
-#define IR_IN						GPIO_PD7
-#define UART_TX_PIN					UART_TX_PB1
-#define UART_RX_PIN					UART_RX_PB7
-#define UART_SWS					GPIO_PA7
+#define IR_IN							GPIO_PD7
+#define UART_TX_PIN						UART_TX_PB1
+#define UART_RX_PIN						UART_RX_PB7
+#define UART_SWS						GPIO_PA7
 
-//#define LED_POWER					GPIO_PA0
+//#define LED_POWER						GPIO_PA0
 //#define LED_PERMIT					GPIO_PC2
+
+#if (TARGET == TORSO)
+#	define BUTTON2						GPIO_PD4
+#	define LED_PERMIT					GPIO_PC2
+#endif
 
 //	setting IO functions
 // BUTTON1
@@ -96,60 +101,57 @@ extern "C" {
 #   define PD4_INPUT_ENABLE				1
 #   define PULL_WAKEUP_SRC_PD4			PM_PIN_PULLUP_10K
 #endif
-// POWER_LED
-#if defined(POWER_LED) && (POWER_LED == GPIO_PA0)
+// LED_POWER
+#if defined(LED_POWER) && (LED_POWER == GPIO_PA0)
 #	define PA0_FUNC						AS_GPIO
 #	define PA0_OUTPUT_ENABLE			1
 #	define PA0_INPUT_ENABLE				0
 //#	define PULL_WAKEUP_SRC_PA0			PM_PIN_PULLDOWN_100K
 #endif
-// PERMIT_LED
-#if defined(PERMIT_LED) && (PERMIT_LED != LED_WW)
+// LED_PERMIT
+/* #if defined(LED_PERMIT) && (LED_PERMIT == GPIO_PC2)
 #	define PC2_FUNC					AS_GPIO
 #	define PC2_OUTPUT_ENABLE		1
 #	define PC2_INPUT_ENABLE			0
-//#	define PULL_WAKEUP_SRC_PC2		PM_PIN_PULLDOWN_100K
-#endif
+#	define PULL_WAKEUP_SRC_PC2		PM_PIN_PULLDOWN_100K
+#endif */
 
 #if (__PROJECT_TL_DIMMABLE_LIGHT__) || (__LIGHT__MARCH42_TORSO__)
+#	define LED_CH1_PWM				5//PWM5
+#	define LED_CH1_PWM_SET()		do{	\
+										gpio_set_func(LED_CH1, AS_PWM5); 	\
+									}while(0)
+#	define LED_CH2_PWM				4//PWM4
+#	define LED_CH2_PWM_SET()		do{	\
+										gpio_set_func(LED_CH2, AS_PWM4); 		\
+									}while(0)
+#	define LED_CH3_PWM				1//PWM1
+#	define LED_CH3_PWM_SET()		do{	\
+										gpio_set_func(LED_CH3, AS_PWM1); 	\
+									}while(0)
+#	define LED_CH4_PWM				3//PWM3
+#	define LED_CH4_PWM_SET()		do{	\
+										gpio_set_func(LED_CH4, AS_PWM3); 		\
+									}while(0)
+#	define LED_CH5_PWM				0//PWM0
+#	define LED_CH5_PWM_SET()		do{	\
+										gpio_set_func(LED_CH5, AS_PWM0); 		\
+									}while(0)
 	// LED_W
-#	define PWM_W_CHANNEL			5//PWM5
-#	define PWM_W_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_W, AS_PWM5); 	\
-									}while(0)
-#	define COOL_LIGHT_PWM_CHANNEL	PWM_W_CHANNEL
-#	define COOL_LIGHT_PWM_SET()		PWM_W_CHANNEL_SET()
+#	define COOL_LIGHT_PWM_CHANNEL	LED_CH1_PWM
+#	define COOL_LIGHT_PWM_SET()		LED_CH1_PWM_SET()
 	// LED_R
-#	define PWM_R_CHANNEL			4//PWM4
-#	define PWM_R_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_R, AS_PWM4); 		\
-									}while(0)
-#	define R_LIGHT_PWM_CHANNEL		PWM_R_CHANNEL
-#	define R_LIGHT_PWM_SET()		PWM_R_CHANNEL_SET()
+#	define R_LIGHT_PWM_CHANNEL		LED_CH2_PWM
+#	define R_LIGHT_PWM_SET()		LED_CH2_PWM_SET()
 	// LED_G
-#	define PWM_G_CHANNEL			1//PWM1
-#	define PWM_G_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_G, AS_PWM1); 	\
-									}while(0)
-#	define G_LIGHT_PWM_CHANNEL		PWM_G_CHANNEL
-#	define G_LIGHT_PWM_SET()		PWM_G_CHANNEL_SET()
+#	define G_LIGHT_PWM_CHANNEL		LED_CH3_PWM
+#	define G_LIGHT_PWM_SET()		LED_CH3_PWM_SET()
 	// LED_B
-#	define PWM_B_CHANNEL			3//PWM3
-#	define PWM_B_CHANNEL_SET()		do{	\
-										gpio_set_func(LED_B, AS_PWM3); 		\
-									}while(0)
-#	define B_LIGHT_PWM_CHANNEL		PWM_B_CHANNEL
-#	define B_LIGHT_PWM_SET()		PWM_B_CHANNEL_SET()
-
+#	define B_LIGHT_PWM_CHANNEL		LED_CH4_PWM
+#	define B_LIGHT_PWM_SET()		LED_CH4_PWM_SET()
 	// LED_WW
-#	if defined(LED_WW) && (LED_WW == GPIO_PC2)
-#		define PWM_WW_CHANNEL			0//PWM0
-#		define PWM_WW_CHANNEL_SET()		do{	\
-											gpio_set_func(LED_WW, AS_PWM0); 		\
-										}while(0)
-#		define WARM_LIGHT_PWM_CHANNEL	PWM_WW_CHANNEL
-#		define WARM_LIGHT_PWM_SET()		PWM_WW_CHANNEL_SET()
-#	endif
+#	define WARM_LIGHT_PWM_CHANNEL	LED_CH5_PWM
+#	define WARM_LIGHT_PWM_SET()		LED_CH5_PWM_SET()
 
 #elif (__PROJECT_TL_BOOT_LOADER__)
 	// LED_W
@@ -206,15 +208,18 @@ enum{
 	VK_SW2 = 0x02,
 };
 
-#define	KB_MAP_NORMAL	{\
-		{VK_SW1,}, \
-		{VK_SW2,}, }
+#define KB_DRIVE_PINS	{0}
+
+#ifdef BUTTON2
+#	define KB_MAP_NORMAL	{ {VK_SW1,}, {VK_SW2,}, }
+#	define KB_SCAN_PINS	{BUTTON1,BUTTON2}
+#else
+#	define KB_MAP_NORMAL	{ {VK_SW1,}, }
+#	define KB_SCAN_PINS	{BUTTON1}
+#endif
 
 #define	KB_MAP_NUM		KB_MAP_NORMAL
 #define	KB_MAP_FN		KB_MAP_NORMAL
-
-#define KB_DRIVE_PINS	{0}
-#define KB_SCAN_PINS	{BUTTON1, BUTTON2}
 
 
 /* Disable C linkage for C++ Compilers: */

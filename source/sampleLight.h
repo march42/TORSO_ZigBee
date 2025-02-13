@@ -129,7 +129,7 @@ typedef struct{
 	u8	enhancedColorMode;
 	u8	numOfPrimaries;
 	u16 colorCapabilities;
-#if COLOR_RGB_SUPPORT
+#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
 	u8	currentHue;
 	u8	currentSaturation;
 	u8	colorLoopActive;
@@ -138,10 +138,11 @@ typedef struct{
 	u16 colorLoopStartEnhancedHue;
 	u16 colorLoopStoredEnhancedHue;
 #endif
-#if COLOR_CCT_SUPPORT
+#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
 	u16 colorTemperatureMireds;
 	u16 colorTempPhysicalMinMireds;
 	u16 colorTempPhysicalMaxMireds;
+	u16 coupleColorTempToLevelMinMireds;
 	u16 startUpColorTemperatureMireds;
 #endif
 }zcl_lightColorCtrlAttr_t;
@@ -166,11 +167,11 @@ typedef struct {
  *  @brief Defined for saving color control attributes
  */
 typedef struct {
-#if COLOR_RGB_SUPPORT
+#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
 	u8	currentHue;
 	u8	currentSaturation;
 #endif
-#if COLOR_CCT_SUPPORT
+#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
 	u16	colorTemperatureMireds;
 	u16	startUpColorTemperatureMireds;
 #endif
@@ -221,6 +222,11 @@ void sampleLight_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf);
 void sampleLight_leaveIndHandler(nlme_leave_ind_t *pLeaveInd);
 void sampleLight_otaProcessMsgHandler(u8 evt, u8 status);
 bool sampleLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate);
+
+void sampleLight_onoff(u8 cmd);
+void sampleLight_level(u8 setLevel);
+#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#endif
 
 void zcl_sampleLightAttrsInit(void);
 nv_sts_t zcl_onOffAttr_save(void);

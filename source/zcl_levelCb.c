@@ -65,6 +65,25 @@ static ev_timer_event_t *levelTimerEvt = NULL;
  */
 
 /*********************************************************************
+ * @fn      sampleLight_level
+ *
+ * @brief
+ *
+ * @param   setLevel
+ *
+ * @return  None
+ */
+void sampleLight_level(u8 setLevel)
+{
+	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
+
+	pLevel->remainingTime	= 0;
+	pLevel->curLevel		= setLevel;
+
+	light_fresh();
+}
+
+/*********************************************************************
  * @fn      sampleLight_levelInit
  *
  * @brief

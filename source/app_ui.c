@@ -56,13 +56,6 @@ kb_data_t kb_buffer;		// buffer for kb_event handling
 /**********************************************************************
  * FUNCTIONS
  */
-extern void sampleLight_updateOnOff(void);
-extern void sampleLight_updateLevel(void);
-extern void sampleLight_updateColor(void);
-
-extern void sampleLight_onOffInit(void);
-extern void sampleLight_levelInit(void);
-extern void sampleLight_colorInit(void);
 
 /**********************************************************************
  * LOCAL FUNCTIONS
@@ -239,9 +232,7 @@ void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 				return;
 			case 2:	// On and dim to initial default
 				DEBUG(DEBUG_BUTTONS, "BUTTON Full On\r");
-				zcl_levelAttr_t *pLevel		= zcl_levelAttrGet();
-				pLevel->curLevel			= ZCL_LEVEL_ATTR_MAX_LEVEL;
-				sampleLight_updateLevel();					// set level
+				sampleLight_level(ZCL_LEVEL_ATTR_MAX_LEVEL);	// set level
 				sampleLight_onoff(ZCL_CMD_ONOFF_ON);		// turn on
 				return;
 			case 3:

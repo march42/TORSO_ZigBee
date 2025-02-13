@@ -54,6 +54,12 @@ else
 	BUILDDIR	?= $(PROJECTDIR)/build/$(MODULE)
 endif
 ###
+# TARGET	= TS0501B,TS0502B,TS0503B,TS0504B,TS0505B, TORSO
+ifdef TARGET
+	config_TARGET		:= $(TARGET)
+else
+	TARGET				:= TS0505B
+endif
 # MODULE	= ZT3L, ZYZB010
 ifdef MODULE
 	config_MODULE		:= $(MODULE)
@@ -86,9 +92,35 @@ endif
 ###
 # build settings
 #include_dirs			+= $(SOURCEDIR) $(SOURCEDIR)/common
-CPPFLAGS				+= -D__LIGHT__MARCH42_TORSO__=1
+#CFLAGS					+= -std=gnu99 -Wall -Werror
+CFLAGS					+= -Werror
 ###
+#	LED_MODE channels WHITE	= 0x01,0x02,0x04,0x08
+#	LED_MODE channels COLOR	= 0x10,0x20,0x40,0x80
+LED_MODE_DIMMER		= 0x01
+LED_MODE_CCT		= 0x03
+LED_MODE_RGB		= 0x70
+LED_MODE_RGBW		= 0x71
+LED_MODE_RGBCCT		= 0x73
+LED_MODE_MULTIPLE	= 0xFF
 # board settings
+ifdef LED_MODE
+#	allready specified
+else ifeq ($(TARGET),TORSO)
+	CPPFLAGS		+= -D__LIGHT__MARCH42_TORSO__=1
+	LED_MODE		= $(LED_MODE_RGBW)
+else ifeq ($(TARGET),TS0501B)
+	LED_MODE		= $(LED_MODE_DIMMER)
+else ifeq ($(TARGET),TS0502B)
+	LED_MODE		= $(LED_MODE_CCT)
+else ifeq ($(TARGET),TS0503B)
+	LED_MODE		= $(LED_MODE_RGB)
+else ifeq ($(TARGET),TS0504B)
+	LED_MODE		= $(LED_MODE_RGBW)
+else ifeq ($(TARGET),TS0505B)
+	LED_MODE		= $(LED_MODE_RGBCCT)
+endif
+# SOC module
 ifeq ($(MODULE),ZT3L)
 #	-DMCU_CORE_8258=1 -DTUYA_ZT3L=1 -D__PROJECT_TL_BOOT_LOADER__=1
 	MCU_CHIP			:= TLSR_8258
@@ -96,15 +128,12 @@ ifeq ($(MODULE),ZT3L)
 	CPPFLAGS			+= -DMODULE_ZT3L=1 -DMCU_CORE_8258=1
 	CHIP_TYPE			:= TLSR_8258_1M
 	BOOT_LOADER_MODE	:= 1
-	LED_RGBCCT_MODE		:= 1
-#	src_files			+= 
 else ifeq ($(MODULE),ZYZB010)
 	MCU_CHIP			:= TLSR_8258
 	MCU_CORE_8258		:= 1
 	CPPFLAGS			+= -DMODULE_ZYZB010=1 -DMCU_CORE_8258=1
 	CHIP_TYPE			:= TLSR_8258_512K
-	BOOT_LOADER_MODE	:= 1
-	LED_RGBCCT_MODE		:= 1
+	BOOT_LOADER_MODE	:= 0
 endif
 CPPFLAGS		+= -DBOOT_LOADER_MODE=$(BOOT_LOADER_MODE) -D$(ZB_ROLE)=1
 CFLAGS			+= -ffunction-sections -fdata-sections -Wall -O2 -fpack-struct -fshort-enums -finline-small-functions -std=gnu99 -fshort-wchar -fms-extensions
@@ -180,25 +209,73 @@ endif
 	led_CPPFLAGS	+= -I$(TL_ZIGBEE_SDK)/zbhci
 	led_source		= $(wildcard $(SOURCEDIR)/*.c) $(wildcard $(SOURCEDIR)/common/*.c)
 	led_HEADERS		= $(wildcard $(PROJECTDIR)/source/*.h) $(wildcard $(PROJECTDIR)/source/common/*.h) $(sdk_HEADERS) $(zigbee_HEADERS)
-	led_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_rgbcct,$(led_source:.c=.c.o))
+	led_dimmer_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_dimmer,$(led_source:.c=.c.o))
+	led_cct_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_cct,$(led_source:.c=.c.o))
+	led_rgb_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_rgb,$(led_source:.c=.c.o))
+	led_rgbw_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_rgbw,$(led_source:.c=.c.o))
+	led_rgbcct_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/led_rgbcct,$(led_source:.c=.c.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_SOURCES:.c=.c.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_ASMS:.S=.S.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_SOURCES:.c=.c.o))
 	led_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_ASMS:.S=.S.o))
-ifeq ($(LED_RGBCCT_MODE),1)
+	torso_OBJS		= $(subst $(PROJECTDIR),$(BUILDDIR)/torso,$(led_source:.c=.c.o))
+
+ifeq ($(TARGET),TORSO)
+#	special LED controller
+	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/torso.elf $(BUILDDIR)/torso.lst
+	firmware_app	+= $(BUILDDIR)/torso.bin
+else ifeq ($(LED_MODE),0x01)
+#	single color WHITE
+	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_dimmer.elf $(BUILDDIR)/led_dimmer.lst
+	firmware_app	+= $(BUILDDIR)/led_dimmer.bin
+else ifeq ($(LED_MODE),0x03)
+#	dual channel WHITE
+	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_cct.elf $(BUILDDIR)/led_cct.lst
+	firmware_app	+= $(BUILDDIR)/led_cct.bin
+else ifeq ($(LED_MODE),0x70)
+#	3 channel color
+	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgb.elf $(BUILDDIR)/led_rgb.lst
+	firmware_app	+= $(BUILDDIR)/led_rgb.bin
+else ifeq ($(LED_MODE),0x71)
+#	3 channel color and single color WHITE
+	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgbw.elf $(BUILDDIR)/led_rgbw.lst
+	firmware_app	+= $(BUILDDIR)/led_rgbw.bin
+else ifeq ($(LED_MODE),0x73)
+#	3 channel RGB and 2 channel WHITE
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgbcct.elf $(BUILDDIR)/led_rgbcct.lst
-	bin_files		+= $(BUILDDIR)/led_rgbcct.bin
+	firmware_app	= $(BUILDDIR)/led_rgbcct.bin
+else
+#	unplanned for now, this should not happen
 endif
+bin_files			+= $(firmware_app)
+
+.PHONY: all clean allclean distclean
+###
+# all is first, so it is done if none specified
+all: build_info config.mk $(bin_files)
 
 clean:
 	$(info removing built objects)
 	rm -f $(sdk_OBJS) $(zigbee_OBJS) $(led_OBJS) $(ldr_OBJS) $(OBJS) $(extra_files)
 
+allclean:
+	$(info removing built dir)
+	rm -fR $(BUILDDIR)
+
 distclean: clean
 	$(info removing ALL built objects)
 	rm -fR $(BUILDDIR) config.mk $(bin_files)
 
-all: config.mk $(bin_files)
+.PHONY: build_info
+build_info:
+	$(info )
+	$(info BUILDING INFO)
+	$(info MODULE           = $(MODULE))
+	$(info CHIP_TYPE        = $(CHIP_TYPE))
+	$(info BOOT_LOADER_MODE = $(BOOT_LOADER_MODE))
+	$(info LED_MODE         = $(LED_MODE))
+	$(info TARGET           = $(TARGET))
+	$(info )
 
 ###
 # config
@@ -268,9 +345,9 @@ else ifeq ($(CHIP_TYPE),TLSR_8258_512K)
 endif
 ifeq ($(BOOT_LOADER_MODE),1)
 	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/bootloader.bin
-	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x08000 $(BUILDDIR)/led_rgbcct.bin
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x08000 $(firmware_app)
 else
-	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(BUILDDIR)/led_rgbcct.bin
+	python TlsrComSwireWriter/TLSR825xComFlasher.py $(FLASHER) wf 0x00000 $(firmware_app)
 endif
 
 .PHONY: run_firmware
@@ -280,9 +357,9 @@ run_firmware: write_firmware
 ###
 # directories
 ifneq ($(BUILDDIR),)
-.PHONY: $(BUILDDIR)
+#.PHONY: $(BUILDDIR)
 $(BUILDDIR):
-	$(info Creating $@)
+	$(info Creating	BUILDDIR	$@)
 	@mkdir -p $@
 endif
 #
@@ -299,10 +376,45 @@ $(BUILDDIR)/boot.link: $(boot_link) | $(BUILDDIR)
 	cp -f $< $@
 
 ###
-#	led_rgbcct rules
-$(BUILDDIR)/led_rgbcct.elf: $(BUILDDIR)/boot.link $(led_OBJS)
+#	torso rules
+$(BUILDDIR)/torso.elf: $(BUILDDIR)/boot.link $(led_OBJS) $(torso_OBJS)
 	$(info Linking	$@)
-	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(LDLIBS)
+	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(torso_OBJS) $(LDLIBS)
+	$(SIZE) -t $@
+
+$(BUILDDIR)/torso.lst: $(BUILDDIR)/torso.elf
+	$(info Creating	$@)
+	$(OBJDUMP) -x -D -l -S $< >$@
+
+.PHONY:	torso
+torso: $(BUILDDIR)/torso.bin
+	$(info building $@)
+$(BUILDDIR)/torso.bin: $(BUILDDIR)/torso.elf $(BUILDDIR)/torso.lst
+	$(info Creating	$@)
+#	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32
+	$(OBJCOPY) -v -O binary $< $@
+	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
+
+#.PHONY: $(BUILDDIR)/torso
+$(BUILDDIR)/torso:
+	$(info Creating	$@)
+	@mkdir -p $@
+
+$(BUILDDIR)/torso/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/torso
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE) -D__LIGHT__MARCH42_TORSO__=1 $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/torso/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/torso
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE) -D__LIGHT__MARCH42_TORSO__=1 $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+###
+#	led_rgbcct rules
+$(BUILDDIR)/led_rgbcct.elf: $(BUILDDIR)/boot.link $(led_OBJS) $(led_rgbcct_OBJS)
+	$(info Linking	$@)
+	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(led_rgbcct_OBJS) $(LDLIBS)
 	$(SIZE) -t $@
 
 $(BUILDDIR)/led_rgbcct.lst: $(BUILDDIR)/led_rgbcct.elf
@@ -318,7 +430,7 @@ $(BUILDDIR)/led_rgbcct.bin: $(BUILDDIR)/led_rgbcct.elf $(BUILDDIR)/led_rgbcct.ls
 	$(OBJCOPY) -v -O binary $< $@
 	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
 
-.PHONY: $(BUILDDIR)/led_rgbcct
+#.PHONY: $(BUILDDIR)/led_rgbcct
 $(BUILDDIR)/led_rgbcct:
 	$(info Creating	$@)
 	@mkdir -p $@
@@ -326,14 +438,158 @@ $(BUILDDIR)/led_rgbcct:
 $(BUILDDIR)/led_rgbcct/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/led_rgbcct
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
-	$(CC) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -DLED_MODE=$(LED_MODE_RGBCCT) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILDDIR)/led_rgbcct/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/led_rgbcct
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -DLED_MODE=$(LED_MODE_RGBCCT) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
-.PHONY: $(BUILDDIR)/sdk
+###
+#	led_cct rules
+$(BUILDDIR)/led_cct.elf: $(BUILDDIR)/boot.link $(led_OBJS) $(led_cct_OBJS)
+	$(info Linking	$@)
+	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(led_cct_OBJS) $(LDLIBS)
+	$(SIZE) -t $@
+
+$(BUILDDIR)/led_cct.lst: $(BUILDDIR)/led_cct.elf
+	$(info Creating	$@)
+	$(OBJDUMP) -x -D -l -S $< >$@
+
+.PHONY:	led_cct
+led_cct: $(BUILDDIR)/led_cct.bin
+	$(info building $@)
+$(BUILDDIR)/led_cct.bin: $(BUILDDIR)/led_cct.elf $(BUILDDIR)/led_cct.lst
+	$(info Creating	$@)
+#	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32
+	$(OBJCOPY) -v -O binary $< $@
+	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
+
+#.PHONY: $(BUILDDIR)/led_cct
+$(BUILDDIR)/led_cct:
+	$(info Creating	$@)
+	@mkdir -p $@
+
+$(BUILDDIR)/led_cct/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/led_cct
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_CCT) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/led_cct/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/led_cct
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_CCT) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+###
+#	led_dimmer rules
+$(BUILDDIR)/led_dimmer.elf: $(BUILDDIR)/boot.link $(led_OBJS) $(led_dimmer_OBJS)
+	$(info Linking	$@)
+	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(led_dimmer_OBJS) $(LDLIBS)
+	$(SIZE) -t $@
+
+$(BUILDDIR)/led_dimmer.lst: $(BUILDDIR)/led_dimmer.elf
+	$(info Creating	$@)
+	$(OBJDUMP) -x -D -l -S $< >$@
+
+.PHONY:	led_dimmer
+led_dimmer: $(BUILDDIR)/led_dimmer.bin
+	$(info building $@)
+$(BUILDDIR)/led_dimmer.bin: $(BUILDDIR)/led_dimmer.elf $(BUILDDIR)/led_dimmer.lst
+	$(info Creating	$@)
+#	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32
+	$(OBJCOPY) -v -O binary $< $@
+	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
+
+#.PHONY: $(BUILDDIR)/led_dimmer
+$(BUILDDIR)/led_dimmer:
+	$(info Creating	$@)
+	@mkdir -p $@
+
+$(BUILDDIR)/led_dimmer/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/led_dimmer
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_DIMMER) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/led_dimmer/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/led_dimmer
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_DIMMER) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+###
+#	led_rgb rules
+$(BUILDDIR)/led_rgb.elf: $(BUILDDIR)/boot.link $(led_OBJS) $(led_rgb_OBJS)
+	$(info Linking	$@)
+	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(led_rgb_OBJS) $(LDLIBS)
+	$(SIZE) -t $@
+
+$(BUILDDIR)/led_rgb.lst: $(BUILDDIR)/led_rgb.elf
+	$(info Creating	$@)
+	$(OBJDUMP) -x -D -l -S $< >$@
+
+.PHONY:	led_rgb
+led_rgb: $(BUILDDIR)/led_rgb.bin
+	$(info building $@)
+$(BUILDDIR)/led_rgb.bin: $(BUILDDIR)/led_rgb.elf $(BUILDDIR)/led_rgb.lst
+	$(info Creating	$@)
+#	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32
+	$(OBJCOPY) -v -O binary $< $@
+	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
+
+#.PHONY: $(BUILDDIR)/led_rgb
+$(BUILDDIR)/led_rgb:
+	$(info Creating	$@)
+	@mkdir -p $@
+
+$(BUILDDIR)/led_rgb/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/led_rgb
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_RGB) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/led_rgb/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/led_rgb
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_RGB) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+###
+#	led_rgbw rules
+$(BUILDDIR)/led_rgbw.elf: $(BUILDDIR)/boot.link $(led_OBJS) $(led_rgbw_OBJS)
+	$(info Linking	$@)
+	$(LD) $(LDFLAGS) -T $(BUILDDIR)/boot.link -o $@ $(led_OBJS) $(led_rgbw_OBJS) $(LDLIBS)
+	$(SIZE) -t $@
+
+$(BUILDDIR)/led_rgbw.lst: $(BUILDDIR)/led_rgbw.elf
+	$(info Creating	$@)
+	$(OBJDUMP) -x -D -l -S $< >$@
+
+.PHONY:	led_rgbw
+led_rgbw: $(BUILDDIR)/led_rgbw.bin
+	$(info building $@)
+$(BUILDDIR)/led_rgbw.bin: $(BUILDDIR)/led_rgbw.elf $(BUILDDIR)/led_rgbw.lst
+	$(info Creating	$@)
+#	$(TL_ZIGBEE_SDK)/tools/tl_check_fw.sh" bootloader tc32
+	$(OBJCOPY) -v -O binary $< $@
+	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
+
+#.PHONY: $(BUILDDIR)/led_rgbw
+$(BUILDDIR)/led_rgbw:
+	$(info Creating	$@)
+	@mkdir -p $@
+
+$(BUILDDIR)/led_rgbw/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/led_rgbw
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_RGBW) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/led_rgbw/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/led_rgbw
+	$(info Compiling	$<)
+	mkdir -p $(dir $@)
+	$(CC) -DLED_MODE=$(LED_MODE_RGBW) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+
+###
+# SDK
+#	compile with LED_MODE=LED_MODE_RGBCCT to enable building the neccessary routines
+#.PHONY: $(BUILDDIR)/sdk
 $(BUILDDIR)/sdk:
 	$(info Creating	$@)
 	@mkdir -p $@
@@ -341,12 +597,12 @@ $(BUILDDIR)/sdk:
 $(BUILDDIR)/sdk/%.c.o : $(TL_ZIGBEE_SDK)/%.c $(led_HEADERS)	| $(BUILDDIR)/sdk
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
-	$(CC) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -DLED_MODE=$(LED_MODE_RGBCCT) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILDDIR)/sdk/%.S.o : $(TL_ZIGBEE_SDK)/%.S $(led_HEADERS)	| $(BUILDDIR)/sdk
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
-	$(CC) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -DLED_MODE=$(LED_MODE_RGBCCT) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
 ###
 #	bootloader rules
@@ -368,7 +624,7 @@ $(BUILDDIR)/bootloader.bin: $(BUILDDIR)/bootloader.elf $(BUILDDIR)/bootloader.ls
 	$(OBJCOPY) -v -O binary $< $@
 	$(TL_ZIGBEE_SDK)/tools/tl_check_fw2 $@
 
-.PHONY: $(BUILDDIR)/bootloader
+#.PHONY: $(BUILDDIR)/bootloader
 $(BUILDDIR)/bootloader:
 	$(info Creating	$@)
 	@mkdir -p $@
@@ -388,7 +644,7 @@ $(BUILDDIR)/bootloader/%.S.o : %.S	| $(BUILDDIR)/bootloader
 	mkdir -p $(dir $@)
 	$(CC) $(ASFLAGS) $(ldr_ASFLAGS) $(ldr_CPPFLAGS) $(CPPFLAGS) $(ldr_CFLAGS) $(CFLAGS) -c $< -o $@
 
-.PHONY: $(BUILDDIR)/sdk-bootloader
+#.PHONY: $(BUILDDIR)/sdk-bootloader
 $(BUILDDIR)/sdk-bootloader:
 	$(info Creating	$@)
 	@mkdir -p $@

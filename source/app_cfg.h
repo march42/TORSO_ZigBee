@@ -51,24 +51,38 @@ extern "C" {
 #define	ZBHCI_UART						0
 
 /* RGB or CCT */
-#ifndef LED_DIMMER_MODE
-#	define LED_DIMMER_MODE				0
+#ifndef LED_MODE_DIMMER
+#	define LED_MODE_DIMMER				0x01
 #endif
-#ifndef LED_CCT_MODE
-#	define LED_CCT_MODE					0
+#ifndef LED_MODE_CCT
+#	define LED_MODE_CCT					0x03
 #endif
-#ifndef LED_RGB_MODE
-#	define LED_RGB_MODE					0
+#ifndef LED_MODE_RGB
+#	define LED_MODE_RGB					0x70
 #endif
-#ifndef LED_RGBW_MODE
-#	define LED_RGBW_MODE				0
+#ifndef LED_MODE_RGBW
+#	define LED_MODE_RGBW				0x71
 #endif
-#ifndef LED_RGBCCT_MODE
-#	define LED_RGBCCT_MODE				0
+#ifndef LED_MODE_RGBCCT
+#	define LED_MODE_RGBCCT				0x73
 #endif
-#define COLOR_RGB_SUPPORT				0
-#define COLOR_CCT_SUPPORT				0
+#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+//#	warning	RGB channel color
+#endif
+#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+//#	warning DUAL channel white
+#elif (LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW)
+//#	warning SINGLE CHANNEL white
+#endif
 
+#ifdef COLOR_RGB_SUPPORT
+#	warning	COLOR_RGB_SUPPORT is defined
+#endif
+#ifdef COLOR_CCT_SUPPORT
+#	warning	COLOR_CCT_SUPPORT is defined
+#endif
+
+/* save current values after change */
 #define LIGHTING_SAVE					1
 
 /* BDB */
@@ -142,8 +156,8 @@ extern "C" {
 	#include "board_826x_evk.h"
 #elif(BOARD == BOARD_826x_DONGLE)
 	#include "board_826x_dongle.h"
-#elif (BOARD == TS0501B)
-#	include "board_8258_TS050xB.h"
+//#elif (TARGET == TS0501B)
+//#	include "board_8258_TS050xB.h"
 #elif (MODULE == ZT3L)
 #	include "board_8258_zt3l.h"
 #elif (MODULE == ZYZB010)
@@ -214,13 +228,16 @@ extern "C" {
  */
 #define ZCL_ON_OFF_SUPPORT							1
 #define ZCL_LEVEL_CTRL_SUPPORT						1
-#if (COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT)
-#define ZCL_LIGHT_COLOR_CONTROL_SUPPORT				1
+//#	define EXTENDED_COLOR_LIGHT_DEVICE				0	// TODO: currently unused and still untested
+//#	define COLOR_TEMPERATURE_LIGHT_DEVICE			0	// TODO: currently unused and still untested
+#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	define ZCL_LIGHT_COLOR_CONTROL_SUPPORT			1
 #endif
 #define ZCL_GROUP_SUPPORT							1
 #define ZCL_SCENE_SUPPORT							1
 #define ZCL_OTA_SUPPORT								1
 #define ZCL_GP_SUPPORT								1
+// ZigBee Works With All Hubs initiative (cluster ID 0xfc57, manufacturer ID 0x1217) more specifically Works-With-Amazon
 #define ZCL_WWAH_SUPPORT							0
 #if TOUCHLINK_SUPPORT
 #define ZCL_ZLL_COMMISSIONING_SUPPORT				1
