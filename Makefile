@@ -57,8 +57,6 @@ endif
 # TARGET	= TS0501B,TS0502B,TS0503B,TS0504B,TS0505B, TORSO
 ifdef TARGET
 	config_TARGET		:= $(TARGET)
-else
-	TARGET				:= TS0505B
 endif
 # MODULE	= ZT3L, ZYZB010
 ifdef MODULE
@@ -119,6 +117,8 @@ else ifeq ($(TARGET),TS0504B)
 	LED_MODE		= $(LED_MODE_RGBW)
 else ifeq ($(TARGET),TS0505B)
 	LED_MODE		= $(LED_MODE_RGBCCT)
+else
+	LED_MODE		= $(LED_MODE_DIMMER)
 endif
 # SOC module
 ifeq ($(MODULE),ZT3L)
@@ -135,7 +135,7 @@ else ifeq ($(MODULE),ZYZB010)
 	CHIP_TYPE			:= TLSR_8258_512K
 	BOOT_LOADER_MODE	:= 0
 endif
-CPPFLAGS		+= -DBOOT_LOADER_MODE=$(BOOT_LOADER_MODE) -D$(ZB_ROLE)=1
+CPPFLAGS		+= -DBOOT_LOADER_MODE=$(BOOT_LOADER_MODE) -DTARGET=$(TARGET) -D$(ZB_ROLE)=1
 CFLAGS			+= -ffunction-sections -fdata-sections -Wall -O2 -fpack-struct -fshort-enums -finline-small-functions -std=gnu99 -fshort-wchar -fms-extensions
 LDFLAGS			+= --gc-sections
 #bin_files		+= $(BUILDDIR)/torso-light.bin 
@@ -288,6 +288,11 @@ else
 	echo '# config.mk' > config.mk
 	echo '# $(MAKE)' >> config.mk
 	echo '# project settings' >> config.mk
+ifndef config_TARGET
+	echo '#TARGET' >> config.mk
+else
+	echo 'TARGET            := $(TARGET)' >> config.mk
+endif
 ifndef config_MODULE
 	echo '#MODULE' >> config.mk
 else

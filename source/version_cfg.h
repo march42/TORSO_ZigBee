@@ -54,8 +54,8 @@
 		#define CHIP_TYPE					TLSR_TL321X
 #endif
 
-#define APP_RELEASE							0x10//app release 1.0
-#define APP_BUILD							0x01//app build 01
+#define APP_RELEASE							0x11//app release 1.1
+#define APP_BUILD							0x02//app build 02
 #define STACK_RELEASE						0x30//stack release 3.0
 #define STACK_BUILD							0x01//stack build 01
 
@@ -68,7 +68,7 @@
 #define	FILE_VERSION					  	((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)
 
 #define ZCL_BASIC_MFG_NAME     		{7,'m','a','r','c','h','4','2'}
-#if (TARGET==TORSO)
+#if (TARGET==TORSO) || defined(__LIGHT__MARCH42_TORSO__)
 #	define ZCL_BASIC_MODEL_ID	   	{11,'T','O','R','S','O',' ','l','i','g','h','t'}
 #elif (TARGET==TS0501B)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','1','B'}
@@ -80,8 +80,18 @@
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','4','B'}
 #elif (TARGET==TS0505B)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','5','B'}
+#elif (LED_MODE==LED_DIMMER)
+#	define ZCL_BASIC_MODEL_ID	   	{10,'L','E','D','-','D','i','m','m','e','r'}
+#elif (LED_MODE==LED_CCT)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'L','E','D','-','C','C','T'}
+#elif (LED_MODE==LED_RGB)
+#	define ZCL_BASIC_MODEL_ID	   	{7,'L','E','D','-','R','G','B'}
+#elif (LED_MODE==LED_RGBW)
+#	define ZCL_BASIC_MODEL_ID	   	{8,'L','E','D','-','R','G','B','W'}
+#elif (LED_MODE==LED_RGBCCT)
+#	define ZCL_BASIC_MODEL_ID	   	{10,'L','E','D','-','R','G','B','C','C','T'}
 #else
-#	define ZCL_BASIC_MODEL_ID	   	{13,'L','E','D','c','o','n','t','r','o','l','l','e','r'}
+#	define ZCL_BASIC_MODEL_ID	   	{9,'L','E','D',' ','l','i','g','h','t'}
 #endif
 #define ZCL_BASIC_SW_BUILD_ID     	{10,'0','2','2','0','2','5','0','2','1','3'}
 

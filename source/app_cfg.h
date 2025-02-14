@@ -66,21 +66,10 @@ extern "C" {
 #ifndef LED_MODE_RGBCCT
 #	define LED_MODE_RGBCCT				0x73
 #endif
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
-//#	warning	RGB channel color
-#endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
-//#	warning DUAL channel white
-#elif (LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW)
-//#	warning SINGLE CHANNEL white
-#endif
 
-#ifdef COLOR_RGB_SUPPORT
-#	warning	COLOR_RGB_SUPPORT is defined
-#endif
-#ifdef COLOR_CCT_SUPPORT
-#	warning	COLOR_CCT_SUPPORT is defined
-#endif
+//#	define COLOR_RGB_SUPPORT			((LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT))
+//#	define COLOR_CCT_SUPPORT			((LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT))
+//#	define SINGLE_WHITE_SUPPORT			((LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW))
 
 /* save current values after change */
 #define LIGHTING_SAVE					1
