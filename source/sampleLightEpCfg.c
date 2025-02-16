@@ -52,16 +52,20 @@
 **	mired = 1,000,000 / kelvin
 **	Mired equals 1 million over Temperature in Kelvin
 **	kelvin = 1000000 / mired
-**	***
-**	0x0064  100  10000K
-**	0x0099  153   6500K
-**	0x00FA  250   4000K
-**	0x0172	370   2700K
-**	0x01C6  454   2200K
-**	0x01F4  500   2000K
 */
-#define COLOR_TEMPERATURE_PHYSICAL_MIN	0x0099
-#define COLOR_TEMPERATURE_PHYSICAL_MAX	0x01F4
+#define COLOR_TEMPERATURE_10000K		0x0064
+#define COLOR_TEMPERATURE_6500K			0x0099	// blue sky daylight
+#define COLOR_TEMPERATURE_6000K			0x00A6
+#define COLOR_TEMPERATURE_5500K			0x00B5	// cold white
+#define COLOR_TEMPERATURE_5000K			0x00C8	// noon sun
+#define COLOR_TEMPERATURE_4000K			0x00FA	// neutral, morning sun
+#define COLOR_TEMPERATURE_3000K			0x014D	// warm white
+#define COLOR_TEMPERATURE_2700K			0x0172	// soft white
+#define COLOR_TEMPERATURE_2200K			0x01C6	// light bulb
+#define COLOR_TEMPERATURE_2000K			0x01F4
+#define COLOR_TEMPERATURE_1700K			0x024C	// candle
+#define COLOR_TEMPERATURE_PHYSICAL_MIN	COLOR_TEMPERATURE_6000K
+#define COLOR_TEMPERATURE_PHYSICAL_MAX	COLOR_TEMPERATURE_3000K
 #endif
 
 /**********************************************************************
@@ -124,17 +128,18 @@ const u16 sampleLight_outClusterList[] =
 const af_simple_descriptor_t sampleLight_simpleDesc =
 {
 	HA_PROFILE_ID,                      		/* Application profile identifier */
-	#if defined(EXTENDED_COLOR_LIGHT_DEVICE) && (EXTENDED_COLOR_LIGHT_DEVICE)
+#	if defined(EXTENDED_COLOR_LIGHT_DEVICE) && (EXTENDED_COLOR_LIGHT_DEVICE)
 		HA_DEV_EXTENDED_COLOR_LIGHT,				/* TODO: zbDeviceId_t extended color light */
-	#elif defined(COLOR_TEMPERATURE_LIGHT_DEVICE) && (COLOR_TEMPERATURE_LIGHT_DEVICE)
+//#	elif defined(COLOR_TEMPERATURE_LIGHT_DEVICE) && (COLOR_TEMPERATURE_LIGHT_DEVICE)
+#	elif (LED_MODE==LED_MODE_CCT)
 		HA_DEV_COLOR_TEMPERATURE_LIGHT,				/* TODO: color temperature light */
-	#elif defined(ZCL_LIGHT_COLOR_CONTROL)
+#	elif defined(ZCL_LIGHT_COLOR_CONTROL)
 		HA_DEV_COLOR_DIMMABLE_LIGHT,				/* Application device identifier */
-	#elif defined(ZCL_LEVEL_CTRL)
+#	elif defined(ZCL_LEVEL_CTRL)
 		HA_DEV_DIMMABLE_LIGHT,						/* Application device identifier */
-	#else
+#	else
 		HA_DEV_ONOFF_LIGHT,							/* Application device identifier */
-	#endif
+#	endif
 	SAMPLE_LIGHT_ENDPOINT,              		/* Endpoint */
 	1,                                  		/* Application device version */
 	0,											/* Reserved */
@@ -335,9 +340,11 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.options						= 0x00,
 	.enhancedColorMode				= ZCL_COLOR_MODE_CURRENT_X_Y,
 	.colorCapabilities				= 0x0000
+#	if defined(__LIGHT__MARCH42_TORSO__)
+		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	// EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle
+#	endif
 #	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
 		| ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
-		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	// EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle
 		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP
 		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
 #	endif
@@ -359,7 +366,7 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.colorTemperatureMireds				= COLOR_TEMPERATURE_PHYSICAL_MAX,
 	.colorTempPhysicalMinMireds			= COLOR_TEMPERATURE_PHYSICAL_MIN,
 	.colorTempPhysicalMaxMireds			= COLOR_TEMPERATURE_PHYSICAL_MAX,
-	.coupleColorTempToLevelMinMireds	= COLOR_TEMPERATURE_PHYSICAL_MIN,	/* 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑃ℎ𝑦𝑠𝑖𝑐𝑎𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑢𝑝𝑙𝑒𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑇𝑜𝐿𝑒𝑣𝑒𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑒𝑟𝑎𝑡𝑢𝑟𝑒𝑀𝑖𝑟𝑒𝑑𝑠 */
+	.coupleColorTempToLevelMinMireds	= COLOR_TEMPERATURE_4000K,	/* 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑃ℎ𝑦𝑠𝑖𝑐𝑎𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑢𝑝𝑙𝑒𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑇𝑜𝐿𝑒𝑣𝑒𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑒𝑟𝑎𝑡𝑢𝑟𝑒𝑀𝑖𝑟𝑒𝑑𝑠 */
 	.startUpColorTemperatureMireds		= ZCL_START_UP_COLOR_TEMPERATURE_MIREDS_TO_PREVIOUS,
 #endif
 };
@@ -382,10 +389,11 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
     { ZCL_ATTRID_COLOR_LOOP_STORED_ENHANCED_HUE,  	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStoredEnhancedHue },
 #endif
 #if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
-    { ZCL_ATTRID_COLOR_TEMPERATURE_MIREDS,			ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.colorTemperatureMireds },
-    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,  	ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
-    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,  	ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
-    { ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS, ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds },
+    { ZCL_ATTRID_COLOR_TEMPERATURE_MIREDS,				ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.colorTemperatureMireds },
+    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
+    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
+    { ZCL_ATTRID_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS,	ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.coupleColorTempToLevelMinMireds },
+    { ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds },
 #endif
 
     { ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, 			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,  							 (u8*)&zcl_attr_global_clusterRevision},
@@ -437,6 +445,7 @@ u8 SAMPLELIGHT_CB_CLUSTER_NUM = (sizeof(g_sampleLightClusterList)/sizeof(g_sampl
  */
 nv_sts_t zcl_onOffAttr_save(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_onOffAttr_save\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_ON_OFF
@@ -477,6 +486,7 @@ nv_sts_t zcl_onOffAttr_save(void)
  */
 nv_sts_t zcl_onOffAttr_restore(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_onOffAttr_restore\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_ON_OFF
@@ -508,6 +518,7 @@ nv_sts_t zcl_onOffAttr_restore(void)
  */
 nv_sts_t zcl_levelAttr_save(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_levelAttr_save\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LEVEL_CTRL
@@ -548,6 +559,7 @@ nv_sts_t zcl_levelAttr_save(void)
  */
 nv_sts_t zcl_levelAttr_restore(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_levelAttr_restore\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LEVEL_CTRL
@@ -579,6 +591,7 @@ nv_sts_t zcl_levelAttr_restore(void)
  */
 nv_sts_t zcl_colorCtrlAttr_save(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_colorCtrlAttr_save\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
@@ -642,6 +655,7 @@ nv_sts_t zcl_colorCtrlAttr_save(void)
  */
 nv_sts_t zcl_colorCtrlAttr_restore(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_colorCtrlAttr_restore\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
@@ -682,6 +696,7 @@ nv_sts_t zcl_colorCtrlAttr_restore(void)
  */
 void zcl_sampleLightAttrsInit(void)
 {
+	DEBUG(DEBUG_TRACE, "zcl_sampleLightAttrsInit\r");
 	zcl_onOffAttr_restore();
 	zcl_levelAttr_restore();
 	zcl_colorCtrlAttr_restore();

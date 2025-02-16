@@ -37,7 +37,7 @@
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define PWM_FREQUENCY					4000
+#define PWM_FREQUENCY					12000
 #define PWM_FULL_DUTYCYCLE				100
 #define PMW_MAX_TICK		            (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
@@ -154,6 +154,7 @@ void hwLight_onOffUpdate(u8 onOff)
 #if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
 		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
 #endif
+
 	}else{
 #if (LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW)
 		drv_pwm_stop(COOL_LIGHT_PWM_CHANNEL);
@@ -180,9 +181,9 @@ void hwLight_onOffUpdate(u8 onOff)
  */
 void hwLight_levelUpdate(u8 level)
 {
-#if (LED_MODE==LED_MODE_DIMMER)
 	DEBUG(DEBUG_TRACE, "hwLight_levelUpdate(%x)\r", level);
 
+#if (LED_MODE==LED_MODE_DIMMER)
 	level = (level < 0x10) ? 0x10 : level;
 
 	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -524,6 +525,7 @@ s32 light_blink_TimerEvtCb(void *arg)
  */
 void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
 {
+	DEBUG(DEBUG_TRACE, "light_blink_start\r");
 	u32 interval = 0;
 	zcl_onOffAttr_t *pOnoff = zcl_onoffAttrGet();
 
@@ -558,6 +560,7 @@ void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
  */
 void light_blink_stop(void)
 {
+	DEBUG(DEBUG_TRACE, "light_blink_stop\r");
 	if(gLightCtx.timerLedEvt){
 		TL_ZB_TIMER_CANCEL(&gLightCtx.timerLedEvt);
 
