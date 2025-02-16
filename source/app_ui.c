@@ -68,22 +68,22 @@ extern void sampleLight_colorInit(void);
  * LOCAL FUNCTIONS
  */
 void led_on(u32 pin){
-#ifdef LED_POWER
 	drv_gpio_write(pin, LED_ON);
-#endif
 }
 
 void led_off(u32 pin){
-#ifdef LED_PERMIT
 	drv_gpio_write(pin, LED_OFF);
-#endif
 }
 
 void led_init(void){
 #ifdef LED_POWER
 	led_off(LED_POWER);
 #endif
-#ifdef LED_PERMIT
+#if defined(PERMIT_PWM_CHANNEL) //&& defined(PERMIT_PWM_SET)
+	PERMIT_PWM_SET();							// gpio_set_func AS_PWM
+	drv_pwm_cfg(PERMIT_PWM_CHANNEL, 400, 4000);	// set brightness level
+	drv_pwm_stop(PERMIT_PWM_CHANNEL);			// set LED off
+#elif defined(LED_PERMIT)
 	led_off(LED_PERMIT);
 #endif
 }
@@ -94,20 +94,27 @@ void localPermitJoinState(void){
 	static bool assocPermit = 0;
 	if(assocPermit != zb_getMacAssocPermit()){
 		assocPermit = zb_getMacAssocPermit();
-#ifdef LED_PERMIT
-		if(assocPermit){
+
+#if defined(PERMIT_PWM_CHANNEL)
+		if (assocPermit) {
+			drv_pwm_start(PERMIT_PWM_CHANNEL);
+		} else {
+			drv_pwm_stop(PERMIT_PWM_CHANNEL);
+		}
+#elif defined(LED_PERMIT)
+		if (assocPermit) {
 			led_on(LED_PERMIT);
-		}else{
+		} else {
 			led_off(LED_PERMIT);
 		}
-#else /* use the LED channels for PERMIT signalling */
+#endif
+
 		// TODO: implement PERMIT_SIGNALLING effect
 		if(assocPermit){
-			light_blink_start(32, 700, 1300);
+			light_blink_start(100, 700, 1300);
 		}else{
 			light_blink_stop();
 		}
-#endif
 	}
 }
 

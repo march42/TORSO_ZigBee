@@ -83,6 +83,12 @@ extern "C" {
 //#define LED_POWER					GPIO_PA0
 //#define LED_PERMIT					GPIO_PC2
 
+#if defined(__LIGHT__MARCH42_TORSO__)
+#	define BUTTON2						GPIO_PD4
+#	define LED_PERMIT					GPIO_PC2
+#	define EXTENDED_COLOR_LIGHT_DEVICE	1
+#endif
+
 //	setting IO functions
 // BUTTON1
 #define PC0_FUNC						AS_GPIO
