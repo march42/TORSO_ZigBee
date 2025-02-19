@@ -103,5 +103,32 @@ ZigBee 3.0 LED controller
 
 #### TODO
 
+- [ ] colorLoop feature
+
 source/zcl_colorCtrlCb.c:303:12: warning: 'sampleLight_colorLoopTimerEvtCb' defined but not used
 source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defined but not used
+
+- [ ] fix debug output (maybe interrupt problem)
+- [ ] fix the color controll handling (RGB, CCT or RGB and white or RGB and CCT)
+- [ ] switching main/backlight with power on/off
+
+### firmware functions
+
+#### ZCL cluster support setting
+
+In `source/app_cfg.h` the desired ZCL clusters are specified (ZCL_ ... _SUPPORT).
+
+- ZCL_ON_OFF_SUPPORT
+- ZCL_LEVEL_CTRL_SUPPORT
+- ZCL_LIGHT_COLOR_CONTROL_SUPPORT
+- ZCL_GROUP_SUPPORT
+- ZCL_SCENE_SUPPORT
+- ZCL_OTA_SUPPORT
+- ZCL_GP_SUPPORT
+- ZCL_WWAH_SUPPORT
+- ZCL_ZLL_COMMISSIONING_SUPPORT
+
+In `tl_zigbee_sdk/zigbee/zcl/zcl_config.h` the (ZCL_ ...) macros are defined accordingly.
+
+The actual handling is then enabled in the according SDK files (e.g. `tl_zigbee_sdk/zigbee/zcl/general/zcl_level.c`).
+
