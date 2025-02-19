@@ -62,12 +62,12 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-#	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_RGB_SUPPORT)
 	u8 hue = pScene->extField[extLen+3];
 	u8 saturation = pScene->extField[extLen+4];
 	extLen += 5;
 #	endif
-#	if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_CCT_SUPPORT)
 	u16 colorTemperatureMireds = BUILD_U16(pScene->extField[extLen+3], pScene->extField[extLen+4]);
 	extLen += 5;
 #	endif
@@ -83,7 +83,7 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-#	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_RGB_SUPPORT)
 	zcl_colorCtrlMoveToHueAndSaturationCmd_t move2HueAndSat;
 	move2HueAndSat.hue = hue;
 	move2HueAndSat.saturation = saturation;
@@ -92,7 +92,7 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 
 	sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE_AND_SATURATION, &move2HueAndSat);
 #	endif
-#	if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_CCT_SUPPORT)
 	zcl_colorCtrlMoveToColorTemperatureCmd_t move2ColorTemp;
 	move2ColorTemp.colorTemperature = colorTemperatureMireds;
 	move2ColorTemp.transitionTime = pScene->transTime * 10 + pScene->transTime100ms;
@@ -141,12 +141,12 @@ static void sampleLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
 
 	pScene->extField[extLen++] = LO_UINT16(ZCL_CLUSTER_LIGHTING_COLOR_CONTROL);
 	pScene->extField[extLen++] = HI_UINT16(ZCL_CLUSTER_LIGHTING_COLOR_CONTROL);
-#	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_RGB_SUPPORT)
 	pScene->extField[extLen++] = 2;
 	pScene->extField[extLen++] = pColor->currentHue;
 	pScene->extField[extLen++] = pColor->currentSaturation;
 #	endif
-#	if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_CCT_SUPPORT)
 	pScene->extField[extLen++] = 2;
 	pScene->extField[extLen++] = LO_UINT16(pColor->colorTemperatureMireds);
 	pScene->extField[extLen++] = HI_UINT16(pColor->colorTemperatureMireds);

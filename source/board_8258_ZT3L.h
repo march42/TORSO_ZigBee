@@ -103,7 +103,9 @@ extern "C" {
 
 #if defined(__LIGHT__MARCH42_TORSO__)
 #	define BUTTON2						GPIO_PD4
-#	define LED_PERMIT					GPIO_PC2
+#	if (!COLOR_CCT_SUPPORT)
+#		define LED_PERMIT					GPIO_PC2
+#	endif
 #	define EXTENDED_COLOR_LIGHT_DEVICE	1
 #endif
 

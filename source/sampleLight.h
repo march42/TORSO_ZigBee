@@ -129,7 +129,7 @@ typedef struct{
 	u8	enhancedColorMode;
 	u8	numOfPrimaries;
 	u16 colorCapabilities;
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if COLOR_RGB_SUPPORT
 	u8	currentHue;
 	u8	currentSaturation;
 	u8	colorLoopActive;
@@ -138,7 +138,7 @@ typedef struct{
 	u16 colorLoopStartEnhancedHue;
 	u16 colorLoopStoredEnhancedHue;
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if COLOR_CCT_SUPPORT
 	u16 colorTemperatureMireds;
 	u16 colorTempPhysicalMinMireds;
 	u16 colorTempPhysicalMaxMireds;
@@ -167,11 +167,11 @@ typedef struct {
  *  @brief Defined for saving color control attributes
  */
 typedef struct {
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if COLOR_RGB_SUPPORT
 	u8	currentHue;
 	u8	currentSaturation;
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if COLOR_CCT_SUPPORT
 	u16	colorTemperatureMireds;
 	u16	startUpColorTemperatureMireds;
 #endif
@@ -225,7 +225,7 @@ bool sampleLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate);
 
 void sampleLight_onoff(u8 cmd);
 void sampleLight_level(u8 setLevel);
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
 #endif
 
 void zcl_sampleLightAttrsInit(void);

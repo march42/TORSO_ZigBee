@@ -46,7 +46,7 @@
  * TYPEDEFS
  */
 typedef struct{
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	// ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
 	s32 stepHue256;
 	u16	currentHue256;
@@ -59,7 +59,7 @@ typedef struct{
 	u16 loopRemainingTime;
 #endif
 
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	// ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE
 	s32 stepColorTemp256;
 	u32	currentColorTemp256;
@@ -73,7 +73,7 @@ typedef struct{
  * LOCAL VARIABLES
  */
 static zcl_colorInfo_t colorInfo = {
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	.stepHue256 				= 0,
 	.currentHue256				= 0,
 	.hueRemainingTime			= 0,
@@ -85,7 +85,7 @@ static zcl_colorInfo_t colorInfo = {
 	.loopRemainingTime			= 0,
 #endif
 
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	.stepColorTemp256			= 0,
 	.currentColorTemp256		= 0,
 	.colorTempRemainingTime		= 0,
@@ -95,7 +95,7 @@ static zcl_colorInfo_t colorInfo = {
 };
 
 static ev_timer_event_t *colorTimerEvt = NULL;
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 static ev_timer_event_t *colorLoopTimerEvt = NULL;
 #endif
 
@@ -226,10 +226,10 @@ void sampleLight_updateColor(void)
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	hwLight_colorUpdate_HSV2RGB(pColor->currentHue, pColor->currentSaturation, pLevel->curLevel);
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	hwLight_colorUpdate_colorTemperature(pColor->colorTemperatureMireds, pLevel->curLevel);
 #endif
 }
@@ -247,7 +247,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 {
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	if( (pColor->enhancedColorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) ||
 		(pColor->enhancedColorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION) ){
 		if(colorInfo.saturationRemainingTime){
@@ -261,7 +261,7 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 		}
 	}
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	if(pColor->enhancedColorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS){
 		if(colorInfo.colorTempRemainingTime){
 			light_applyUpdate_16(&pColor->colorTemperatureMireds, &colorInfo.currentColorTemp256, &colorInfo.stepColorTemp256, &colorInfo.colorTempRemainingTime,
@@ -270,12 +270,12 @@ static s32 sampleLight_colorTimerEvtCb(void *arg)
 	}
 #endif
 
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	if(colorInfo.saturationRemainingTime || colorInfo.hueRemainingTime){
 		return 0;
 	} else
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	if(colorInfo.colorTempRemainingTime){
 		return 0;
 	} else
@@ -302,7 +302,7 @@ static void sampleLight_colorTimerStop(void)
 	}
 }
 
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 /*********************************************************************
  * @fn      sampleLight_colorLoopTimerEvtCb
  *
@@ -891,7 +891,7 @@ static void sampleLight_colorLoopSetProcess(zcl_colorCtrlColorLoopSetCmd_t *cmd)
 }
 #endif
 
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 
 /*********************************************************************
  * @fn      sampleLight_moveToColorTemperatureProcess
@@ -1068,11 +1068,11 @@ static void sampleLight_stopMoveStepProcess(void)
 {
 	//zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	colorInfo.hueRemainingTime = 0;
 	colorInfo.saturationRemainingTime = 0;
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	colorInfo.colorTempRemainingTime = 0;
 #endif
 
@@ -1094,7 +1094,7 @@ status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, voi
 {
 	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
 		switch(cmdId){
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE:
 				sampleLight_moveToHueProcess((zcl_colorCtrlMoveToHueCmd_t *)cmdPayload);
 				break;
@@ -1141,7 +1141,7 @@ status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, voi
 				sampleLight_colorLoopSetProcess((zcl_colorCtrlColorLoopSetCmd_t *)cmdPayload);
 				break;
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE:
 				sampleLight_moveToColorTemperatureProcess((zcl_colorCtrlMoveToColorTemperatureCmd_t *)cmdPayload);
 				break;

@@ -68,27 +68,27 @@
 #define	FILE_VERSION					  	((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)
 
 #define ZCL_BASIC_MFG_NAME     		{7,'m','a','r','c','h','4','2'}
-#if (TARGET==TORSO) || defined(__LIGHT__MARCH42_TORSO__)
+#if defined(__LIGHT__MARCH42_TORSO__)
 #	define ZCL_BASIC_MODEL_ID	   	{11,'T','O','R','S','O',' ','l','i','g','h','t'}
-#elif (TARGET==TS0501B)
+#elif defined(__LIGHT__TS050xB__)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','1','B'}
-#elif (TARGET==TS0502B)
+#elif defined(__LIGHT__TS050xB__)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','2','B'}
-#elif (TARGET==TS0503B)
+#elif defined(__LIGHT__TS050xB__)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','3','B'}
-#elif (TARGET==TS0504B)
+#elif defined(__LIGHT__TS050xB__)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','4','B'}
-#elif (TARGET==TS0505B)
+#elif defined(__LIGHT__TS050xB__)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'T','S','0','5','0','5','B'}
-#elif (LED_MODE==LED_DIMMER)
+#elif (LED_MODE==LED_MODE_DIMMER)
 #	define ZCL_BASIC_MODEL_ID	   	{10,'L','E','D','-','D','i','m','m','e','r'}
-#elif (LED_MODE==LED_CCT)
+#elif (LED_MODE==LED_MODE_CCT)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'L','E','D','-','C','C','T'}
-#elif (LED_MODE==LED_RGB)
+#elif (LED_MODE==LED_MODE_RGB)
 #	define ZCL_BASIC_MODEL_ID	   	{7,'L','E','D','-','R','G','B'}
-#elif (LED_MODE==LED_RGBW)
+#elif (LED_MODE==LED_MODE_RGBW)
 #	define ZCL_BASIC_MODEL_ID	   	{8,'L','E','D','-','R','G','B','W'}
-#elif (LED_MODE==LED_RGBCCT)
+#elif (LED_MODE==LED_MODE_RGBCCT)
 #	define ZCL_BASIC_MODEL_ID	   	{10,'L','E','D','-','R','G','B','C','C','T'}
 #else
 #	define ZCL_BASIC_MODEL_ID	   	{9,'L','E','D',' ','l','i','g','h','t'}

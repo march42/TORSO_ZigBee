@@ -111,11 +111,11 @@ void hwLight_init(void)
 
 	drv_pwm_init();
 
-#if (LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW)
+#if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
 	COOL_LIGHT_PWM_SET();
 	pwmInit(COOL_LIGHT_PWM_CHANNEL, 0);
 #endif
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	R_LIGHT_PWM_SET();
 	G_LIGHT_PWM_SET();
 	B_LIGHT_PWM_SET();
@@ -123,7 +123,7 @@ void hwLight_init(void)
 	pwmInit(G_LIGHT_PWM_CHANNEL, 0);
 	pwmInit(B_LIGHT_PWM_CHANNEL, 0);
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	WARM_LIGHT_PWM_SET();
 	pwmInit(WARM_LIGHT_PWM_CHANNEL, 0);
 #endif
@@ -143,28 +143,28 @@ void hwLight_onOffUpdate(u8 onOff)
 	DEBUG(DEBUG_TRACE, "hwLight_onOffUpdate(%x)\r", onOff);
 
 	if(onOff){
-#if (LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW)
+#if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
 		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
 #endif
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
 #endif
 
 	}else{
-#if (LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW)
+#if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
 		drv_pwm_stop(COOL_LIGHT_PWM_CHANNEL);
 #endif
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 		drv_pwm_stop(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
 #endif
 	}
@@ -183,7 +183,7 @@ void hwLight_levelUpdate(u8 level)
 {
 	DEBUG(DEBUG_TRACE, "hwLight_levelUpdate(%x)\r", level);
 
-#if (LED_MODE==LED_MODE_DIMMER)
+#if (SINGLE_WHITE_SUPPORT)
 	level = (level < 0x10) ? 0x10 : level;
 
 	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -206,7 +206,7 @@ void hwLight_levelUpdate(u8 level)
  */
 void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
 {
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
 	*W = (u8)(((temperatureMireds - pColor->colorTempPhysicalMinMireds) * level) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds));
@@ -226,7 +226,7 @@ void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
  */
 void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 {
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	u8 C = 0;
 	u8 W = 0;
 
@@ -258,7 +258,7 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
  */
 void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
 {
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
     u8 region;
     u8 remainder;
     u8 p, q, t;
@@ -327,7 +327,7 @@ void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
  */
 void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 {
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	u8 R = 0;
 	u8 G = 0;
 	u8 B = 0;

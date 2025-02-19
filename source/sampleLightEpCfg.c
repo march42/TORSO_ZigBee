@@ -47,25 +47,25 @@
 #endif
 
 
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 /*	color temperature calculation
 **	mired = 1,000,000 / kelvin
 **	Mired equals 1 million over Temperature in Kelvin
 **	kelvin = 1000000 / mired
 */
-#define COLOR_TEMPERATURE_10000K		0x0064
-#define COLOR_TEMPERATURE_6500K			0x0099	// blue sky daylight
-#define COLOR_TEMPERATURE_6000K			0x00A6
-#define COLOR_TEMPERATURE_5500K			0x00B5	// cold white
-#define COLOR_TEMPERATURE_5000K			0x00C8	// noon sun
-#define COLOR_TEMPERATURE_4000K			0x00FA	// neutral, morning sun
-#define COLOR_TEMPERATURE_3000K			0x014D	// warm white
-#define COLOR_TEMPERATURE_2700K			0x0172	// soft white
-#define COLOR_TEMPERATURE_2200K			0x01C6	// light bulb
-#define COLOR_TEMPERATURE_2000K			0x01F4
-#define COLOR_TEMPERATURE_1700K			0x024C	// candle
-#define COLOR_TEMPERATURE_PHYSICAL_MIN	COLOR_TEMPERATURE_6000K
-#define COLOR_TEMPERATURE_PHYSICAL_MAX	COLOR_TEMPERATURE_3000K
+#	define COLOR_TEMPERATURE_10000K			0x0064
+#	define COLOR_TEMPERATURE_6500K			0x0099	// blue sky daylight
+#	define COLOR_TEMPERATURE_6000K			0x00A6
+#	define COLOR_TEMPERATURE_5500K			0x00B5	// cold white
+#	define COLOR_TEMPERATURE_5000K			0x00C8	// noon sun
+#	define COLOR_TEMPERATURE_4000K			0x00FA	// neutral, morning sun
+#	define COLOR_TEMPERATURE_3000K			0x014D	// warm white
+#	define COLOR_TEMPERATURE_2700K			0x0172	// soft white
+#	define COLOR_TEMPERATURE_2200K			0x01C6	// light bulb
+#	define COLOR_TEMPERATURE_2000K			0x01F4
+#	define COLOR_TEMPERATURE_1700K			0x024C	// candle
+#	define COLOR_TEMPERATURE_PHYSICAL_MIN	COLOR_TEMPERATURE_6000K
+#	define COLOR_TEMPERATURE_PHYSICAL_MAX	COLOR_TEMPERATURE_3000K
 #endif
 
 /**********************************************************************
@@ -343,17 +343,17 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 #	if defined(__LIGHT__MARCH42_TORSO__)
 		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	// EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle
 #	endif
-#	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_RGB_SUPPORT)
 		| ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
 		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP
 		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
 #	endif
-#	if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_CCT_SUPPORT)
 		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE
 #	endif
 		,
 	.numOfPrimaries					= 0,
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
 	.currentHue						= 0x00,
 	.currentSaturation				= 0x00,
 	.colorLoopActive				= 0x00,
@@ -362,7 +362,7 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.colorLoopStartEnhancedHue		= 0x2300,
 	.colorLoopStoredEnhancedHue		= 0x0000,
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
 	.colorTemperatureMireds				= COLOR_TEMPERATURE_PHYSICAL_MAX,
 	.colorTempPhysicalMinMireds			= COLOR_TEMPERATURE_PHYSICAL_MIN,
 	.colorTempPhysicalMaxMireds			= COLOR_TEMPERATURE_PHYSICAL_MAX,
@@ -379,7 +379,7 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
     { ZCL_ATTRID_COLOR_CAPABILITIES,       			ZCL_DATA_TYPE_BITMAP16, ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.colorCapabilities },
     { ZCL_ATTRID_NUMBER_OF_PRIMARIES,     			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.numOfPrimaries },
 
-#if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT)
     { ZCL_ATTRID_CURRENT_HUE,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentHue },
     { ZCL_ATTRID_CURRENT_SATURATION,      			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentSaturation },
     { ZCL_ATTRID_COLOR_LOOP_ACTIVE,       			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopActive },
@@ -388,7 +388,7 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
     { ZCL_ATTRID_COLOR_LOOP_START_ENHANCED_HUE,   	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStartEnhancedHue },
     { ZCL_ATTRID_COLOR_LOOP_STORED_ENHANCED_HUE,  	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStoredEnhancedHue },
 #endif
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_CCT_SUPPORT)
     { ZCL_ATTRID_COLOR_TEMPERATURE_MIREDS,				ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.colorTemperatureMireds },
     { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
     { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
@@ -601,7 +601,7 @@ nv_sts_t zcl_colorCtrlAttr_save(void)
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8*)&zcl_nv_colorCtrl);
 
-#	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_RGB_SUPPORT)
 	if(st == NV_SUCC){
 		if((zcl_nv_colorCtrl.currentHue != g_zcl_colorCtrlAttrs.currentHue) || (zcl_nv_colorCtrl.currentSaturation != g_zcl_colorCtrlAttrs.currentSaturation)){
 			zcl_nv_colorCtrl.currentHue = g_zcl_colorCtrlAttrs.currentHue;
@@ -616,7 +616,7 @@ nv_sts_t zcl_colorCtrlAttr_save(void)
 		needSave = TRUE;
 	}
 #	endif
-#	if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_CCT_SUPPORT)
 	if(st == NV_SUCC){
 		if((zcl_nv_colorCtrl.colorTemperatureMireds != g_zcl_colorCtrlAttrs.colorTemperatureMireds) || (zcl_nv_colorCtrl.startUpColorTemperatureMireds != g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds)){
 			zcl_nv_colorCtrl.colorTemperatureMireds = g_zcl_colorCtrlAttrs.colorTemperatureMireds;
@@ -664,13 +664,13 @@ nv_sts_t zcl_colorCtrlAttr_restore(void)
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8*)&zcl_nv_colorCtrl);
 
-#	if (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_RGB_SUPPORT)
 	if(st == NV_SUCC){
 		g_zcl_colorCtrlAttrs.currentHue = zcl_nv_colorCtrl.currentHue;
 		g_zcl_colorCtrlAttrs.currentSaturation = zcl_nv_colorCtrl.currentSaturation;
 	}
 #	endif
-#	if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (COLOR_CCT_SUPPORT)
 	if(st == NV_SUCC){
 		g_zcl_colorCtrlAttrs.colorTemperatureMireds = zcl_nv_colorCtrl.colorTemperatureMireds;
 		g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds = zcl_nv_colorCtrl.startUpColorTemperatureMireds;

@@ -66,10 +66,12 @@ extern "C" {
 #ifndef LED_MODE_RGBCCT
 #	define LED_MODE_RGBCCT				0x73
 #endif
-
-//#	define COLOR_RGB_SUPPORT			((LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT))
-//#	define COLOR_CCT_SUPPORT			((LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT))
-//#	define SINGLE_WHITE_SUPPORT			((LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW))
+#define SINGLE_WHITE_SUPPORT			((LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW))
+#define COLOR_RGB_SUPPORT				((LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT))
+#define COLOR_CCT_SUPPORT				((LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT))
+#if (!SINGLE_WHITE_SUPPORT) && (!COLOR_RGB_SUPPORT) && (!COLOR_CCT_SUPPORT)
+#	warning	MISSING configured LED mode and support
+#endif
 
 /* save current values after change */
 #define LIGHTING_SAVE					1
@@ -145,7 +147,8 @@ extern "C" {
 	#include "board_826x_evk.h"
 #elif(BOARD == BOARD_826x_DONGLE)
 	#include "board_826x_dongle.h"
-//#elif (TARGET == TS0501B)
+//#elif defined(__LIGHT__TS050xB__) && (__LIGHT__TS050xB__)
+//	handle in ZT3L and ZYZB010 header
 //#	include "board_8258_TS050xB.h"
 #elif (MODULE == ZT3L)
 #	include "board_8258_zt3l.h"
@@ -219,7 +222,7 @@ extern "C" {
 #define ZCL_LEVEL_CTRL_SUPPORT						1
 //#	define EXTENDED_COLOR_LIGHT_DEVICE				0	// TODO: currently unused and still untested
 //#	define COLOR_TEMPERATURE_LIGHT_DEVICE			0	// TODO: currently unused and still untested
-#if (LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#if (COLOR_RGB_SUPPORT) || (COLOR_CCT_SUPPORT)
 #	define ZCL_LIGHT_COLOR_CONTROL_SUPPORT			1
 #endif
 #define ZCL_GROUP_SUPPORT							1

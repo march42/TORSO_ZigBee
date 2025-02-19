@@ -100,25 +100,39 @@ LED_MODE_CCT		= 0x03
 LED_MODE_RGB		= 0x70
 LED_MODE_RGBW		= 0x71
 LED_MODE_RGBCCT		= 0x73
-LED_MODE_MULTIPLE	= 0xFF
 # board settings
-ifdef LED_MODE
-#	allready specified
-else ifeq ($(TARGET),TORSO)
+ifeq ($(TARGET),TORSO)
 	CPPFLAGS		+= -D__LIGHT__MARCH42_TORSO__=1
-	LED_MODE		= $(LED_MODE_RGBW)
+	ifeq ($(LED_MODE),)
+		LED_MODE	= $(LED_MODE_RGBW)
+	endif
 else ifeq ($(TARGET),TS0501B)
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
 	LED_MODE		= $(LED_MODE_DIMMER)
 else ifeq ($(TARGET),TS0502B)
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
 	LED_MODE		= $(LED_MODE_CCT)
 else ifeq ($(TARGET),TS0503B)
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
 	LED_MODE		= $(LED_MODE_RGB)
 else ifeq ($(TARGET),TS0504B)
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
 	LED_MODE		= $(LED_MODE_RGBW)
 else ifeq ($(TARGET),TS0505B)
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
 	LED_MODE		= $(LED_MODE_RGBCCT)
-else
-	LED_MODE		= $(LED_MODE_DIMMER)
+endif
+# LED mode settings
+ifeq ($(LED_MODE),$(LED_MODE_DIMMER))
+	CPPFLAGS		+= -D__LED_MODE__DIMMER__=$(LED_MODE) -DLED_SUPPORT_WHITE=1 -DLED_SUPPORT_RGB=0 -DLED_SUPPORT_CCT=0
+else ifeq ($(LED_MODE),$(LED_MODE_CCT))
+	CPPFLAGS		+= -D__LED_MODE__CCT__=$(LED_MODE) -DLED_SUPPORT_WHITE=0 -DLED_SUPPORT_RGB=0 -DLED_SUPPORT_CCT=1
+else ifeq ($(LED_MODE),$(LED_MODE_RGB))
+	CPPFLAGS		+= -D__LED_MODE__RGB__=$(LED_MODE) -DLED_SUPPORT_WHITE=0 -DLED_SUPPORT_RGB=1 -DLED_SUPPORT_CCT=0
+else ifeq ($(LED_MODE),$(LED_MODE_RGBW))
+	CPPFLAGS		+= -D__LED_MODE__RGBW__=$(LED_MODE) -DLED_SUPPORT_WHITE=1 -DLED_SUPPORT_RGB=1 -DLED_SUPPORT_CCT=0
+else ifeq ($(LED_MODE),$(LED_MODE_RGBCCT))
+	CPPFLAGS		+= -D__LED_MODE__RGBCCT__=$(LED_MODE) -DLED_SUPPORT_WHITE=0 -DLED_SUPPORT_RGB=1 -DLED_SUPPORT_CCT=1
 endif
 # SOC module
 ifeq ($(MODULE),ZT3L)
@@ -135,7 +149,7 @@ else ifeq ($(MODULE),ZYZB010)
 	CHIP_TYPE			:= TLSR_8258_512K
 	BOOT_LOADER_MODE	:= 0
 endif
-CPPFLAGS		+= -DBOOT_LOADER_MODE=$(BOOT_LOADER_MODE) -DTARGET=$(TARGET) -D$(ZB_ROLE)=1
+CPPFLAGS		+= -DBOOT_LOADER_MODE=$(BOOT_LOADER_MODE) -D$(ZB_ROLE)=1
 CFLAGS			+= -ffunction-sections -fdata-sections -Wall -O2 -fpack-struct -fshort-enums -finline-small-functions -std=gnu99 -fshort-wchar -fms-extensions
 LDFLAGS			+= --gc-sections
 #bin_files		+= $(BUILDDIR)/torso-light.bin 
@@ -224,24 +238,24 @@ ifeq ($(TARGET),TORSO)
 #	special LED controller
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/torso.elf $(BUILDDIR)/torso.lst
 	firmware_app	+= $(BUILDDIR)/torso.bin
-else ifeq ($(LED_MODE),0x01)
+else ifeq ($(LED_MODE),$(LED_MODE_DIMMER))
 #	single color WHITE
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_dimmer.elf $(BUILDDIR)/led_dimmer.lst
 	firmware_app	+= $(BUILDDIR)/led_dimmer.bin
-else ifeq ($(LED_MODE),0x03)
+else ifeq ($(LED_MODE),$(LED_MODE_CCT))
 #	dual channel WHITE
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_cct.elf $(BUILDDIR)/led_cct.lst
 	firmware_app	+= $(BUILDDIR)/led_cct.bin
-else ifeq ($(LED_MODE),0x70)
-#	3 channel color
+else ifeq ($(LED_MODE),$(LED_MODE_RGB))
+#	3 channel RGB color
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgb.elf $(BUILDDIR)/led_rgb.lst
 	firmware_app	+= $(BUILDDIR)/led_rgb.bin
-else ifeq ($(LED_MODE),0x71)
-#	3 channel color and single color WHITE
+else ifeq ($(LED_MODE),$(LED_MODE_RGBW))
+#	3 channel RGB color and single color WHITE
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgbw.elf $(BUILDDIR)/led_rgbw.lst
 	firmware_app	+= $(BUILDDIR)/led_rgbw.bin
-else ifeq ($(LED_MODE),0x73)
-#	3 channel RGB and 2 channel WHITE
+else ifeq ($(LED_MODE),$(LED_MODE_RGBCCT))
+#	3 channel RGB color and 2 channel WHITE
 	extra_files		+= $(BUILDDIR)/boot.link $(BUILDDIR)/led_rgbcct.elf $(BUILDDIR)/led_rgbcct.lst
 	firmware_app	= $(BUILDDIR)/led_rgbcct.bin
 else
@@ -408,12 +422,12 @@ $(BUILDDIR)/torso:
 $(BUILDDIR)/torso/%.c.o : %.c $(led_HEADERS)	| $(BUILDDIR)/torso
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
-	$(CC) -DLED_MODE=$(LED_MODE) -D__LIGHT__MARCH42_TORSO__=1 $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -DLED_MODE=$(LED_MODE) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
 $(BUILDDIR)/torso/%.S.o : %.S $(led_HEADERS)	| $(BUILDDIR)/torso
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
-	$(CC) -DLED_MODE=$(LED_MODE) -D__LIGHT__MARCH42_TORSO__=1 $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) -DLED_MODE=$(LED_MODE) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
 
 ###
 #	led_rgbcct rules
