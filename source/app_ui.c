@@ -8,6 +8,7 @@
  * 
  * @author	Marc Hefter
  * @date	2024-2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
  *
  * @par     Copyright (c) 2021, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *			All rights reserved.
@@ -34,8 +35,8 @@
 #include "tl_common.h"
 #include "zb_api.h"
 #include "zcl_include.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 #include "app_ui.h"
 #include "gp.h"
 /**********************************************************************
@@ -104,7 +105,7 @@ void localPermitJoinState(void){
 
 		// TODO: implement PERMIT_SIGNALLING effect
 		if(assocPermit){
-			light_blink_start(100, 700, 1300);
+			light_blink_start(90, 700, 1300);
 		}else{
 			light_blink_stop();
 		}
@@ -126,9 +127,9 @@ void buttonShortPressed(u8 btNum){
 		if(zb_isDeviceJoinedNwk()){
 			gLightCtx.sta = !gLightCtx.sta;
 			if(gLightCtx.sta){
-				sampleLight_onoff(ZCL_ONOFF_STATUS_ON);
+				ledLight_onoff(ZCL_ONOFF_STATUS_ON);
 			}else{
-				sampleLight_onoff(ZCL_ONOFF_STATUS_OFF);
+				ledLight_onoff(ZCL_ONOFF_STATUS_OFF);
 			}
 		}
 	}else if(btNum == VK_SW2){
@@ -186,7 +187,7 @@ void app_key_handler(void){
 
 #else
 /*	app_key_handler
-**	regularly called by app_task in sampleLight.c
+**	regularly called by app_task in ledLight.c
 **	***
 **	pressed_count	current counter of subsequent key presses
 **	gLightCtx.keyPressedTime	last time key was pressed
@@ -235,12 +236,12 @@ void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 		switch (pressed_count) {
 			case 1:	// On/Off toggle
 				DEBUG(DEBUG_BUTTONS, "BUTTON OnOff\r");
-				sampleLight_onoff(ZCL_CMD_ONOFF_TOGGLE);	// toggle On/Off
+				ledLight_onoff(ZCL_CMD_ONOFF_TOGGLE);	// toggle On/Off
 				return;
 			case 2:	// On and dim to initial default
 				DEBUG(DEBUG_BUTTONS, "BUTTON Full On\r");
-				sampleLight_level(ZCL_LEVEL_ATTR_MAX_LEVEL);	// set level
-				sampleLight_onoff(ZCL_CMD_ONOFF_ON);		// turn on
+				ledLight_level(ZCL_LEVEL_ATTR_MAX_LEVEL);	// set level
+				ledLight_onoff(ZCL_CMD_ONOFF_ON);		// turn on
 				return;
 			case 3:
 				DEBUG(DEBUG_BUTTONS, "BUTTON Join Network\r");

@@ -3,6 +3,10 @@
  *
  * @brief   This is the header file for version_cfg
  *
+ * @author	Marc Hefter
+ * @date	2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
+ *
  * @author  Zigbee Group
  * @date    2021
  *

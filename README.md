@@ -58,6 +58,16 @@ ZigBee 3.0 LED controller
 - 5 channel PWM CW,WW,R,G,B
 - 1 button input (for factory reset and pairing mode)
 
+### firmware
+
+#### LED Channels
+
+- LED channel level set by `cmp_tick = (dutycycle * PMW_MAX_TICK) / (ZCL_LEVEL_ATTR_MAX_LEVEL * PWM_FULL_DUTYCYCLE)`
+- hwLight_init initializes the PWM module and channels
+- light_adjust initializes the light to default
+- light_adjust calls sampleLight_colorInit, sampleLight_levelInit, sampleLight_onOffInit
+- sampleLight_colorInit
+
 ### building firmware
 
 ```

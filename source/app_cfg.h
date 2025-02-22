@@ -6,6 +6,10 @@
  * @author  Zigbee Group
  * @date    2021
  *
+ * @author	Marc Hefter
+ * @date	2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
+ *
  * @par     Copyright (c) 2021, Telink Semiconductor (Shanghai) Co., Ltd. ("TELINK")
  *			All rights reserved.
  *

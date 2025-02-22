@@ -33,8 +33,8 @@
 #include "zcl_include.h"
 #include "bdb.h"
 #include "ota.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -60,9 +60,9 @@ void zbdemo_bdbIdentifyCb(u8 endpoint, u16 srcAddr, u16 identifyTime);
 bdb_appCb_t g_zbDemoBdbCb = {zbdemo_bdbInitCb, zbdemo_bdbCommissioningCb, zbdemo_bdbIdentifyCb, NULL};
 
 #ifdef ZCL_OTA
-ota_callBack_t sampleLight_otaCb =
+ota_callBack_t ledLight_otaCb =
 {
-	sampleLight_otaProcessMsgHandler,
+	ledLight_otaProcessMsgHandler,
 };
 #endif
 
@@ -94,7 +94,7 @@ static s32 heartTimerCb(void *arg){
 }
 #endif
 
-s32 sampleLight_bdbNetworkSteerStart(void *arg){
+s32 ledLight_bdbNetworkSteerStart(void *arg){
 	bdb_networkSteerStart();
 
 	steerTimerEvt = NULL;
@@ -102,7 +102,7 @@ s32 sampleLight_bdbNetworkSteerStart(void *arg){
 }
 
 #if FIND_AND_BIND_SUPPORT
-s32 sampleLight_bdbFindAndBindStart(void *arg){
+s32 ledLight_bdbFindAndBindStart(void *arg){
 	bdb_findAndBindStart(BDB_COMMISSIONING_ROLE_TARGET);
 
 	return -1;
@@ -145,7 +145,7 @@ void zbdemo_bdbInitCb(u8 status, u8 joinedNetwork){
 			if(steerTimerEvt){
 				TL_ZB_TIMER_CANCEL(&steerTimerEvt);
 			}
-			steerTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_bdbNetworkSteerStart, NULL, jitter);
+			steerTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_bdbNetworkSteerStart, NULL, jitter);
 #endif
 		}
 	}else{
@@ -191,7 +191,7 @@ void zbdemo_bdbCommissioningCb(u8 status, void *arg){
 #if FIND_AND_BIND_SUPPORT
 			if(!gLightCtx.bdbFindBindFlg){
 				gLightCtx.bdbFindBindFlg = TRUE;
-				TL_ZB_TIMER_SCHEDULE(sampleLight_bdbFindAndBindStart, NULL, 1000);
+				TL_ZB_TIMER_SCHEDULE(ledLight_bdbFindAndBindStart, NULL, 1000);
 			}
 #endif
 			break;
@@ -211,7 +211,7 @@ void zbdemo_bdbCommissioningCb(u8 status, void *arg){
 				if(steerTimerEvt){
 					TL_ZB_TIMER_CANCEL(&steerTimerEvt);
 				}
-				steerTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_bdbNetworkSteerStart, NULL, jitter);
+				steerTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_bdbNetworkSteerStart, NULL, jitter);
 			}
 			break;
 		case BDB_COMMISSION_STA_FORMATION_FAILURE:
@@ -238,17 +238,17 @@ void zbdemo_bdbCommissioningCb(u8 status, void *arg){
 }
 
 
-extern void sampleLight_zclIdentifyCmdHandler(u8 endpoint, u16 srcAddr, u16 identifyTime);
+extern void ledLight_zclIdentifyCmdHandler(u8 endpoint, u16 srcAddr, u16 identifyTime);
 void zbdemo_bdbIdentifyCb(u8 endpoint, u16 srcAddr, u16 identifyTime){
 #if FIND_AND_BIND_SUPPORT
-	sampleLight_zclIdentifyCmdHandler(endpoint, srcAddr, identifyTime);
+	ledLight_zclIdentifyCmdHandler(endpoint, srcAddr, identifyTime);
 #endif
 }
 
 
 
 #ifdef ZCL_OTA
-void sampleLight_otaProcessMsgHandler(u8 evt, u8 status)
+void ledLight_otaProcessMsgHandler(u8 evt, u8 status)
 {
 	if(evt == OTA_EVT_START){
 		if(status == ZCL_STA_SUCCESS){
@@ -266,14 +266,14 @@ void sampleLight_otaProcessMsgHandler(u8 evt, u8 status)
 }
 #endif
 
-s32 sampleLight_softReset(void *arg){
+s32 ledLight_softReset(void *arg){
 	SYSTEM_RESET();
 
 	return -1;
 }
 
 /*********************************************************************
- * @fn      sampleLight_leaveCnfHandler
+ * @fn      ledLight_leaveCnfHandler
  *
  * @brief   Handler for ZDO Leave Confirm message.
  *
@@ -281,18 +281,18 @@ s32 sampleLight_softReset(void *arg){
  *
  * @return  None
  */
-void sampleLight_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf)
+void ledLight_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf)
 {
     if(pLeaveCnf->status == SUCCESS){
     	light_blink_start(3, 200, 200);
 
     	//waiting blink over
-    	TL_ZB_TIMER_SCHEDULE(sampleLight_softReset, NULL, 2 * 1000);
+    	TL_ZB_TIMER_SCHEDULE(ledLight_softReset, NULL, 2 * 1000);
     }
 }
 
 /*********************************************************************
- * @fn      sampleLight_leaveIndHandler
+ * @fn      ledLight_leaveIndHandler
  *
  * @brief   Handler for ZDO leave indication message.
  *
@@ -300,12 +300,12 @@ void sampleLight_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf)
  *
  * @return  None
  */
-void sampleLight_leaveIndHandler(nlme_leave_ind_t *pLeaveInd)
+void ledLight_leaveIndHandler(nlme_leave_ind_t *pLeaveInd)
 {
 
 }
 
-bool sampleLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate){
+bool ledLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate){
 	return FAILURE;
 }
 

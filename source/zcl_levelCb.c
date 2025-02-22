@@ -30,8 +30,8 @@
 #include "tl_common.h"
 #include "zb_api.h"
 #include "zcl_include.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 
 #ifdef ZCL_LEVEL_CTRL
 
@@ -65,7 +65,7 @@ static ev_timer_event_t *levelTimerEvt = NULL;
  */
 
 /*********************************************************************
- * @fn      sampleLight_level
+ * @fn      ledLight_level
  *
  * @brief
  *
@@ -73,7 +73,7 @@ static ev_timer_event_t *levelTimerEvt = NULL;
  *
  * @return  None
  */
-void sampleLight_level(u8 setLevel)
+void ledLight_level(u8 setLevel)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -84,7 +84,7 @@ void sampleLight_level(u8 setLevel)
 }
 
 /*********************************************************************
- * @fn      sampleLight_levelInit
+ * @fn      ledLight_levelInit
  *
  * @brief
  *
@@ -92,7 +92,7 @@ void sampleLight_level(u8 setLevel)
  *
  * @return  None
  */
-void sampleLight_levelInit(void)
+void ledLight_levelInit(void)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -105,7 +105,7 @@ void sampleLight_levelInit(void)
 }
 
 /*********************************************************************
- * @fn      sampleLight_updateLevel
+ * @fn      ledLight_updateLevel
  *
  * @brief
  *
@@ -113,7 +113,7 @@ void sampleLight_levelInit(void)
  *
  * @return  None
  */
-void sampleLight_updateLevel(void)
+void ledLight_updateLevel(void)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -121,7 +121,7 @@ void sampleLight_updateLevel(void)
 }
 
 /*********************************************************************
- * @fn      sampleLight_levelTimerEvtCb
+ * @fn      ledLight_levelTimerEvtCb
  *
  * @brief   timer event to process the level command
  *
@@ -129,7 +129,7 @@ void sampleLight_updateLevel(void)
  *
  * @return  0: timer continue on; -1: timer will be canceled
  */
-static s32 sampleLight_levelTimerEvtCb(void * arg)
+static s32 ledLight_levelTimerEvtCb(void * arg)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -140,7 +140,7 @@ static s32 sampleLight_levelTimerEvtCb(void * arg)
 
 	if(levelInfo.withOnOff){
 		if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
-			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
+			ledLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
@@ -153,7 +153,7 @@ static s32 sampleLight_levelTimerEvtCb(void * arg)
 }
 
 /*********************************************************************
- * @fn      sampleLight_LevelTimerStop
+ * @fn      ledLight_LevelTimerStop
  *
  * @brief   force to stop the level timer
  *
@@ -161,7 +161,7 @@ static s32 sampleLight_levelTimerEvtCb(void * arg)
  *
  * @return
  */
-static void sampleLight_LevelTimerStop(void)
+static void ledLight_LevelTimerStop(void)
 {
 	if(levelTimerEvt){
 		TL_ZB_TIMER_CANCEL(&levelTimerEvt);
@@ -169,7 +169,7 @@ static void sampleLight_LevelTimerStop(void)
 }
 
 /*********************************************************************
- * @fn      sampleLight_moveToLevelProcess
+ * @fn      ledLight_moveToLevelProcess
  *
  * @brief
  *
@@ -178,7 +178,7 @@ static void sampleLight_LevelTimerStop(void)
  *
  * @return	None
  */
-static void sampleLight_moveToLevelProcess(u8 cmdId, moveToLvl_t *cmd)
+static void ledLight_moveToLevelProcess(u8 cmdId, moveToLvl_t *cmd)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -194,22 +194,22 @@ static void sampleLight_moveToLevelProcess(u8 cmdId, moveToLvl_t *cmd)
 
 	if(levelInfo.withOnOff){
 		if(levelInfo.stepLevel256 > 0){
-			sampleLight_onoff(ZCL_CMD_ONOFF_ON);
+			ledLight_onoff(ZCL_CMD_ONOFF_ON);
 		}else if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
-			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
+			ledLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
 	if(pLevel->remainingTime){
-		sampleLight_LevelTimerStop();
-		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+		ledLight_LevelTimerStop();
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
 	}else{
-		sampleLight_LevelTimerStop();
+		ledLight_LevelTimerStop();
 	}
 }
 
 /*********************************************************************
- * @fn      sampleLight_moveProcess
+ * @fn      ledLight_moveProcess
  *
  * @brief
  *
@@ -218,7 +218,7 @@ static void sampleLight_moveToLevelProcess(u8 cmdId, moveToLvl_t *cmd)
  *
  * @return	None
  */
-static void sampleLight_moveProcess(u8 cmdId, move_t *cmd)
+static void ledLight_moveProcess(u8 cmdId, move_t *cmd)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -245,7 +245,7 @@ static void sampleLight_moveProcess(u8 cmdId, move_t *cmd)
 
 	if(cmd->moveMode == LEVEL_MOVE_UP){
 		if(levelInfo.withOnOff){
-			sampleLight_onoff(ZCL_CMD_ONOFF_ON);
+			ledLight_onoff(ZCL_CMD_ONOFF_ON);
 		}
 	}
 
@@ -254,20 +254,20 @@ static void sampleLight_moveProcess(u8 cmdId, move_t *cmd)
 
 	if(levelInfo.withOnOff){
 		if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
-			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
+			ledLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
 	if(pLevel->remainingTime){
-		sampleLight_LevelTimerStop();
-		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+		ledLight_LevelTimerStop();
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
 	}else{
-		sampleLight_LevelTimerStop();
+		ledLight_LevelTimerStop();
 	}
 }
 
 /*********************************************************************
- * @fn      sampleLight_stepProcess
+ * @fn      ledLight_stepProcess
  *
  * @brief
  *
@@ -276,7 +276,7 @@ static void sampleLight_moveProcess(u8 cmdId, move_t *cmd)
  *
  * @return	None
  */
-static void sampleLight_stepProcess(u8 cmdId, step_t *cmd)
+static void ledLight_stepProcess(u8 cmdId, step_t *cmd)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
@@ -288,7 +288,7 @@ static void sampleLight_stepProcess(u8 cmdId, step_t *cmd)
 
 	if(cmd->stepMode == LEVEL_STEP_UP){
 		if(levelInfo.withOnOff){
-			sampleLight_onoff(ZCL_CMD_ONOFF_ON);
+			ledLight_onoff(ZCL_CMD_ONOFF_ON);
 		}
 	}else{
 		levelInfo.stepLevel256 = -levelInfo.stepLevel256;
@@ -299,20 +299,20 @@ static void sampleLight_stepProcess(u8 cmdId, step_t *cmd)
 
 	if(levelInfo.withOnOff){
 		if(pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL){
-			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
+			ledLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
 	if(pLevel->remainingTime){
-		sampleLight_LevelTimerStop();
-		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
+		ledLight_LevelTimerStop();
+		levelTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_levelTimerEvtCb, NULL, ZCL_LEVEL_CHANGE_INTERVAL);
 	}else{
-		sampleLight_LevelTimerStop();
+		ledLight_LevelTimerStop();
 	}
 }
 
 /*********************************************************************
- * @fn      sampleLight_stopProcess
+ * @fn      ledLight_stopProcess
  *
  * @brief
  *
@@ -321,18 +321,18 @@ static void sampleLight_stepProcess(u8 cmdId, step_t *cmd)
  *
  * @return	None
  */
-static void sampleLight_stopProcess(u8 cmdId, stop_t *cmd)
+static void ledLight_stopProcess(u8 cmdId, stop_t *cmd)
 {
 	zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
 
-	sampleLight_LevelTimerStop();
+	ledLight_LevelTimerStop();
 	pLevel->remainingTime = 0;
 
 	levelInfo.currentLevel256 = ((s32)pLevel->curLevel) << 8;
 }
 
 /*********************************************************************
- * @fn      sampleLight_levelCb
+ * @fn      ledLight_levelCb
  *
  * @brief   Handler for ZCL LEVEL command. This function will set LEVEL attribute first.
  *
@@ -342,25 +342,25 @@ static void sampleLight_stopProcess(u8 cmdId, stop_t *cmd)
  *
  * @return  status_t
  */
-status_t sampleLight_levelCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
+status_t ledLight_levelCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
+	if(pAddrInfo->dstEp == LEDLIGHT_ENDPOINT){
 		switch(cmdId){
 			case ZCL_CMD_LEVEL_MOVE_TO_LEVEL:
 			case ZCL_CMD_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF:
-				sampleLight_moveToLevelProcess(cmdId, (moveToLvl_t *)cmdPayload);
+				ledLight_moveToLevelProcess(cmdId, (moveToLvl_t *)cmdPayload);
 				break;
 			case ZCL_CMD_LEVEL_MOVE:
 			case ZCL_CMD_LEVEL_MOVE_WITH_ON_OFF:
-				sampleLight_moveProcess(cmdId, (move_t *)cmdPayload);
+				ledLight_moveProcess(cmdId, (move_t *)cmdPayload);
 				break;
 			case ZCL_CMD_LEVEL_STEP:
 			case ZCL_CMD_LEVEL_STEP_WITH_ON_OFF:
-				sampleLight_stepProcess(cmdId, (step_t *)cmdPayload);
+				ledLight_stepProcess(cmdId, (step_t *)cmdPayload);
 				break;
 			case ZCL_CMD_LEVEL_STOP:
 			case ZCL_CMD_LEVEL_STOP_WITH_ON_OFF:
-				sampleLight_stopProcess(cmdId, (stop_t *)cmdPayload);
+				ledLight_stopProcess(cmdId, (stop_t *)cmdPayload);
 				break;
 			default:
 				break;

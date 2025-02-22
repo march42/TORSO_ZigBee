@@ -1,7 +1,11 @@
 /********************************************************************************************************
- * @file    sampleLightEpCfg.c
+ * @file    ledLightEpCfg.c
  *
- * @brief   This is the source file for sampleLightEpCfg
+ * @brief   This is the source file for ledLightEpCfg
+ *
+ * @author	Marc Hefter
+ * @date	2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
  *
  * @author  Zigbee Group
  * @date    2021
@@ -30,7 +34,7 @@
  */
 #include "tl_common.h"
 #include "zcl_include.h"
-#include "sampleLight.h"
+#include "ledLight.h"
 
 
 /**********************************************************************
@@ -79,7 +83,7 @@
 /**
  *  @brief Definition for Incoming cluster / Sever Cluster
  */
-const u16 sampleLight_inClusterList[] =
+const u16 ledLight_inClusterList[] =
 {
 	ZCL_CLUSTER_GEN_BASIC,
 	ZCL_CLUSTER_GEN_IDENTIFY,
@@ -109,7 +113,7 @@ const u16 sampleLight_inClusterList[] =
 /**
  *  @brief Definition for Outgoing cluster / Client Cluster
  */
-const u16 sampleLight_outClusterList[] =
+const u16 ledLight_outClusterList[] =
 {
 #ifdef ZCL_OTA
     ZCL_CLUSTER_OTA,
@@ -119,13 +123,13 @@ const u16 sampleLight_outClusterList[] =
 /**
  *  @brief Definition for Server cluster number and Client cluster number
  */
-#define SAMPLELIGHT_IN_CLUSTER_NUM		(sizeof(sampleLight_inClusterList)/sizeof(sampleLight_inClusterList[0]))
-#define SAMPLELIGHT_OUT_CLUSTER_NUM		(sizeof(sampleLight_outClusterList)/sizeof(sampleLight_outClusterList[0]))
+#define LEDLIGHT_IN_CLUSTER_NUM		(sizeof(ledLight_inClusterList)/sizeof(ledLight_inClusterList[0]))
+#define LEDLIGHT_OUT_CLUSTER_NUM		(sizeof(ledLight_outClusterList)/sizeof(ledLight_outClusterList[0]))
 
 /**
  *  @brief Definition for simple description for HA profile
  */
-const af_simple_descriptor_t sampleLight_simpleDesc =
+const af_simple_descriptor_t ledLight_simpleDesc =
 {
 	HA_PROFILE_ID,                      		/* Application profile identifier */
 #	if defined(EXTENDED_COLOR_LIGHT_DEVICE) && (EXTENDED_COLOR_LIGHT_DEVICE)
@@ -140,13 +144,13 @@ const af_simple_descriptor_t sampleLight_simpleDesc =
 #	else
 		HA_DEV_ONOFF_LIGHT,							/* Application device identifier */
 #	endif
-	SAMPLE_LIGHT_ENDPOINT,              		/* Endpoint */
+	LEDLIGHT_ENDPOINT,              		/* Endpoint */
 	1,                                  		/* Application device version */
 	0,											/* Reserved */
-	SAMPLELIGHT_IN_CLUSTER_NUM,           		/* Application input cluster count */
-	SAMPLELIGHT_OUT_CLUSTER_NUM,          		/* Application output cluster count */
-	(u16 *)sampleLight_inClusterList,    		/* Application input cluster list */
-	(u16 *)sampleLight_outClusterList,   		/* Application output cluster list */
+	LEDLIGHT_IN_CLUSTER_NUM,           		/* Application input cluster count */
+	LEDLIGHT_OUT_CLUSTER_NUM,          		/* Application output cluster count */
+	(u16 *)ledLight_inClusterList,    		/* Application input cluster list */
+	(u16 *)ledLight_outClusterList,   		/* Application output cluster list */
 };
 
 #if AF_TEST_ENABLE
@@ -356,6 +360,9 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 #if (COLOR_RGB_SUPPORT)
 	.currentHue						= 0x00,
 	.currentSaturation				= 0x00,
+	.currentX						= 0x616b,
+	.currentY						= 0x607d,
+	.enhancedCurrentHue				= 0x0000,
 	.colorLoopActive				= 0x00,
 	.colorLoopDirection				= 0x00,
 	.colorLoopTime					= 0x0019,
@@ -366,7 +373,9 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.colorTemperatureMireds				= COLOR_TEMPERATURE_PHYSICAL_MAX,
 	.colorTempPhysicalMinMireds			= COLOR_TEMPERATURE_PHYSICAL_MIN,
 	.colorTempPhysicalMaxMireds			= COLOR_TEMPERATURE_PHYSICAL_MAX,
+#	if (COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS)
 	.coupleColorTempToLevelMinMireds	= COLOR_TEMPERATURE_4000K,	/* 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑃ℎ𝑦𝑠𝑖𝑐𝑎𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑢𝑝𝑙𝑒𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑇𝑜𝐿𝑒𝑣𝑒𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑒𝑟𝑎𝑡𝑢𝑟𝑒𝑀𝑖𝑟𝑒𝑑𝑠 */
+#	endif
 	.startUpColorTemperatureMireds		= ZCL_START_UP_COLOR_TEMPERATURE_MIREDS_TO_PREVIOUS,
 #endif
 };
@@ -382,6 +391,9 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
 #if (COLOR_RGB_SUPPORT)
     { ZCL_ATTRID_CURRENT_HUE,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentHue },
     { ZCL_ATTRID_CURRENT_SATURATION,      			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentSaturation },
+    { ZCL_ATTRID_CURRENT_X,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentX },
+    { ZCL_ATTRID_CURRENT_Y,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentY },
+    { ZCL_ATTRID_ENHANCED_CURRENT_HUE,             	ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.enhancedCurrentHue },
     { ZCL_ATTRID_COLOR_LOOP_ACTIVE,       			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopActive },
     { ZCL_ATTRID_COLOR_LOOP_DIRECTION,    			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopDirection },
     { ZCL_ATTRID_COLOR_LOOP_TIME,         			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopTime },
@@ -392,8 +404,10 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
     { ZCL_ATTRID_COLOR_TEMPERATURE_MIREDS,				ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.colorTemperatureMireds },
     { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
     { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
-    { ZCL_ATTRID_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS,	ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.coupleColorTempToLevelMinMireds },
-    { ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds },
+#	if (COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS)
+	{ ZCL_ATTRID_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS,	ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.coupleColorTempToLevelMinMireds },
+#	endif
+	{ ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds },
 #endif
 
     { ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, 			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,  							 (u8*)&zcl_attr_global_clusterRevision},
@@ -405,28 +419,28 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
 /**
  *  @brief Definition for simple light ZCL specific cluster
  */
-const zcl_specClusterInfo_t g_sampleLightClusterList[] =
+const zcl_specClusterInfo_t g_ledLightClusterList[] =
 {
-	{ZCL_CLUSTER_GEN_BASIC,				 MANUFACTURER_CODE_NONE, 	ZCL_BASIC_ATTR_NUM, 	basic_attrTbl,  		zcl_basic_register,			 sampleLight_basicCb},
-	{ZCL_CLUSTER_GEN_IDENTIFY,			 MANUFACTURER_CODE_NONE, 	ZCL_IDENTIFY_ATTR_NUM,	identify_attrTbl,		zcl_identify_register,		 sampleLight_identifyCb},
+	{ZCL_CLUSTER_GEN_BASIC,				 MANUFACTURER_CODE_NONE, 	ZCL_BASIC_ATTR_NUM, 	basic_attrTbl,  		zcl_basic_register,			 ledLight_basicCb},
+	{ZCL_CLUSTER_GEN_IDENTIFY,			 MANUFACTURER_CODE_NONE, 	ZCL_IDENTIFY_ATTR_NUM,	identify_attrTbl,		zcl_identify_register,		 ledLight_identifyCb},
 #ifdef ZCL_GROUP
 	{ZCL_CLUSTER_GEN_GROUPS,			 MANUFACTURER_CODE_NONE, 	ZCL_GROUP_ATTR_NUM, 	group_attrTbl,  		zcl_group_register,			 NULL},
 #endif
 #ifdef ZCL_SCENE
-	{ZCL_CLUSTER_GEN_SCENES,			 MANUFACTURER_CODE_NONE, 	ZCL_SCENE_ATTR_NUM,		scene_attrTbl,			zcl_scene_register,			 sampleLight_sceneCb},
+	{ZCL_CLUSTER_GEN_SCENES,			 MANUFACTURER_CODE_NONE, 	ZCL_SCENE_ATTR_NUM,		scene_attrTbl,			zcl_scene_register,			 ledLight_sceneCb},
 #endif
 #ifdef ZCL_ON_OFF
-	{ZCL_CLUSTER_GEN_ON_OFF,			 MANUFACTURER_CODE_NONE, 	ZCL_ONOFF_ATTR_NUM,		onOff_attrTbl,			zcl_onOff_register,			 sampleLight_onOffCb},
+	{ZCL_CLUSTER_GEN_ON_OFF,			 MANUFACTURER_CODE_NONE, 	ZCL_ONOFF_ATTR_NUM,		onOff_attrTbl,			zcl_onOff_register,			 ledLight_onOffCb},
 #endif
 #ifdef ZCL_LEVEL_CTRL
-	{ZCL_CLUSTER_GEN_LEVEL_CONTROL,		 MANUFACTURER_CODE_NONE, 	ZCL_LEVEL_ATTR_NUM,		level_attrTbl,			zcl_level_register,			 sampleLight_levelCb},
+	{ZCL_CLUSTER_GEN_LEVEL_CONTROL,		 MANUFACTURER_CODE_NONE, 	ZCL_LEVEL_ATTR_NUM,		level_attrTbl,			zcl_level_register,			 ledLight_levelCb},
 #endif
 #ifdef ZCL_LIGHT_COLOR_CONTROL
-	{ZCL_CLUSTER_LIGHTING_COLOR_CONTROL, MANUFACTURER_CODE_NONE, 	ZCL_COLOR_ATTR_NUM,		lightColorCtrl_attrTbl,	zcl_lightColorCtrl_register, sampleLight_colorCtrlCb},
+	{ZCL_CLUSTER_LIGHTING_COLOR_CONTROL, MANUFACTURER_CODE_NONE, 	ZCL_COLOR_ATTR_NUM,		lightColorCtrl_attrTbl,	zcl_lightColorCtrl_register, ledLight_colorCtrlCb},
 #endif
 };
 
-u8 SAMPLELIGHT_CB_CLUSTER_NUM = (sizeof(g_sampleLightClusterList)/sizeof(g_sampleLightClusterList[0]));
+u8 LEDLIGHT_CB_CLUSTER_NUM = (sizeof(g_ledLightClusterList)/sizeof(g_ledLightClusterList[0]));
 
 
 /**********************************************************************
@@ -686,7 +700,7 @@ nv_sts_t zcl_colorCtrlAttr_restore(void)
 }
 
 /*********************************************************************
- * @fn      zcl_sampleLightAttrsInit
+ * @fn      zcl_ledLightAttrsInit
  *
  * @brief
  *
@@ -694,9 +708,9 @@ nv_sts_t zcl_colorCtrlAttr_restore(void)
  *
  * @return
  */
-void zcl_sampleLightAttrsInit(void)
+void zcl_ledLightAttrsInit(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_sampleLightAttrsInit\r");
+	DEBUG(DEBUG_TRACE, "zcl_ledLightAttrsInit\r");
 	zcl_onOffAttr_restore();
 	zcl_levelAttr_restore();
 	zcl_colorCtrlAttr_restore();

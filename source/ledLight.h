@@ -1,7 +1,11 @@
 /********************************************************************************************************
- * @file    sampleLight.h
+ * @file    ledLight.h
  *
- * @brief   This is the header file for sampleLight
+ * @brief   This is the header file for ledLight
+ *
+ * @author	Marc Hefter
+ * @date	2024-2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
  *
  * @author  Zigbee Group
  * @date    2021
@@ -23,15 +27,15 @@
  *
  *******************************************************************************************************/
 
-#ifndef _SAMPLE_LIGHT_H_
-#define _SAMPLE_LIGHT_H_
+#ifndef _LEDLIGHT_H_
+#define _LEDLIGHT_H_
 
 
 
 /**********************************************************************
  * CONSTANT
  */
-#define SAMPLE_LIGHT_ENDPOINT   0x01
+#define LEDLIGHT_ENDPOINT   0x01
 #define SAMPLE_TEST_ENDPOINT	0x02
 
 /**********************************************************************
@@ -132,6 +136,9 @@ typedef struct{
 #if COLOR_RGB_SUPPORT
 	u8	currentHue;
 	u8	currentSaturation;
+	u16	currentX;
+	u16	currentY;
+	u16	enhancedCurrentHue;
 	u8	colorLoopActive;
 	u8	colorLoopDirection;
 	u16	colorLoopTime;
@@ -142,7 +149,9 @@ typedef struct{
 	u16 colorTemperatureMireds;
 	u16 colorTempPhysicalMinMireds;
 	u16 colorTempPhysicalMaxMireds;
+#	if (COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS)
 	u16 coupleColorTempToLevelMinMireds;
+#	endif
 	u16 startUpColorTemperatureMireds;
 #endif
 }zcl_lightColorCtrlAttr_t;
@@ -185,9 +194,9 @@ extern bdb_commissionSetting_t g_bdbCommissionSetting;
 extern bdb_appCb_t g_zbDemoBdbCb;
 
 
-extern u8 SAMPLELIGHT_CB_CLUSTER_NUM;
-extern const zcl_specClusterInfo_t g_sampleLightClusterList[];
-extern const af_simple_descriptor_t sampleLight_simpleDesc;
+extern u8 LEDLIGHT_CB_CLUSTER_NUM;
+extern const zcl_specClusterInfo_t g_ledLightClusterList[];
+extern const af_simple_descriptor_t ledLight_simpleDesc;
 #if AF_TEST_ENABLE
 extern const af_simple_descriptor_t sampleTestDesc;
 #endif
@@ -209,26 +218,26 @@ extern zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs;
 /**********************************************************************
  * FUNCTIONS
  */
-void sampleLight_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg);
+void ledLight_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg);
 
-status_t sampleLight_basicCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
-status_t sampleLight_identifyCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
-status_t sampleLight_sceneCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
-status_t sampleLight_onOffCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
-status_t sampleLight_levelCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
-status_t sampleLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
+status_t ledLight_basicCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
+status_t ledLight_identifyCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
+status_t ledLight_sceneCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
+status_t ledLight_onOffCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
+status_t ledLight_levelCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
+status_t ledLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload);
 
-void sampleLight_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf);
-void sampleLight_leaveIndHandler(nlme_leave_ind_t *pLeaveInd);
-void sampleLight_otaProcessMsgHandler(u8 evt, u8 status);
-bool sampleLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate);
+void ledLight_leaveCnfHandler(nlme_leave_cnf_t *pLeaveCnf);
+void ledLight_leaveIndHandler(nlme_leave_ind_t *pLeaveInd);
+void ledLight_otaProcessMsgHandler(u8 evt, u8 status);
+bool ledLight_nwkUpdateIndicateHandler(nwkCmd_nwkUpdate_t *pNwkUpdate);
 
-void sampleLight_onoff(u8 cmd);
-void sampleLight_level(u8 setLevel);
+void ledLight_onoff(u8 cmd);
+void ledLight_level(u8 setLevel);
 #if COLOR_RGB_SUPPORT || COLOR_CCT_SUPPORT
 #endif
 
-void zcl_sampleLightAttrsInit(void);
+void zcl_ledLightAttrsInit(void);
 nv_sts_t zcl_onOffAttr_save(void);
 nv_sts_t zcl_levelAttr_save(void);
 nv_sts_t zcl_colorCtrlAttr_save(void);
@@ -238,4 +247,4 @@ void afTest_rx_handler(void *arg);
 void afTest_dataSendConfirm(void *arg);
 #endif
 
-#endif /* _SAMPLE_LIGHT_H_ */
+#endif /* _LEDLIGHT_H_ */

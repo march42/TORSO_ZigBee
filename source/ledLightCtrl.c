@@ -1,7 +1,11 @@
 /********************************************************************************************************
- * @file    sampleLightCtrl.c
+ * @file    ledLightCtrl.c
  *
- * @brief   This is the source file for sampleLightCtrl
+ * @brief   This is the source file for ledLightCtrl
+ *
+ * @author	Marc Hefter
+ * @date	2024-2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
  *
  * @author  Zigbee Group
  * @date    2021
@@ -30,14 +34,14 @@
  */
 #include "tl_common.h"
 #include "zcl_include.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 
 
 /**********************************************************************
  * LOCAL CONSTANTS
  */
-#define PWM_FREQUENCY					12000
+#define PWM_FREQUENCY					4000
 #define PWM_FULL_DUTYCYCLE				100
 #define PMW_MAX_TICK		            (PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
@@ -45,23 +49,29 @@
 /**********************************************************************
  * TYPEDEFS
  */
-
+typedef struct {
+	u16	CH1_CycleTick;
+	u16	CH2_CycleTick;
+	u16	CH3_CycleTick;
+	u16	CH4_CycleTick;
+	u16	CH5_CycleTick;
+} ledLight_PwmChannels_t;
 
 /**********************************************************************
  * GLOBAL VARIABLES
  */
-
+ledLight_PwmChannels_t	g_PwmChannels;
 
 /**********************************************************************
  * FUNCTIONS
  */
-extern void sampleLight_updateOnOff(void);
-extern void sampleLight_updateLevel(void);
-extern void sampleLight_updateColor(void);
+extern void ledLight_onOffInit(void);
+extern void ledLight_levelInit(void);
+extern void ledLight_colorInit(void);
 
-extern void sampleLight_onOffInit(void);
-extern void sampleLight_levelInit(void);
-extern void sampleLight_colorInit(void);
+extern void ledLight_updateOnOff(void);
+extern void ledLight_updateLevel(void);
+extern void ledLight_updateColor(void);
 
 /*********************************************************************
  * @fn      pwmSetDuty
@@ -113,19 +123,19 @@ void hwLight_init(void)
 
 #if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
 	COOL_LIGHT_PWM_SET();
-	pwmInit(COOL_LIGHT_PWM_CHANNEL, 0);
+	pwmInit(COOL_LIGHT_PWM_CHANNEL, 20);
 #endif
 #if (COLOR_RGB_SUPPORT)
 	R_LIGHT_PWM_SET();
 	G_LIGHT_PWM_SET();
 	B_LIGHT_PWM_SET();
-	pwmInit(R_LIGHT_PWM_CHANNEL, 0);
-	pwmInit(G_LIGHT_PWM_CHANNEL, 0);
-	pwmInit(B_LIGHT_PWM_CHANNEL, 0);
+	pwmInit(R_LIGHT_PWM_CHANNEL, 20);
+	pwmInit(G_LIGHT_PWM_CHANNEL, 20);
+	pwmInit(B_LIGHT_PWM_CHANNEL, 20);
 #endif
 #if (COLOR_CCT_SUPPORT)
 	WARM_LIGHT_PWM_SET();
-	pwmInit(WARM_LIGHT_PWM_CHANNEL, 0);
+	pwmInit(WARM_LIGHT_PWM_CHANNEL, 20);
 #endif
 }
 
@@ -188,7 +198,8 @@ void hwLight_levelUpdate(u8 level)
 
 	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, gammaCorrectLevel * PWM_FULL_DUTYCYCLE);
+	g_PwmChannels.CH1_CycleTick = gammaCorrectLevel * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
 #endif
 }
 
@@ -237,8 +248,10 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 	u16 gammaCorrectC = ((u16)C * C) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 	u16 gammaCorrectW = ((u16)W * W) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, gammaCorrectC * PWM_FULL_DUTYCYCLE);
-	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, gammaCorrectW * PWM_FULL_DUTYCYCLE);
+	g_PwmChannels.CH1_CycleTick = gammaCorrectC * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
+	g_PwmChannels.CH5_CycleTick = gammaCorrectW * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, g_PwmChannels.CH5_CycleTick);
 #endif
 }
 
@@ -340,9 +353,12 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 	u16 gammaCorrectG = ((u16)G * G) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 	u16 gammaCorrectB = ((u16)B * B) / ZCL_LEVEL_ATTR_MAX_LEVEL;
 
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL, gammaCorrectR * PWM_FULL_DUTYCYCLE);
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL, gammaCorrectG * PWM_FULL_DUTYCYCLE);
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL, gammaCorrectB * PWM_FULL_DUTYCYCLE);
+	g_PwmChannels.CH2_CycleTick = gammaCorrectR * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL, g_PwmChannels.CH2_CycleTick);
+	g_PwmChannels.CH3_CycleTick = gammaCorrectG * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL, g_PwmChannels.CH3_CycleTick);
+	g_PwmChannels.CH4_CycleTick = gammaCorrectB * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL, g_PwmChannels.CH4_CycleTick);
 #endif
 }
 
@@ -361,12 +377,12 @@ void light_adjust(void)
 
 #if defined(ZCL_LIGHT_COLOR_CONTROL)
 	// if CCT or RGB supported
-	sampleLight_colorInit();
+	ledLight_colorInit();
 #elif defined(ZCL_LEVEL_CTRL)
 	// for LED_MODE_DIMMER
-	sampleLight_levelInit();
+	ledLight_levelInit();
 #endif
-	sampleLight_onOffInit();
+	ledLight_onOffInit();
 }
 
 /*********************************************************************
@@ -384,15 +400,16 @@ void light_fresh(void)
 
 #if defined(ZCL_LIGHT_COLOR_CONTROL)
 	// if CCT or RGB supported
-	sampleLight_updateColor();
+	ledLight_updateColor();
 #elif defined(ZCL_LEVEL_CTRL)
 	// for LED_MODE_DIMMER
-	sampleLight_updateLevel();
+	ledLight_updateLevel();
 #else
 	// always set LED_CH1 to maximum, without ZCL_LEVEL_CTRL and ZCL_LIGHT_COLOR_CONTROL
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, ZCL_LEVEL_ATTR_MAX_LEVEL * PWM_FULL_DUTYCYCLE);
+	g_PwmChannels.CH1_CycleTick = ZCL_LEVEL_ATTR_MAX_LEVEL * PWM_FULL_DUTYCYCLE;
+	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
 #endif
-	sampleLight_updateOnOff();
+	ledLight_updateOnOff();
 
 	gLightCtx.lightAttrsChanged = TRUE;
 }

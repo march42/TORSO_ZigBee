@@ -31,8 +31,8 @@
 #include "tl_common.h"
 #include "zb_api.h"
 #include "zcl_include.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -49,7 +49,7 @@ static ev_timer_event_t *onWithTimedOffTimerEvt = NULL;
  */
 
 /*********************************************************************
- * @fn      sampleLight_onOffInit
+ * @fn      ledLight_onOffInit
  *
  * @brief
  *
@@ -57,15 +57,15 @@ static ev_timer_event_t *onWithTimedOffTimerEvt = NULL;
  *
  * @return  None
  */
-void sampleLight_onOffInit(void)
+void ledLight_onOffInit(void)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	sampleLight_onoff(pOnOff->onOff);
+	ledLight_onoff(pOnOff->onOff);
 }
 
 /*********************************************************************
- * @fn      sampleLight_updateOnOff
+ * @fn      ledLight_updateOnOff
  *
  * @brief
  *
@@ -73,7 +73,7 @@ void sampleLight_onOffInit(void)
  *
  * @return  None
  */
-void sampleLight_updateOnOff(void)
+void ledLight_updateOnOff(void)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
@@ -81,7 +81,7 @@ void sampleLight_updateOnOff(void)
 }
 
 /*********************************************************************
- * @fn      sampleLight_onoff
+ * @fn      ledLight_onoff
  *
  * @brief
  *
@@ -89,7 +89,7 @@ void sampleLight_updateOnOff(void)
  *
  * @return  None
  */
-void sampleLight_onoff(u8 cmd)
+void ledLight_onoff(u8 cmd)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
@@ -126,7 +126,7 @@ void sampleLight_onoff(u8 cmd)
 }
 
 /*********************************************************************
- * @fn      sampleLight_OnWithTimedOffTimerCb
+ * @fn      ledLight_OnWithTimedOffTimerCb
  *
  * @brief   timer event to process the ON_WITH_TIMED_OFF command
  *
@@ -134,7 +134,7 @@ void sampleLight_onoff(u8 cmd)
  *
  * @return  0: timer continue on; -1: timer will be canceled
  */
-static s32 sampleLight_OnWithTimedOffTimerCb(void *arg)
+static s32 ledLight_OnWithTimedOffTimerCb(void *arg)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
@@ -142,7 +142,7 @@ static s32 sampleLight_OnWithTimedOffTimerCb(void *arg)
 		pOnOff->onTime--;
 		if(pOnOff->onTime <= 0){
 			pOnOff->offWaitTime = 0;
-			sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
+			ledLight_onoff(ZCL_CMD_ONOFF_OFF);
 		}
 	}
 
@@ -163,7 +163,7 @@ static s32 sampleLight_OnWithTimedOffTimerCb(void *arg)
 }
 
 /*********************************************************************
- * @fn      sampleLight_OnWithTimedOffTimerStop
+ * @fn      ledLight_OnWithTimedOffTimerStop
  *
  * @brief   force to stop the OnWithTimedOff timer
  *
@@ -171,7 +171,7 @@ static s32 sampleLight_OnWithTimedOffTimerCb(void *arg)
  *
  * @return
  */
-static void sampleLight_OnWithTimedOffTimerStop(void)
+static void ledLight_OnWithTimedOffTimerStop(void)
 {
 	if(onWithTimedOffTimerEvt){
 		TL_ZB_TIMER_CANCEL(&onWithTimedOffTimerEvt);
@@ -179,7 +179,7 @@ static void sampleLight_OnWithTimedOffTimerStop(void)
 }
 
 /*********************************************************************
- * @fn      sampleLight_onoff_onWithTimedOffProcess
+ * @fn      ledLight_onoff_onWithTimedOffProcess
  *
  * @brief
  *
@@ -187,7 +187,7 @@ static void sampleLight_OnWithTimedOffTimerStop(void)
  *
  * @return  None
  */
-static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t *cmd)
+static void ledLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t *cmd)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
@@ -200,19 +200,19 @@ static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t
 	}else{
 		pOnOff->onTime = max2(pOnOff->onTime, cmd->onTime);
 		pOnOff->offWaitTime = cmd->offWaitTime;
-		sampleLight_onoff(ZCL_CMD_ONOFF_ON);
+		ledLight_onoff(ZCL_CMD_ONOFF_ON);
 	}
 
 	if((pOnOff->onTime < 0xFFFF) && (pOnOff->offWaitTime < 0xFFFF)){
 		if(pOnOff->onTime || pOnOff->offWaitTime){
-			sampleLight_OnWithTimedOffTimerStop();
-			onWithTimedOffTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_OnWithTimedOffTimerCb, NULL, ZCL_ONOFF_TIMER_INTERVAL);
+			ledLight_OnWithTimedOffTimerStop();
+			onWithTimedOffTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_OnWithTimedOffTimerCb, NULL, ZCL_ONOFF_TIMER_INTERVAL);
 		}
 	}
 }
 
 /*********************************************************************
- * @fn      sampleLight_onoff_offWithEffectProcess
+ * @fn      ledLight_onoff_offWithEffectProcess
  *
  * @brief
  *
@@ -220,15 +220,15 @@ static void sampleLight_onoff_onWithTimedOffProcess(zcl_onoff_onWithTimeOffCmd_t
  *
  * @return  None
  */
-static void sampleLight_onoff_offWithEffectProcess(zcl_onoff_offWithEffectCmd_t *cmd)
+static void ledLight_onoff_offWithEffectProcess(zcl_onoff_offWithEffectCmd_t *cmd)
 {
 	//TODO: FIXED ME
 
-	sampleLight_onoff(ZCL_CMD_ONOFF_OFF);
+	ledLight_onoff(ZCL_CMD_ONOFF_OFF);
 }
 
 /*********************************************************************
- * @fn      sampleLight_onoff_onWithRecallGlobalSceneProcess
+ * @fn      ledLight_onoff_onWithRecallGlobalSceneProcess
  *
  * @brief
  *
@@ -236,13 +236,13 @@ static void sampleLight_onoff_offWithEffectProcess(zcl_onoff_offWithEffectCmd_t 
  *
  * @return  None
  */
-static void sampleLight_onoff_onWithRecallGlobalSceneProcess(void)
+static void ledLight_onoff_onWithRecallGlobalSceneProcess(void)
 {
 
 }
 
 /*********************************************************************
- * @fn      sampleLight_onOffCb
+ * @fn      ledLight_onOffCb
  *
  * @brief   Handler for ZCL ONOFF command. This function will set ONOFF attribute first.
  *
@@ -252,16 +252,16 @@ static void sampleLight_onoff_onWithRecallGlobalSceneProcess(void)
  *
  * @return  status_t
  */
-status_t sampleLight_onOffCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
+status_t ledLight_onOffCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
+	if(pAddrInfo->dstEp == LEDLIGHT_ENDPOINT){
 		switch(cmdId){
 			case ZCL_CMD_ONOFF_ON:
 			case ZCL_CMD_ONOFF_OFF:
 			case ZCL_CMD_ONOFF_TOGGLE:
-				sampleLight_onoff(cmdId);
+				ledLight_onoff(cmdId);
 				break;
 			case ZCL_CMD_OFF_WITH_EFFECT:
 				if(pOnOff->globalSceneControl == TRUE){
@@ -269,16 +269,16 @@ status_t sampleLight_onOffCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *c
 
 					pOnOff->globalSceneControl = FALSE;
 				}
-				sampleLight_onoff_offWithEffectProcess((zcl_onoff_offWithEffectCmd_t *)cmdPayload);
+				ledLight_onoff_offWithEffectProcess((zcl_onoff_offWithEffectCmd_t *)cmdPayload);
 				break;
 			case ZCL_CMD_ON_WITH_RECALL_GLOBAL_SCENE:
 				if(pOnOff->globalSceneControl == FALSE){
-					sampleLight_onoff_onWithRecallGlobalSceneProcess();
+					ledLight_onoff_onWithRecallGlobalSceneProcess();
 					pOnOff->globalSceneControl = TRUE;
 				}
 				break;
 			case ZCL_CMD_ON_WITH_TIMED_OFF:
-				sampleLight_onoff_onWithTimedOffProcess((zcl_onoff_onWithTimeOffCmd_t *)cmdPayload);
+				ledLight_onoff_onWithTimedOffProcess((zcl_onoff_onWithTimeOffCmd_t *)cmdPayload);
 				break;
 			default:
 				break;

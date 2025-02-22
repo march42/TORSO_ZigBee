@@ -32,11 +32,11 @@
 #include "tl_common.h"
 #include "zb_api.h"
 #include "zcl_include.h"
-#include "sampleLight.h"
+#include "ledLight.h"
 
 
 /*********************************************************************
- * @fn      sampleLight_sceneRecallReqHandler
+ * @fn      ledLight_sceneRecallReqHandler
  *
  * @brief   Handler for ZCL scene recall command. This function will recall scene.
  *
@@ -45,7 +45,7 @@
  *
  * @return  None
  */
-static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, zcl_sceneEntry_t *pScene)
+static void ledLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, zcl_sceneEntry_t *pScene)
 {
 	u8 extLen = 0;
 
@@ -79,7 +79,7 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 	moveToLevel.transitionTime = pScene->transTime * 10 + pScene->transTime100ms;
 	moveToLevel.optPresent = 0;
 
-	sampleLight_levelCb(pAddrInfo, ZCL_CMD_LEVEL_MOVE_TO_LEVEL, &moveToLevel);
+	ledLight_levelCb(pAddrInfo, ZCL_CMD_LEVEL_MOVE_TO_LEVEL, &moveToLevel);
 #endif
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
@@ -90,7 +90,7 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 	move2HueAndSat.transitionTime = pScene->transTime * 10 + pScene->transTime100ms;
 	move2HueAndSat.optPresent = 0;
 
-	sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE_AND_SATURATION, &move2HueAndSat);
+	ledLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE_AND_SATURATION, &move2HueAndSat);
 #	endif
 #	if (COLOR_CCT_SUPPORT)
 	zcl_colorCtrlMoveToColorTemperatureCmd_t move2ColorTemp;
@@ -98,13 +98,13 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
 	move2ColorTemp.transitionTime = pScene->transTime * 10 + pScene->transTime100ms;
 	move2ColorTemp.optPresent = 0;
 
-	sampleLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE, &move2ColorTemp);
+	ledLight_colorCtrlCb(pAddrInfo, ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR_TEMPERATURE, &move2ColorTemp);
 #	endif
 #endif
 }
 
 /*********************************************************************
- * @fn      sampleLight_sceneStoreReqHandler
+ * @fn      ledLight_sceneStoreReqHandler
  *
  * @brief   Handler for ZCL scene store command. This function will set scene attribute first.
  *
@@ -113,7 +113,7 @@ static void sampleLight_sceneRecallReqHandler(zclIncomingAddrInfo_t *pAddrInfo, 
  *
  * @return  None
  */
-static void sampleLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
+static void ledLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
 {
 	/* receive Store Scene Request command, get the latest Scene info to save */
 	u8 extLen = 0;
@@ -157,7 +157,7 @@ static void sampleLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
 }
 
 /*********************************************************************
- * @fn      sampleLight_sceneCb
+ * @fn      ledLight_sceneCb
  *
  * @brief   Handler for ZCL Scene command.
  *
@@ -165,16 +165,16 @@ static void sampleLight_sceneStoreReqHandler(zcl_sceneEntry_t *pScene)
  *
  * @return  None
  */
-status_t sampleLight_sceneCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
+status_t ledLight_sceneCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
+	if(pAddrInfo->dstEp == LEDLIGHT_ENDPOINT){
 		if(pAddrInfo->dirCluster == ZCL_FRAME_CLIENT_SERVER_DIR){
 			switch(cmdId){
 				case ZCL_CMD_SCENE_STORE_SCENE:
-					sampleLight_sceneStoreReqHandler((zcl_sceneEntry_t *)cmdPayload);
+					ledLight_sceneStoreReqHandler((zcl_sceneEntry_t *)cmdPayload);
 					break;
 				case ZCL_CMD_SCENE_RECALL_SCENE:
-					sampleLight_sceneRecallReqHandler(pAddrInfo, (zcl_sceneEntry_t *)cmdPayload);
+					ledLight_sceneRecallReqHandler(pAddrInfo, (zcl_sceneEntry_t *)cmdPayload);
 					break;
 				default:
 					break;

@@ -98,6 +98,7 @@ extern "C" {
 #define UART_RX_PIN						UART_RX_PB7
 #define UART_SWS						GPIO_PA7
 
+//#define LED_ACTIVE_LOW				0
 //#define LED_POWER						GPIO_PA0
 //#define LED_PERMIT					GPIO_PC2
 

@@ -1,7 +1,11 @@
 /********************************************************************************************************
- * @file    sampleLight.c
+ * @file    ledLight.c
  *
- * @brief   This is the source file for sampleLight
+ * @brief   This is the source file for ledLight
+ *
+ * @author	Marc Hefter
+ * @date	2024-2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
  *
  * @author  Zigbee Group
  * @date    2021
@@ -34,8 +38,8 @@
 #include "bdb.h"
 #include "ota.h"
 #include "gp.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 #include "app_ui.h"
 #include "factory_reset.h"
 #if ZBHCI_EN
@@ -62,10 +66,10 @@ app_ctx_t gLightCtx;
 
 
 #ifdef ZCL_OTA
-extern ota_callBack_t sampleLight_otaCb;
+extern ota_callBack_t ledLight_otaCb;
 
 //running code firmware information
-ota_preamble_t sampleLight_otaInfo = {
+ota_preamble_t ledLight_otaInfo = {
 	.fileVer 			= FILE_VERSION,
 	.imageType 			= IMAGE_TYPE,
 	.manufacturerCode 	= MANUFACTURER_CODE_TELINK,
@@ -78,9 +82,9 @@ const zdo_appIndCb_t appCbLst = {
 	bdb_zdoStartDevCnf,//start device cnf cb
 	NULL,//reset cnf cb
 	NULL,//device announce indication cb
-	sampleLight_leaveIndHandler,//leave ind cb
-	sampleLight_leaveCnfHandler,//leave cnf cb
-	sampleLight_nwkUpdateIndicateHandler,//nwk update ind cb
+	ledLight_leaveIndHandler,//leave ind cb
+	ledLight_leaveCnfHandler,//leave cnf cb
+	ledLight_nwkUpdateIndicateHandler,//nwk update ind cb
 	NULL,//permit join ind cb
 	NULL,//nlme sync cnf cb
 	NULL,//tc join ind cb
@@ -113,7 +117,7 @@ bdb_commissionSetting_t g_bdbCommissionSetting = {
 /**********************************************************************
  * LOCAL VARIABLES
  */
-ev_timer_event_t *sampleLightAttrsStoreTimerEvt = NULL;
+ev_timer_event_t *ledLightAttrsStoreTimerEvt = NULL;
 
 
 /**********************************************************************
@@ -156,64 +160,64 @@ void user_app_init(void)
 
     /* Initialize ZCL layer */
 	/* Register Incoming ZCL Foundation command/response messages */
-    zcl_init(sampleLight_zclProcessIncomingMsg);
+    zcl_init(ledLight_zclProcessIncomingMsg);
 
 	/* Register endPoint */
-	af_endpointRegister(SAMPLE_LIGHT_ENDPOINT, (af_simple_descriptor_t *)&sampleLight_simpleDesc, zcl_rx_handler, NULL);
+	af_endpointRegister(LEDLIGHT_ENDPOINT, (af_simple_descriptor_t *)&ledLight_simpleDesc, zcl_rx_handler, NULL);
 #if AF_TEST_ENABLE
 	/* A sample of AF data handler. */
 	af_endpointRegister(SAMPLE_TEST_ENDPOINT, (af_simple_descriptor_t *)&sampleTestDesc, afTest_rx_handler, afTest_dataSendConfirm);
 #endif
 
 	/* Initialize or restore attributes, this must before 'zcl_register()' */
-	zcl_sampleLightAttrsInit();
+	zcl_ledLightAttrsInit();
 	zcl_reportingTabInit();
 
 	/* Register ZCL specific cluster information */
-	zcl_register(SAMPLE_LIGHT_ENDPOINT, SAMPLELIGHT_CB_CLUSTER_NUM, (zcl_specClusterInfo_t *)g_sampleLightClusterList);
+	zcl_register(LEDLIGHT_ENDPOINT, LEDLIGHT_CB_CLUSTER_NUM, (zcl_specClusterInfo_t *)g_ledLightClusterList);
 
 #if ZCL_GP_SUPPORT
 	/* Initialize GP */
-	gp_init(SAMPLE_LIGHT_ENDPOINT);
+	gp_init(LEDLIGHT_ENDPOINT);
 #endif
 
 #if ZCL_OTA_SUPPORT
 	/* Initialize OTA */
-    ota_init(OTA_TYPE_CLIENT, (af_simple_descriptor_t *)&sampleLight_simpleDesc, &sampleLight_otaInfo, &sampleLight_otaCb);
+    ota_init(OTA_TYPE_CLIENT, (af_simple_descriptor_t *)&ledLight_simpleDesc, &ledLight_otaInfo, &ledLight_otaCb);
 #endif
 
 #if ZCL_WWAH_SUPPORT
     /* Initialize WWAH server */
-    wwah_init(WWAH_TYPE_SERVER, (af_simple_descriptor_t *)&sampleLight_simpleDesc);
+    wwah_init(WWAH_TYPE_SERVER, (af_simple_descriptor_t *)&ledLight_simpleDesc);
 #endif
 }
 
 
 
-s32 sampleLightAttrsStoreTimerCb(void *arg)
+s32 ledLightAttrsStoreTimerCb(void *arg)
 {
 	zcl_onOffAttr_save();
 	zcl_levelAttr_save();
 	zcl_colorCtrlAttr_save();
 
-	sampleLightAttrsStoreTimerEvt = NULL;
+	ledLightAttrsStoreTimerEvt = NULL;
 	return -1;
 }
 
-void sampleLightAttrsStoreTimerStart(void)
+void ledLightAttrsStoreTimerStart(void)
 {
-	if(sampleLightAttrsStoreTimerEvt){
-		TL_ZB_TIMER_CANCEL(&sampleLightAttrsStoreTimerEvt);
+	if(ledLightAttrsStoreTimerEvt){
+		TL_ZB_TIMER_CANCEL(&ledLightAttrsStoreTimerEvt);
 	}
-	sampleLightAttrsStoreTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLightAttrsStoreTimerCb, NULL, 200);
+	ledLightAttrsStoreTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLightAttrsStoreTimerCb, NULL, 200);
 }
 
-void sampleLightAttrsChk(void)
+void ledLightAttrsChk(void)
 {
 	if(gLightCtx.lightAttrsChanged){
 		gLightCtx.lightAttrsChanged = FALSE;
 		if(zb_isDeviceJoinedNwk()){
-			sampleLightAttrsStoreTimerStart();
+			ledLightAttrsStoreTimerStart();
 		}
 	}
 }
@@ -240,19 +244,19 @@ void app_task(void)
 	app_key_handler();
 	localPermitJoinState();
 	if(BDB_STATE_GET() == BDB_STATE_IDLE){
-		//factoryRst_handler();
+		factoryRst_handler();
 
 		report_handler();
 
 #if (LIGHTING_SAVE)			/* latest status of lighting will be stored. */
-		sampleLightAttrsChk();
+		ledLightAttrsChk();
 #endif
 	}
 }
 
-static void sampleLightSysException(void)
+static void ledLightSysException(void)
 {
-	DEBUG(DEBUG_TRACE, "sampleLightSysException\r");
+	DEBUG(DEBUG_TRACE, "ledLightSysException\r");
 #if 1
 	SYSTEM_RESET();
 #else
@@ -280,7 +284,7 @@ void user_init(bool isRetention)
 	led_init();
 	hwLight_init();
 
-	//factoryRst_init();
+	factoryRst_init();
 
 	/* Initialize Stack */
 	stack_init();
@@ -289,7 +293,7 @@ void user_init(bool isRetention)
 	user_app_init();
 
 	/* Register except handler for test */
-	sys_exceptHandlerRegister(sampleLightSysException);
+	sys_exceptHandlerRegister(ledLightSysException);
 
 	/* Adjust light state to default attributes*/
 	light_adjust();
@@ -309,11 +313,11 @@ void user_init(bool isRetention)
 
     /* Set default reporting configuration */
     u8 reportableChange = 0x00;
-    bdb_defaultReportingCfg(SAMPLE_LIGHT_ENDPOINT, HA_PROFILE_ID, ZCL_CLUSTER_GEN_ON_OFF, ZCL_ATTRID_ONOFF,
+    bdb_defaultReportingCfg(LEDLIGHT_ENDPOINT, HA_PROFILE_ID, ZCL_CLUSTER_GEN_ON_OFF, ZCL_ATTRID_ONOFF,
     						0x0000, 0x003c, (u8 *)&reportableChange);
 
     /* Initialize BDB */
-	bdb_init((af_simple_descriptor_t *)&sampleLight_simpleDesc, &g_bdbCommissionSetting, &g_zbDemoBdbCb, 1);
+	bdb_init((af_simple_descriptor_t *)&ledLight_simpleDesc, &g_bdbCommissionSetting, &g_zbDemoBdbCb, 1);
 }
 
 #endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */

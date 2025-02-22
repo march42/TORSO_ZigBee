@@ -1,7 +1,7 @@
 /********************************************************************************************************
- * @file    zcl_sampleLightCb.c
+ * @file    zcl_ledLightCb.c
  *
- * @brief   This is the source file for zcl_sampleLightCb
+ * @brief   This is the source file for zcl_ledLightCb
  *
  * @author  Zigbee Group
  * @date    2021
@@ -32,8 +32,8 @@
 #include "zb_api.h"
 #include "zcl_include.h"
 #include "ota.h"
-#include "sampleLight.h"
-#include "sampleLightCtrl.h"
+#include "ledLight.h"
+#include "ledLightCtrl.h"
 
 /**********************************************************************
  * LOCAL CONSTANTS
@@ -50,18 +50,18 @@
  * LOCAL FUNCTIONS
  */
 #ifdef ZCL_READ
-static void sampleLight_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd);
+static void ledLight_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd);
 #endif
 #ifdef ZCL_WRITE
-static void sampleLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd);
-static void sampleLight_zclWriteRspCmd(zclWriteRspCmd_t *pWriteRspCmd);
+static void ledLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd);
+static void ledLight_zclWriteRspCmd(zclWriteRspCmd_t *pWriteRspCmd);
 #endif
 #ifdef ZCL_REPORT
-static void sampleLight_zclCfgReportCmd(zclCfgReportCmd_t *pCfgReportCmd);
-static void sampleLight_zclCfgReportRspCmd(zclCfgReportRspCmd_t *pCfgReportRspCmd);
-static void sampleLight_zclReportCmd(zclReportCmd_t *pReportCmd);
+static void ledLight_zclCfgReportCmd(zclCfgReportCmd_t *pCfgReportCmd);
+static void ledLight_zclCfgReportRspCmd(zclCfgReportRspCmd_t *pCfgReportRspCmd);
+static void ledLight_zclReportCmd(zclReportCmd_t *pReportCmd);
 #endif
-static void sampleLight_zclDfltRspCmd(zclDefaultRspCmd_t *pDftRspCmd);
+static void ledLight_zclDfltRspCmd(zclDefaultRspCmd_t *pDftRspCmd);
 
 
 /**********************************************************************
@@ -82,7 +82,7 @@ static ev_timer_event_t *identifyTimerEvt = NULL;
  */
 
 /*********************************************************************
- * @fn      sampleLight_zclProcessIncomingMsg
+ * @fn      ledLight_zclProcessIncomingMsg
  *
  * @brief   Process ZCL Foundation incoming message.
  *
@@ -90,38 +90,38 @@ static ev_timer_event_t *identifyTimerEvt = NULL;
  *
  * @return  None
  */
-void sampleLight_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
+void ledLight_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
 {
-//	printf("sampleLight_zclProcessIncomingMsg\n");
+//	printf("ledLight_zclProcessIncomingMsg\n");
 
 	switch(pInHdlrMsg->hdr.cmd)
 	{
 #ifdef ZCL_READ
 		case ZCL_CMD_READ_RSP:
-			sampleLight_zclReadRspCmd(pInHdlrMsg->attrCmd);
+			ledLight_zclReadRspCmd(pInHdlrMsg->attrCmd);
 			break;
 #endif
 #ifdef ZCL_WRITE
 		case ZCL_CMD_WRITE:
-			sampleLight_zclWriteReqCmd(pInHdlrMsg->msg->indInfo.cluster_id, pInHdlrMsg->attrCmd);
+			ledLight_zclWriteReqCmd(pInHdlrMsg->msg->indInfo.cluster_id, pInHdlrMsg->attrCmd);
 			break;
 		case ZCL_CMD_WRITE_RSP:
-			sampleLight_zclWriteRspCmd(pInHdlrMsg->attrCmd);
+			ledLight_zclWriteRspCmd(pInHdlrMsg->attrCmd);
 			break;
 #endif
 #ifdef ZCL_REPORT
 		case ZCL_CMD_CONFIG_REPORT:
-			sampleLight_zclCfgReportCmd(pInHdlrMsg->attrCmd);
+			ledLight_zclCfgReportCmd(pInHdlrMsg->attrCmd);
 			break;
 		case ZCL_CMD_CONFIG_REPORT_RSP:
-			sampleLight_zclCfgReportRspCmd(pInHdlrMsg->attrCmd);
+			ledLight_zclCfgReportRspCmd(pInHdlrMsg->attrCmd);
 			break;
 		case ZCL_CMD_REPORT:
-			sampleLight_zclReportCmd(pInHdlrMsg->attrCmd);
+			ledLight_zclReportCmd(pInHdlrMsg->attrCmd);
 			break;
 #endif
 		case ZCL_CMD_DEFAULT_RSP:
-			sampleLight_zclDfltRspCmd(pInHdlrMsg->attrCmd);
+			ledLight_zclDfltRspCmd(pInHdlrMsg->attrCmd);
 			break;
 		default:
 			break;
@@ -130,7 +130,7 @@ void sampleLight_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
 
 #ifdef ZCL_READ
 /*********************************************************************
- * @fn      sampleLight_zclReadRspCmd
+ * @fn      ledLight_zclReadRspCmd
  *
  * @brief   Handler for ZCL Read Response command.
  *
@@ -138,16 +138,16 @@ void sampleLight_zclProcessIncomingMsg(zclIncoming_t *pInHdlrMsg)
  *
  * @return  None
  */
-static void sampleLight_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd)
+static void ledLight_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd)
 {
-//    printf("sampleLight_zclReadRspCmd\n");
+//    printf("ledLight_zclReadRspCmd\n");
 
 }
 #endif
 
 #ifdef ZCL_WRITE
 /*********************************************************************
- * @fn      sampleLight_zclWriteReqCmd
+ * @fn      ledLight_zclWriteReqCmd
  *
  * @brief   Handler for ZCL Write Request command.
  *
@@ -155,7 +155,7 @@ static void sampleLight_zclReadRspCmd(zclReadRspCmd_t *pReadRspCmd)
  *
  * @return  None
  */
-static void sampleLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd)
+static void ledLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCmd)
 {
 	u8 numAttr = pWriteReqCmd->numAttr;
 	zclWriteRec_t *attr = pWriteReqCmd->attrList;
@@ -170,7 +170,7 @@ static void sampleLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCm
 }
 
 /*********************************************************************
- * @fn      sampleLight_zclWriteRspCmd
+ * @fn      ledLight_zclWriteRspCmd
  *
  * @brief   Handler for ZCL Write Response command.
  *
@@ -178,16 +178,16 @@ static void sampleLight_zclWriteReqCmd(u16 clusterId, zclWriteCmd_t *pWriteReqCm
  *
  * @return  None
  */
-static void sampleLight_zclWriteRspCmd(zclWriteRspCmd_t *pWriteRspCmd)
+static void ledLight_zclWriteRspCmd(zclWriteRspCmd_t *pWriteRspCmd)
 {
-//    printf("sampleLight_zclWriteRspCmd\n");
+//    printf("ledLight_zclWriteRspCmd\n");
 
 }
 #endif
 
 
 /*********************************************************************
- * @fn      sampleLight_zclDfltRspCmd
+ * @fn      ledLight_zclDfltRspCmd
  *
  * @brief   Handler for ZCL Default Response command.
  *
@@ -195,9 +195,9 @@ static void sampleLight_zclWriteRspCmd(zclWriteRspCmd_t *pWriteRspCmd)
  *
  * @return  None
  */
-static void sampleLight_zclDfltRspCmd(zclDefaultRspCmd_t *pDftRspCmd)
+static void ledLight_zclDfltRspCmd(zclDefaultRspCmd_t *pDftRspCmd)
 {
-//  printf("sampleLight_zclDfltRspCmd\n");
+//  printf("ledLight_zclDfltRspCmd\n");
 #ifdef ZCL_OTA
 	if( (pDftRspCmd->commandID == ZCL_CMD_OTA_UPGRADE_END_REQ) &&
 		(pDftRspCmd->statusCode == ZCL_STA_ABORT) ){
@@ -210,7 +210,7 @@ static void sampleLight_zclDfltRspCmd(zclDefaultRspCmd_t *pDftRspCmd)
 
 #ifdef ZCL_REPORT
 /*********************************************************************
- * @fn      sampleLight_zclCfgReportCmd
+ * @fn      ledLight_zclCfgReportCmd
  *
  * @brief   Handler for ZCL Configure Report command.
  *
@@ -218,14 +218,14 @@ static void sampleLight_zclDfltRspCmd(zclDefaultRspCmd_t *pDftRspCmd)
  *
  * @return  None
  */
-static void sampleLight_zclCfgReportCmd(zclCfgReportCmd_t *pCfgReportCmd)
+static void ledLight_zclCfgReportCmd(zclCfgReportCmd_t *pCfgReportCmd)
 {
-//    printf("sampleLight_zclCfgReportCmd\n");
+//    printf("ledLight_zclCfgReportCmd\n");
 
 }
 
 /*********************************************************************
- * @fn      sampleLight_zclCfgReportRspCmd
+ * @fn      ledLight_zclCfgReportRspCmd
  *
  * @brief   Handler for ZCL Configure Report Response command.
  *
@@ -233,14 +233,14 @@ static void sampleLight_zclCfgReportCmd(zclCfgReportCmd_t *pCfgReportCmd)
  *
  * @return  None
  */
-static void sampleLight_zclCfgReportRspCmd(zclCfgReportRspCmd_t *pCfgReportRspCmd)
+static void ledLight_zclCfgReportRspCmd(zclCfgReportRspCmd_t *pCfgReportRspCmd)
 {
-//    printf("sampleLight_zclCfgReportRspCmd\n");
+//    printf("ledLight_zclCfgReportRspCmd\n");
 
 }
 
 /*********************************************************************
- * @fn      sampleLight_zclReportCmd
+ * @fn      ledLight_zclReportCmd
  *
  * @brief   Handler for ZCL Report command.
  *
@@ -248,16 +248,16 @@ static void sampleLight_zclCfgReportRspCmd(zclCfgReportRspCmd_t *pCfgReportRspCm
  *
  * @return  None
  */
-static void sampleLight_zclReportCmd(zclReportCmd_t *pReportCmd)
+static void ledLight_zclReportCmd(zclReportCmd_t *pReportCmd)
 {
-//    printf("sampleLight_zclReportCmd\n");
+//    printf("ledLight_zclReportCmd\n");
 
 }
 #endif
 
 #ifdef ZCL_BASIC
 /*********************************************************************
- * @fn      sampleLight_basicCb
+ * @fn      ledLight_basicCb
  *
  * @brief   Handler for ZCL Basic Reset command.
  *
@@ -267,7 +267,7 @@ static void sampleLight_zclReportCmd(zclReportCmd_t *pReportCmd)
  *
  * @return  status_t
  */
-status_t sampleLight_basicCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
+status_t ledLight_basicCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
 	if(cmdId == ZCL_CMD_BASIC_RESET_FAC_DEFAULT){
 		//Reset all the attributes of all its clusters to factory defaults
@@ -279,7 +279,7 @@ status_t sampleLight_basicCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *c
 #endif
 
 #ifdef ZCL_IDENTIFY
-s32 sampleLight_zclIdentifyTimerCb(void *arg)
+s32 ledLight_zclIdentifyTimerCb(void *arg)
 {
 	if(g_zcl_identifyAttrs.identifyTime <= 0){
 		light_blink_stop();
@@ -291,7 +291,7 @@ s32 sampleLight_zclIdentifyTimerCb(void *arg)
 	return 0;
 }
 
-void sampleLight_zclIdentifyTimerStop(void)
+void ledLight_zclIdentifyTimerStop(void)
 {
 	if(identifyTimerEvt){
 		TL_ZB_TIMER_CANCEL(&identifyTimerEvt);
@@ -299,7 +299,7 @@ void sampleLight_zclIdentifyTimerStop(void)
 }
 
 /*********************************************************************
- * @fn      sampleLight_zclIdentifyCmdHandler
+ * @fn      ledLight_zclIdentifyCmdHandler
  *
  * @brief   Handler for ZCL Identify command. This function will set blink LED.
  *
@@ -309,23 +309,23 @@ void sampleLight_zclIdentifyTimerStop(void)
  *
  * @return  None
  */
-void sampleLight_zclIdentifyCmdHandler(u8 endpoint, u16 srcAddr, u16 identifyTime)
+void ledLight_zclIdentifyCmdHandler(u8 endpoint, u16 srcAddr, u16 identifyTime)
 {
 	g_zcl_identifyAttrs.identifyTime = identifyTime;
 
 	if(identifyTime == 0){
-		sampleLight_zclIdentifyTimerStop();
+		ledLight_zclIdentifyTimerStop();
 		light_blink_stop();
 	}else{
 		if(!identifyTimerEvt){
 			light_blink_start(identifyTime, 500, 500);
-			identifyTimerEvt = TL_ZB_TIMER_SCHEDULE(sampleLight_zclIdentifyTimerCb, NULL, 1000);
+			identifyTimerEvt = TL_ZB_TIMER_SCHEDULE(ledLight_zclIdentifyTimerCb, NULL, 1000);
 		}
 	}
 }
 
 /*********************************************************************
- * @fn      sampleLight_zcltriggerCmdHandler
+ * @fn      ledLight_zcltriggerCmdHandler
  *
  * @brief   Handler for ZCL trigger command.
  *
@@ -333,7 +333,7 @@ void sampleLight_zclIdentifyCmdHandler(u8 endpoint, u16 srcAddr, u16 identifyTim
  *
  * @return  None
  */
-static void sampleLight_zcltriggerCmdHandler(zcl_triggerEffect_t *pTriggerEffect)
+static void ledLight_zcltriggerCmdHandler(zcl_triggerEffect_t *pTriggerEffect)
 {
 	u8 effectId = pTriggerEffect->effectId;
 //	u8 effectVariant = pTriggerEffect->effectVariant;
@@ -363,7 +363,7 @@ static void sampleLight_zcltriggerCmdHandler(zcl_triggerEffect_t *pTriggerEffect
 }
 
 /*********************************************************************
- * @fn      sampleLight_identifyCb
+ * @fn      ledLight_identifyCb
  *
  * @brief   Handler for ZCL Identify command.
  *
@@ -373,16 +373,16 @@ static void sampleLight_zcltriggerCmdHandler(zcl_triggerEffect_t *pTriggerEffect
  *
  * @return  status_t
  */
-status_t sampleLight_identifyCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
+status_t ledLight_identifyCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *cmdPayload)
 {
-	if(pAddrInfo->dstEp == SAMPLE_LIGHT_ENDPOINT){
+	if(pAddrInfo->dstEp == LEDLIGHT_ENDPOINT){
 		if(pAddrInfo->dirCluster == ZCL_FRAME_CLIENT_SERVER_DIR){
 			switch(cmdId){
 				case ZCL_CMD_IDENTIFY:
-					sampleLight_zclIdentifyCmdHandler(pAddrInfo->dstEp, pAddrInfo->srcAddr, ((zcl_identifyCmd_t *)cmdPayload)->identifyTime);
+					ledLight_zclIdentifyCmdHandler(pAddrInfo->dstEp, pAddrInfo->srcAddr, ((zcl_identifyCmd_t *)cmdPayload)->identifyTime);
 					break;
 				case ZCL_CMD_TRIGGER_EFFECT:
-					sampleLight_zcltriggerCmdHandler((zcl_triggerEffect_t *)cmdPayload);
+					ledLight_zcltriggerCmdHandler((zcl_triggerEffect_t *)cmdPayload);
 					break;
 				default:
 					break;

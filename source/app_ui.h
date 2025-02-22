@@ -3,6 +3,10 @@
  *
  * @brief   This is the header file for app_ui
  *
+ * @author	Marc Hefter
+ * @date	2025
+ * @par     Copyright (C) 2025, Marc Hefter (https://github.com/march42)
+ *
  * @author  Zigbee Group
  * @date    2021
  *
@@ -29,9 +33,13 @@
 /**********************************************************************
  * CONSTANT
  */
-#define LED_ON						1
-#define LED_OFF						0
-
+#if (LED_ACTIVE_LOW)
+#	define LED_ON						0
+#	define LED_OFF						1
+#else
+#	define LED_ON						1
+#	define LED_OFF						0
+#endif
 
 /**********************************************************************
  * TYPEDEFS
