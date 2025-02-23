@@ -1,6 +1,7 @@
 # TORSO lamp
 
 The TORSO lamp is an artwork LED lamp.
+
 The baseplate is cut from stainless steel.
 The white plastic cover is a female semishell torso for hanging and presenting underwear.
 
@@ -115,8 +116,17 @@ ZigBee 3.0 LED controller
 
 #### TODO
 
+- [ ] colorLoop feature
+
 source/zcl_colorCtrlCb.c:303:12: warning: 'sampleLight_colorLoopTimerEvtCb' defined but not used
 source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defined but not used
+
+- [ ] fix debug output (maybe interrupt problem)
+- [ ] fix the color controll handling (RGB, CCT or RGB and white or RGB and CCT)
+- [ ] switching main/backlight with power on/off
+- [ ] handle X/Y color setting
+- [ ] handle enhanced hue color setting
+- [ ] split TORSO_LIGHT to multiple end points handling main, background, extra light
 
 ### firmware functions
 
