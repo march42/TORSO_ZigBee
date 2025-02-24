@@ -77,6 +77,17 @@ typedef struct{
 	u8	swBuildId[ZCL_BASIC_MAX_LENGTH];
 	u8	powerSource;
 	u8	deviceEnable;
+
+#	if defined(__LIGHT__MARCH42_TORSO__)
+	u8	GenericDeviceClass;									/* 00=lighting */
+	u8	GenericDeviceType;									/* see table in ZCL rev.8 page 119 3-9 */
+	/*	following attributes need updated ZCL to rev.8 */
+	u8	ProductCode[ZCL_BASIC_MAX_LENGTH];					/* I don't have a unique EAN, UPC o.a. */
+	u8	ProductURL[48];										/* SHALL be limited by the maximum number of a single transmission (about 50) */
+	u8	ManufacturerVersionDetails[ZCL_BASIC_MAX_LENGTH];
+	u8	SerialNumber[ZCL_BASIC_MAX_LENGTH];
+	u8	ProductLabel[ZCL_BASIC_MAX_LENGTH];
+#	endif
 }zcl_basicAttr_t;
 
 /**

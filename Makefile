@@ -101,25 +101,28 @@ LED_MODE_RGB		= 0x70
 LED_MODE_RGBW		= 0x71
 LED_MODE_RGBCCT		= 0x73
 # board settings
+ifneq ($(TARGET),) 
+	CPPFLAGS			+= -D__TARGET_$(TARGET)__=1
+endif
 ifeq ($(TARGET),TORSO)
 	CPPFLAGS		+= -D__LIGHT__MARCH42_TORSO__=1
 	ifeq ($(LED_MODE),)
 		LED_MODE	= $(LED_MODE_RGBW)
 	endif
 else ifeq ($(TARGET),TS0501B)
-	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1
 	LED_MODE		= $(LED_MODE_DIMMER)
 else ifeq ($(TARGET),TS0502B)
-	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1
 	LED_MODE		= $(LED_MODE_CCT)
 else ifeq ($(TARGET),TS0503B)
-	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1
 	LED_MODE		= $(LED_MODE_RGB)
 else ifeq ($(TARGET),TS0504B)
-	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1
 	LED_MODE		= $(LED_MODE_RGBW)
 else ifeq ($(TARGET),TS0505B)
-	CPPFLAGS		+= -D__LIGHT__TS050xB__=1 -D__TARGET_$(TARGET)__=1
+	CPPFLAGS		+= -D__LIGHT__TS050xB__=1
 	LED_MODE		= $(LED_MODE_RGBCCT)
 endif
 # LED mode settings
@@ -206,7 +209,7 @@ zigbee_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_ASMS:.S=.S.o))
 	ldr_CPPFLAGS	= -D__PROJECT_TL_BOOT_LOADER__=1
 	ldr_CPPFLAGS	+= -I$(PROJECTDIR)/bootloader -I$(SOURCEDIR) -I$(TL_ZIGBEE_SDK)/platform -I$(TL_ZIGBEE_SDK)/proj/common -I$(TL_ZIGBEE_SDK)/proj
 	ldr_source		= $(PROJECTDIR)/bootloader/main.c $(PROJECTDIR)/bootloader/bootloader.c $(PROJECTDIR)/source/common/firmwareEncryptChk.c
-	ldr_HEADERS		= $(wildcard $(PROJECTDIR)/bootloader/*.h) $(wildcard $(PROJECTDIR)/source/*.h) $(wildcard $(PROJECTDIR)/source/common/*.h) $(sdk_HEADERS) $(zigbee_HEADERS)
+	ldr_HEADERS		= $(wildcard $(PROJECTDIR)/bootloader/*.h) $(wildcard $(PROJECTDIR)/source/*_cfg.h) $(wildcard $(PROJECTDIR)/source/board_*.h) $(sdk_HEADERS) $(zigbee_HEADERS)
 	ldr_OBJS		+= $(subst $(PROJECTDIR),$(BUILDDIR)/bootloader,$(ldr_source:.c=.c.o))
 	ldr_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk-bootloader,$(sdk_SOURCES:.c=.c.o))
 	ldr_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk-bootloader,$(sdk_ASMS:.S=.S.o))

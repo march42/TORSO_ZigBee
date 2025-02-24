@@ -193,7 +193,7 @@ void hwLight_levelUpdate(u8 level)
 {
 	DEBUG(DEBUG_TRACE, "hwLight_levelUpdate(%x)\r", level);
 
-#if (SINGLE_WHITE_SUPPORT)
+#if (SINGLE_WHITE_SUPPORT) /* && (!COLOR_RGB_SUPPORT) && (!COLOR_CCT_SUPPORT) */
 	level = (level < 0x10) ? 0x10 : level;
 
 	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
@@ -374,7 +374,6 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 void light_adjust(void)
 {
 	DEBUG(DEBUG_TRACE, "light_adjust\r");
-
 #if defined(ZCL_LIGHT_COLOR_CONTROL)
 	// if CCT or RGB supported
 	ledLight_colorInit();
@@ -397,7 +396,6 @@ void light_adjust(void)
 void light_fresh(void)
 {
 	DEBUG(DEBUG_TRACE, "light_fresh\r");
-
 #if defined(ZCL_LIGHT_COLOR_CONTROL)
 	// if CCT or RGB supported
 	ledLight_updateColor();
@@ -425,6 +423,7 @@ void light_fresh(void)
  */
 void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u8 minLevel, u8 maxLevel, bool wrap)
 {
+	DEBUG(DEBUG_LEDCOLOR, "light_applyUpdate\r");
 	if((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel)){
 		*curLevel256 = (wrap) ? ((u16)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u16)maxLevel * 256) - 256)
 							  : ((u16)maxLevel * 256);
@@ -462,6 +461,7 @@ void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *r
  */
 void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)
 {
+	DEBUG(DEBUG_LEDCOLOR, "light_applyUpdate_16\r");
 	if((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel)){
 		*curLevel256 = (wrap) ? ((u32)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u32)maxLevel * 256) - 256)
 							  : ((u32)maxLevel * 256);
@@ -542,7 +542,7 @@ s32 light_blink_TimerEvtCb(void *arg)
  */
 void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
 {
-	DEBUG(DEBUG_TRACE, "light_blink_start\r");
+	DEBUG(DEBUG_LEDEFFECT, "light_blink_start\r");
 	u32 interval = 0;
 	zcl_onOffAttr_t *pOnoff = zcl_onoffAttrGet();
 
@@ -577,7 +577,7 @@ void light_blink_start(u8 times, u16 ledOnTime, u16 ledOffTime)
  */
 void light_blink_stop(void)
 {
-	DEBUG(DEBUG_TRACE, "light_blink_stop\r");
+	DEBUG(DEBUG_LEDEFFECT, "light_blink_stop\r");
 	if(gLightCtx.timerLedEvt){
 		TL_ZB_TIMER_CANCEL(&gLightCtx.timerLedEvt);
 

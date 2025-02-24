@@ -132,7 +132,7 @@ const u16 ledLight_outClusterList[] =
 const af_simple_descriptor_t ledLight_simpleDesc =
 {
 	HA_PROFILE_ID,                      		/* Application profile identifier */
-#	if defined(EXTENDED_COLOR_LIGHT_DEVICE) && (EXTENDED_COLOR_LIGHT_DEVICE)
+#	if (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
 		HA_DEV_EXTENDED_COLOR_LIGHT,				/* TODO: zbDeviceId_t extended color light */
 //#	elif defined(COLOR_TEMPERATURE_LIGHT_DEVICE) && (COLOR_TEMPERATURE_LIGHT_DEVICE)
 #	elif (LED_MODE==LED_MODE_CCT)
@@ -204,15 +204,25 @@ const af_simple_descriptor_t sampleTestDesc =
 /* Basic */
 zcl_basicAttr_t g_zcl_basicAttrs =
 {
-	.zclVersion 	= 0x03,
-	.appVersion 	= 0x00,
+	.zclVersion 	= 0x08,			/* ZigBee Cluster Library rev.8 */
+	.appVersion 	= APP_RELEASE,	/* DEFINE in version_cfg.h */
 	.stackVersion 	= 0x02,
 	.hwVersion		= 0x00,
 	.manuName		= ZCL_BASIC_MFG_NAME,
 	.modelId		= ZCL_BASIC_MODEL_ID,
-	.powerSource	= POWER_SOURCE_MAINS_1_PHASE,
+	.powerSource	= POWER_SOURCE_DC,	/* DC power supply, instead of 1-phase AC mains */
 	.swBuildId		= ZCL_BASIC_SW_BUILD_ID,
 	.deviceEnable	= TRUE,
+
+#	if defined(__LIGHT__MARCH42_TORSO__)
+	.GenericDeviceClass	= 0x00,		/* lighting */
+	.GenericDeviceType	= 0x09,		/* generic indoor light fixture */
+	.ProductCode		= {0x00},	/* 0x00 =no product code provided */
+	.ProductURL			= {39,'h','t','t','p','s',':','/','/','g','i','t','h','u','b','.','c','o','m','/','m','a','r','c','h','4','2','/','T','O','R','S','O','_','Z','i','g','B','e','e'},	/* https://github.com/march42/TORSO_ZigBee */
+	.ManufacturerVersionDetails	= {0xFF},	/* 0xFF =none */
+	.SerialNumber		= {0xFF},
+	.ProductLabel		= {0xFF},
+#	endif
 };
 
 const zclAttrInfo_t basic_attrTbl[] =
@@ -226,6 +236,16 @@ const zclAttrInfo_t basic_attrTbl[] =
 	{ ZCL_ATTRID_BASIC_POWER_SOURCE, 		ZCL_DATA_TYPE_ENUM8,    ACCESS_CONTROL_READ,  						(u8*)&g_zcl_basicAttrs.powerSource},
 	{ ZCL_ATTRID_BASIC_DEV_ENABLED,  		ZCL_DATA_TYPE_BOOLEAN,  ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8*)&g_zcl_basicAttrs.deviceEnable},
 	{ ZCL_ATTRID_BASIC_SW_BUILD_ID,  		ZCL_DATA_TYPE_CHAR_STR, ACCESS_CONTROL_READ,  						(u8*)&g_zcl_basicAttrs.swBuildId},
+
+#	if defined(__LIGHT__MARCH42_TORSO__)
+	{ ZCL_ATTRID_BASIC_GENERICDEVICE_CLASS,	ZCL_DATA_TYPE_ENUM8,    ACCESS_CONTROL_READ,  						(u8*)&g_zcl_basicAttrs.GenericDeviceClass},
+	{ ZCL_ATTRID_BASIC_GENERICDEVICE_TYPE,	ZCL_DATA_TYPE_ENUM8,    ACCESS_CONTROL_READ,  						(u8*)&g_zcl_basicAttrs.GenericDeviceType},
+	{ ZCL_ATTRID_BASIC_PRODUCT_CODE,		ZCL_DATA_TYPE_OCTET_STR, ACCESS_CONTROL_READ,  						(u8*)g_zcl_basicAttrs.ProductCode},
+	{ ZCL_ATTRID_BASIC_PRODUCT_URL,			ZCL_DATA_TYPE_CHAR_STR, ACCESS_CONTROL_READ,  						(u8*)g_zcl_basicAttrs.ProductURL},
+	{ ZCL_ATTRID_BASIC_MANUFACTURER_VERSION_DETAILS,	ZCL_DATA_TYPE_CHAR_STR, ACCESS_CONTROL_READ,			(u8*)g_zcl_basicAttrs.ManufacturerVersionDetails},
+	{ ZCL_ATTRID_BASIC_SERIAL_NUMBER,		ZCL_DATA_TYPE_CHAR_STR, ACCESS_CONTROL_READ,  						(u8*)g_zcl_basicAttrs.SerialNumber},
+	{ ZCL_ATTRID_BASIC_PRODUCT_LABEL,		ZCL_DATA_TYPE_CHAR_STR, ACCESS_CONTROL_READ,  						(u8*)g_zcl_basicAttrs.ProductLabel},
+#	endif
 
 	{ ZCL_ATTRID_GLOBAL_CLUSTER_REVISION, 	ZCL_DATA_TYPE_UINT16,  	ACCESS_CONTROL_READ,  						(u8*)&zcl_attr_global_clusterRevision},
 };
@@ -459,11 +479,11 @@ u8 LEDLIGHT_CB_CLUSTER_NUM = (sizeof(g_ledLightClusterList)/sizeof(g_ledLightClu
  */
 nv_sts_t zcl_onOffAttr_save(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_onOffAttr_save\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_ON_OFF
 #if NV_ENABLE
+	DEBUG(DEBUG_TRACE_NV, "zcl_onOffAttr_save\r");
 	zcl_nv_onOff_t zcl_nv_onOff;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_ON_OFF, sizeof(zcl_nv_onOff_t), (u8*)&zcl_nv_onOff);
@@ -500,11 +520,11 @@ nv_sts_t zcl_onOffAttr_save(void)
  */
 nv_sts_t zcl_onOffAttr_restore(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_onOffAttr_restore\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_ON_OFF
 #if NV_ENABLE
+	DEBUG(DEBUG_TRACE_NV, "zcl_onOffAttr_restore\r");
 	zcl_nv_onOff_t zcl_nv_onOff;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_ON_OFF, sizeof(zcl_nv_onOff_t), (u8*)&zcl_nv_onOff);
@@ -532,11 +552,11 @@ nv_sts_t zcl_onOffAttr_restore(void)
  */
 nv_sts_t zcl_levelAttr_save(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_levelAttr_save\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LEVEL_CTRL
 #if NV_ENABLE
+	DEBUG(DEBUG_TRACE_NV, "zcl_levelAttr_save\r");
 	zcl_nv_level_t zcl_nv_level;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_LEVEL, sizeof(zcl_nv_level_t), (u8*)&zcl_nv_level);
@@ -573,11 +593,11 @@ nv_sts_t zcl_levelAttr_save(void)
  */
 nv_sts_t zcl_levelAttr_restore(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_levelAttr_restore\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LEVEL_CTRL
 #if NV_ENABLE
+	DEBUG(DEBUG_TRACE_NV, "zcl_levelAttr_restore\r");
 	zcl_nv_level_t zcl_nv_level;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_LEVEL, sizeof(zcl_nv_level_t), (u8*)&zcl_nv_level);
@@ -605,11 +625,11 @@ nv_sts_t zcl_levelAttr_restore(void)
  */
 nv_sts_t zcl_colorCtrlAttr_save(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_colorCtrlAttr_save\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
 #if NV_ENABLE
+	DEBUG(DEBUG_TRACE_NV, "zcl_colorCtrlAttr_save\r");
 	bool needSave = FALSE;
 	zcl_nv_colorCtrl_t zcl_nv_colorCtrl;
 
@@ -669,11 +689,11 @@ nv_sts_t zcl_colorCtrlAttr_save(void)
  */
 nv_sts_t zcl_colorCtrlAttr_restore(void)
 {
-	DEBUG(DEBUG_TRACE, "zcl_colorCtrlAttr_restore\r");
 	nv_sts_t st = NV_SUCC;
 
 #ifdef ZCL_LIGHT_COLOR_CONTROL
 #if NV_ENABLE
+	DEBUG(DEBUG_TRACE_NV, "zcl_colorCtrlAttr_restore\r");
 	zcl_nv_colorCtrl_t zcl_nv_colorCtrl;
 
 	st = nv_flashReadNew(1, NV_MODULE_ZCL,  NV_ITEM_ZCL_COLOR_CTRL, sizeof(zcl_nv_colorCtrl_t), (u8*)&zcl_nv_colorCtrl);

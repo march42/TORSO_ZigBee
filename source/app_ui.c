@@ -91,6 +91,7 @@ void localPermitJoinState(void){
 
 #if defined(PERMIT_PWM_CHANNEL)
 		if (assocPermit) {
+			drv_pwm_cfg(PERMIT_PWM_CHANNEL, 400, 4000);	// set brightness level
 			drv_pwm_start(PERMIT_PWM_CHANNEL);
 		} else {
 			drv_pwm_stop(PERMIT_PWM_CHANNEL);
@@ -197,7 +198,7 @@ static volatile struct {						// need to ensure everything is 32bit alligned
 	s8	keyState;		// current state of key press
 	u8	keyCode;		// current pressed key
 	u8	keyCount;		// counter of presses
-	s8	levelState;		// current state for long pressing, 0=unknown <0=decrease >0=increase
+	s8	longPressState;	// current state for long pressing, 0=unknown <0=decrease >0=increase
 	u32	changeTime;		// time of last key change
 }	kb_state	= {-1, 0xFF, 0, 0, 0};			// initial data
 ev_timer_event_t *pressed_resetEvent	= NULL;	// reset pressed counter and keyCode
@@ -205,11 +206,12 @@ ev_timer_event_t *pressed_resetEvent	= NULL;	// reset pressed counter and keyCod
 s32 app_key_reset(void *arg)
 {
 	DEBUG(DEBUG_BUTTONS, "BUTTON reset\r");
-	kb_state.keyCode	= 0xFF;
-	kb_state.keyCount	= 0;
-	pressed_resetEvent	= NULL;
-	gLightCtx.state		= APP_STATE_NORMAL;
-	return -1;
+	kb_state.keyCode		= 0xFF;
+	kb_state.keyCount		= 0;
+	kb_state.longPressState	= 0;
+	pressed_resetEvent		= NULL;
+	gLightCtx.state			= APP_STATE_NORMAL;
+	return(-1);	// end timer
 }
 
 void app_key_reset_startTimer(u32 t_ms)
@@ -236,26 +238,50 @@ void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 		switch (pressed_count) {
 			case 1:	// On/Off toggle
 				DEBUG(DEBUG_BUTTONS, "BUTTON OnOff\r");
-				ledLight_onoff(ZCL_CMD_ONOFF_TOGGLE);	// toggle On/Off
+				ledLight_onoff(ZCL_CMD_ONOFF_TOGGLE);		// toggle On/Off
+				if (!zb_isDeviceJoinedNwk()) {
+					TRACE("NOT joined\r");
+					light_blink_start(3, 300, 700);
+				}
 				return;
 			case 2:	// On and dim to initial default
 				DEBUG(DEBUG_BUTTONS, "BUTTON Full On\r");
 				ledLight_level(ZCL_LEVEL_ATTR_MAX_LEVEL);	// set level
-				ledLight_onoff(ZCL_CMD_ONOFF_ON);		// turn on
+				ledLight_onoff(ZCL_CMD_ONOFF_ON);			// turn on
 				return;
 			case 3:
 				DEBUG(DEBUG_BUTTONS, "BUTTON Join Network\r");
-				// join network
-				/* toggle local permit Joining */
-				zb_nlmePermitJoiningRequest(zb_getMacAssocPermit() ? 0 : 180);
-				gpsCommissionModeInvork();
+				if (!zb_isDeviceJoinedNwk()) {
+					// join network
+					//zb_assocJoinReq();
+					u8 duration = zb_getMacAssocPermit() ? 0 : 180;
+					zb_nlmePermitJoiningRequest(duration);
+					gpsCommissionModeInvork();
+				}
+				else {
+					TRACE("IS joined\r");
+					light_blink_start(3, 300, 700);
+				}
 				return;
 			case 4:
 				DEBUG(DEBUG_BUTTONS, "BUTTON Leave Network\r");
 				// leave network
+				if (zb_isDeviceJoinedNwk()) {
+					// TODO: leave network
+					nlme_leave_req_t leaveReq = {
+						.removeChildren	= true,
+						.rejoin			= false,
+					};
+					zb_nlmeLeaveReq(&leaveReq);
+				}
+				else {
+					TRACE("NOT joined\r");
+					light_blink_start(3, 300, 700);
+				}
 				return;
 			case 5:
 				DEBUG(DEBUG_BUTTONS, "BUTTON Factory Reset\r");
+				sleep_ms(100);
 				// factory reset
 				gLightCtx.state = APP_FACTORY_NEW_DOING;
 				zb_factoryReset();
@@ -277,21 +303,37 @@ void app_key_longpress(u8 pressed_keyCode, int pressed_ms)
 	if (pressed_keyCode == VK_SW2) {		// BUTTON2
 		//	dimming
 		zcl_levelAttr_t *pLevel = zcl_levelAttrGet();
-		if (kb_state.levelState == 0 && pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL) {
-			kb_state.levelState = 1;		// start with dimming up, if at minimum
+		if (kb_state.longPressState == 0 && pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL) {
+			kb_state.longPressState = 1;		// start with dimming up, if at minimum
+			DEBUG(DEBUG_BUTTONS, "dimming up=%d\r", kb_state.longPressState);
 		}
-		else if (kb_state.levelState == 0) {
-			kb_state.levelState = -1;		// start with dimming down
+		else if (kb_state.longPressState == 0) {
+			kb_state.longPressState = -1;		// start with dimming down
+			DEBUG(DEBUG_BUTTONS, "dimming down=%d\r", kb_state.longPressState);
 		}
 
-		if (kb_state.levelState < 0 && pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL) {
+		if (kb_state.longPressState == -100) {
+			sleep_ms(200);
 			return;		// stop at minimum
 		}
-		else if (kb_state.levelState > 0 && pLevel->curLevel == ZCL_LEVEL_ATTR_MAX_LEVEL) {
+		else if (kb_state.longPressState < 0 && pLevel->curLevel == ZCL_LEVEL_ATTR_MIN_LEVEL) {
+			DEBUG(DEBUG_BUTTONS, "dimming minimum\r");
+			light_blink_start(5, 100, 100);
+			kb_state.longPressState = -100;
+			return;		// stop at minimum
+		}
+		else if (kb_state.longPressState == 100) {
+			sleep_ms(200);
+			return;		// stop at maximum
+		}
+		else if (kb_state.longPressState > 0 && pLevel->curLevel == ZCL_LEVEL_ATTR_MAX_LEVEL) {
+			DEBUG(DEBUG_BUTTONS, "dimming maximum\r");
+			light_blink_start(5, 100, 100);
+			kb_state.longPressState = 100;
 			return;		// stop at maximum
 		}
 
-		pLevel->curLevel	+= kb_state.levelState;
+		pLevel->curLevel	+= kb_state.longPressState;
 		hwLight_levelUpdate(pLevel->curLevel);		// set level
 	}
 }
@@ -301,20 +343,19 @@ void app_key_released(u8 pressed_keyCode, int pressed_ms)
 	// button released after pressed_count presses
 	DEBUG(DEBUG_BUTTONS, "BUTTON released key=%x time=%d\r", pressed_keyCode, pressed_ms);
 	/* maybe save state after dimming, when released after long press
-	if (pressed_keyCode == kb_state.keyCode && 0 != kb_state.levelState)
-	if (pressed_keyCode == kb_state.keyCode && 0 != kb_state.colorState)
+	if (pressed_keyCode == kb_state.keyCode && 0 != kb_state.longPressState)
 	*/
 
 	if (pressed_keyCode == VK_SW1 && gLightCtx.state == APP_FACTORY_NEW_SET_CHECK && pressed_ms < 7500) {
 		// factory reset
 		gLightCtx.state = APP_FACTORY_NEW_DOING;
 		zb_factoryReset();
-		// join network
-		zb_nlmePermitJoiningRequest(zb_getMacAssocPermit() ? 0 : 180);
-		gpsCommissionModeInvork();
 	}
 
-	kb_state.levelState = 0;		// restart dimming on released button
+	if (kb_state.longPressState != 0) {
+		kb_state.longPressState = 0;		// restart dimming loop on released button
+		light_blink_stop();
+	}
 }
 
 #	define	MIN_MS_LONG_PRESS		2000
@@ -328,6 +369,7 @@ void app_key_handler(void)
 	if (-1 == kb_state.keyState) {							// this will only be true on startup
 		DEBUG(DEBUG_TRACE, "app_key_handler initialize\r");
 		kb_state.keyState		= 0;						// no key pressed
+		kb_state.longPressState = 0;						// set dimming loop unknown
 	}
 
 	if (kb_scan_key(0, 1)) {								// scan keyboard, returns TRUE if keys changed

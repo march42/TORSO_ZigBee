@@ -47,9 +47,12 @@ extern "C" {
 #define	UART_PRINTF_MODE				1
 #define USB_PRINTF_MODE         		0
 #define BAUDRATE						115200
-#define DEBUG_TRACE						1
+#define DEBUG_TRACE						0
+#define DEBUG_TRACE_NV					0
 #define DEBUG_BUTTONS					0
 #define DEBUG_KEYHANDLER				0
+#define DEBUG_LEDCOLOR					1
+#define DEBUG_LEDEFFECT					1
 
 /* HCI interface */
 #define	ZBHCI_UART						0

@@ -256,12 +256,40 @@ void app_task(void)
 
 static void ledLightSysException(void)
 {
-	DEBUG(DEBUG_TRACE, "ledLightSysException\r");
-#if 1
-	SYSTEM_RESET();
-#else
+#if (UART_PRINTF_MODE) || (USB_PRINTF_MODE)
+	TRACE("ledLightSysException\r");
+#	ifdef LED_POWER
 	led_on(LED_POWER);
+#	endif
+#	if defined(PERMIT_PWM_CHANNEL)
+	drv_pwm_cfg(PERMIT_PWM_CHANNEL, 400, 4000);	// set brightness level
+	drv_pwm_start(PERMIT_PWM_CHANNEL);			// set LED on
+#	elif defined(LED_PERMIT)
+	led_on(LED_PERMIT);
+#	endif
+#	if defined(COOL_LIGHT_PWM_CHANNEL)
+	drv_pwm_cfg(COOL_LIGHT_PWM_CHANNEL, 400, 4000);
+	drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
+#	endif
+#	if defined(R_LIGHT_PWM_CHANNEL)
+	drv_pwm_cfg(R_LIGHT_PWM_CHANNEL, 400, 4000);
+	drv_pwm_start(R_LIGHT_PWM_CHANNEL);
+#	endif
+#	if defined(G_LIGHT_PWM_CHANNEL)
+	drv_pwm_cfg(G_LIGHT_PWM_CHANNEL, 400, 4000);
+	drv_pwm_start(G_LIGHT_PWM_CHANNEL);
+#	endif
+#	if defined(B_LIGHT_PWM_CHANNEL)
+	drv_pwm_cfg(B_LIGHT_PWM_CHANNEL, 400, 4000);
+	drv_pwm_start(B_LIGHT_PWM_CHANNEL);
+#	endif
+#	if defined(WARM_LIGHT_PWM_CHANNEL)
+	drv_pwm_cfg(WARM_LIGHT_PWM_CHANNEL, 400, 4000);
+	drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
+#	endif
 	while(1);
+#else
+	SYSTEM_RESET();
 #endif
 }
 
@@ -318,6 +346,12 @@ void user_init(bool isRetention)
 
     /* Initialize BDB */
 	bdb_init((af_simple_descriptor_t *)&ledLight_simpleDesc, &g_bdbCommissionSetting, &g_zbDemoBdbCb, 1);
+
+	/* start blinking, if not joined to network */
+	if (!zb_isDeviceJoinedNwk()) {
+		TRACE("NOT joined\r");
+		light_blink_start(10, 300, 700);
+	}
 }
 
 #endif  /* __PROJECT_TL_DIMMABLE_LIGHT__ */
