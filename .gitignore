@@ -9,4 +9,4 @@ config.mk
 build/
 
 # firmware images
-*.bin
+./*.bin
