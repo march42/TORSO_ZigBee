@@ -86,7 +86,13 @@ static s32 heartTimerCb(void *arg){
 		return -1;
 	}
 
-#ifdef LED_POWER
+#if defined(POWER_PWM_CHANNEL)
+#	if (POWER_PWM_CHANNEL == 0)
+	BM_FLIP(reg_pwm0_enable, BIT(0));
+#	else
+	BM_FLIP(reg_pwm_enable, BIT(POWER_PWM_CHANNEL));
+#	endif
+#elif defined(LED_POWER)
 	gpio_toggle(LED_POWER);
 #endif
 

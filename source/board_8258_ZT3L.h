@@ -100,12 +100,13 @@ extern "C" {
 
 //#define LED_ACTIVE_LOW				0
 //#define LED_POWER						GPIO_PA0
-//#define LED_PERMIT					GPIO_PC2
+//#define LED_PERMIT					GPIO_PD4
 
 #if defined(__LIGHT__MARCH42_TORSO__)
 #	define BUTTON2						GPIO_PD4
+//#	define LED_PERMIT					GPIO_PD4
 #	if (!COLOR_CCT_SUPPORT)
-#		define LED_PERMIT					GPIO_PC2
+#		define LED_POWER				LED_CH5
 #	endif
 #	define EXTENDED_COLOR_LIGHT_DEVICE	1
 #endif
@@ -131,12 +132,12 @@ extern "C" {
 //#	define PULL_WAKEUP_SRC_PA0			PM_PIN_PULLDOWN_100K
 #endif
 // LED_PERMIT
-/* #if defined(LED_PERMIT) && (LED_PERMIT == GPIO_PC2)
-#	define PC2_FUNC					AS_GPIO
-#	define PC2_OUTPUT_ENABLE		1
-#	define PC2_INPUT_ENABLE			0
-#	define PULL_WAKEUP_SRC_PC2		PM_PIN_PULLDOWN_100K
-#endif */
+#if defined(LED_PERMIT) && (LED_PERMIT == GPIO_PD4)
+#	define PD4_FUNC					AS_GPIO
+#	define PD4_OUTPUT_ENABLE		1
+#	define PD4_INPUT_ENABLE			0
+#	define PULL_WAKEUP_SRC_PD4		PM_PIN_UP_DOWN_FLOAT
+#endif
 
 #if (__PROJECT_TL_DIMMABLE_LIGHT__) || (__LIGHT__MARCH42_TORSO__)
 #	define LED_CH1_PWM				5//PWM5
@@ -172,7 +173,10 @@ extern "C" {
 #	define B_LIGHT_PWM_CHANNEL		LED_CH4_PWM
 #	define B_LIGHT_PWM_SET()		LED_CH4_PWM_SET()
 	// LED_WW
-#	if defined(LED_PERMIT) && (LED_PERMIT == LED_CH5)
+#	if defined(LED_POWER) && (LED_POWER == LED_CH5)
+#		define POWER_PWM_CHANNEL		LED_CH5_PWM
+#		define POWER_PWM_SET()			LED_CH5_PWM_SET()
+#	elif defined(LED_PERMIT) && (LED_PERMIT == LED_CH5)
 #		define PERMIT_PWM_CHANNEL		LED_CH5_PWM
 #		define PERMIT_PWM_SET()			LED_CH5_PWM_SET()
 #	else

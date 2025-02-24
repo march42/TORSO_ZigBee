@@ -239,10 +239,35 @@ void report_handler(void)
 	}
 }
 
+void led_synch(void)
+{
+	if (!gLightCtx.lightAttrsChanged) {
+		return;
+	}
+
+	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
+	if (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF) {
+#if defined(POWER_PWM_CHANNEL)
+		drv_pwm_start(POWER_PWM_CHANNEL);			// set LED on
+#elif defined(LED_POWER)
+		drv_gpio_write(LED_POWER, LED_ON);			// set LED on
+#endif
+
+	} else {
+#if defined(POWER_PWM_CHANNEL)
+		drv_pwm_stop(POWER_PWM_CHANNEL);			// set LED off
+#elif defined(LED_POWER)
+		drv_gpio_write(LED_POWER, LED_OFF);			// set LED off
+#endif
+	}
+}
+
 void app_task(void)
 {
 	app_key_handler();
 	localPermitJoinState();
+	led_synch();
+
 	if(BDB_STATE_GET() == BDB_STATE_IDLE){
 		factoryRst_handler();
 
@@ -258,7 +283,10 @@ static void ledLightSysException(void)
 {
 #if (UART_PRINTF_MODE) || (USB_PRINTF_MODE)
 	TRACE("ledLightSysException\r");
-#	ifdef LED_POWER
+#	if defined(POWER_PWM_CHANNEL)
+	drv_pwm_cfg(POWER_PWM_CHANNEL, 400, 4000);	// set brightness level
+	drv_pwm_start(POWER_PWM_CHANNEL);			// set LED on
+#	elif defined(LED_POWER)
 	led_on(LED_POWER);
 #	endif
 #	if defined(PERMIT_PWM_CHANNEL)

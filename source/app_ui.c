@@ -70,12 +70,16 @@ void led_off(u32 pin){
 }
 
 void led_init(void){
-#ifdef LED_POWER
-	led_off(LED_POWER);
+#if defined(POWER_PWM_CHANNEL)
+	POWER_PWM_SET();							// gpio_set_func AS_PWM
+	drv_pwm_cfg(POWER_PWM_CHANNEL, 10, 4000);	// set brightness level
+	drv_pwm_start(POWER_PWM_CHANNEL);			// set LED on
+#elif defined(LED_POWER)
+	led_on(LED_POWER);
 #endif
 #if defined(PERMIT_PWM_CHANNEL) //&& defined(PERMIT_PWM_SET)
 	PERMIT_PWM_SET();							// gpio_set_func AS_PWM
-	drv_pwm_cfg(PERMIT_PWM_CHANNEL, 400, 4000);	// set brightness level
+	drv_pwm_cfg(PERMIT_PWM_CHANNEL, 10, 4000);	// set brightness level
 	drv_pwm_stop(PERMIT_PWM_CHANNEL);			// set LED off
 #elif defined(LED_PERMIT)
 	led_off(LED_PERMIT);
@@ -91,7 +95,6 @@ void localPermitJoinState(void){
 
 #if defined(PERMIT_PWM_CHANNEL)
 		if (assocPermit) {
-			drv_pwm_cfg(PERMIT_PWM_CHANNEL, 400, 4000);	// set brightness level
 			drv_pwm_start(PERMIT_PWM_CHANNEL);
 		} else {
 			drv_pwm_stop(PERMIT_PWM_CHANNEL);
