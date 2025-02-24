@@ -127,8 +127,16 @@ source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defin
 - [ ] handle X/Y color setting
 - [ ] handle enhanced hue color setting
 - [ ] split TORSO_LIGHT to multiple end points handling main, background, extra light
+- [ ] ZCL BASIC cluster ProductCode attribute (0x00 =none) wird auf HomeAssistant falsch angezeigt
 
 ### firmware functions
+
+#### ZCL clusters and commands
+
+- BASIC cluster
+- OnOff cluster
+- Level cluster
+- ColorControl cluster
 
 #### ZCL cluster support setting
 
