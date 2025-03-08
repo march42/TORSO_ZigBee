@@ -108,7 +108,9 @@ extern "C" {
 #	if (!COLOR_CCT_SUPPORT)
 #		define LED_POWER				LED_CH5
 #	endif
-#	define EXTENDED_COLOR_LIGHT_DEVICE	1
+#	define EXTENDED_COLOR_LIGHT			1
+#	define COLD_LIGHT_TEMPERATURE		6500
+#	define WARM_LIGHT_TEMPERATURE		0
 #endif
 
 //	setting IO functions
@@ -161,8 +163,8 @@ extern "C" {
 										gpio_set_func(LED_CH5, AS_PWM0); 		\
 									}while(0)
 	// LED_W
-#	define COOL_LIGHT_PWM_CHANNEL	LED_CH1_PWM
-#	define COOL_LIGHT_PWM_SET()		LED_CH1_PWM_SET()
+#	define COLD_LIGHT_PWM_CHANNEL	LED_CH1_PWM
+#	define COLD_LIGHT_PWM_SET()		LED_CH1_PWM_SET()
 	// LED_R
 #	define R_LIGHT_PWM_CHANNEL		LED_CH2_PWM
 #	define R_LIGHT_PWM_SET()		LED_CH2_PWM_SET()

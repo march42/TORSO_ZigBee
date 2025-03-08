@@ -35,6 +35,7 @@
 #include "tl_common.h"
 #include "zcl_include.h"
 #include "ledLight.h"
+#include "color_calculations.h"
 
 
 /**********************************************************************
@@ -50,27 +51,6 @@
 #define ZCL_BASIC_SW_BUILD_ID     	{10,'0','1','2','2','0','5','2','0','1','7'}
 #endif
 
-
-#if (COLOR_CCT_SUPPORT)
-/*	color temperature calculation
-**	mired = 1,000,000 / kelvin
-**	Mired equals 1 million over Temperature in Kelvin
-**	kelvin = 1000000 / mired
-*/
-#	define COLOR_TEMPERATURE_10000K			0x0064
-#	define COLOR_TEMPERATURE_6500K			0x0099	// blue sky daylight
-#	define COLOR_TEMPERATURE_6000K			0x00A6
-#	define COLOR_TEMPERATURE_5500K			0x00B5	// cold white
-#	define COLOR_TEMPERATURE_5000K			0x00C8	// noon sun
-#	define COLOR_TEMPERATURE_4000K			0x00FA	// neutral, morning sun
-#	define COLOR_TEMPERATURE_3000K			0x014D	// warm white
-#	define COLOR_TEMPERATURE_2700K			0x0172	// soft white
-#	define COLOR_TEMPERATURE_2200K			0x01C6	// light bulb
-#	define COLOR_TEMPERATURE_2000K			0x01F4
-#	define COLOR_TEMPERATURE_1700K			0x024C	// candle
-#	define COLOR_TEMPERATURE_PHYSICAL_MIN	COLOR_TEMPERATURE_6000K
-#	define COLOR_TEMPERATURE_PHYSICAL_MAX	COLOR_TEMPERATURE_3000K
-#endif
 
 /**********************************************************************
  * TYPEDEFS
@@ -132,9 +112,8 @@ const u16 ledLight_outClusterList[] =
 const af_simple_descriptor_t ledLight_simpleDesc =
 {
 	HA_PROFILE_ID,                      		/* Application profile identifier */
-#	if (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT)
+#	if (EXTENDED_COLOR_LIGHT)
 		HA_DEV_EXTENDED_COLOR_LIGHT,				/* TODO: zbDeviceId_t extended color light */
-//#	elif defined(COLOR_TEMPERATURE_LIGHT_DEVICE) && (COLOR_TEMPERATURE_LIGHT_DEVICE)
 #	elif (LED_MODE==LED_MODE_CCT)
 		HA_DEV_COLOR_TEMPERATURE_LIGHT,				/* TODO: color temperature light */
 #	elif defined(ZCL_LIGHT_COLOR_CONTROL)
@@ -217,10 +196,10 @@ zcl_basicAttr_t g_zcl_basicAttrs =
 #	if defined(__LIGHT__MARCH42_TORSO__)
 	.GenericDeviceClass	= 0x00,		/* lighting */
 	.GenericDeviceType	= 0x09,		/* generic indoor light fixture */
-	.ProductCode		= {0x00},	/* 0x00 =no product code provided */
+	.ProductCode		= {20,0x00,'T','O','R','S','O',' ','a','r','t','w','o','r','k',' ','l','i','g','h','t'},	/* 0x00 =no product code provided */
 	.ProductURL			= {39,'h','t','t','p','s',':','/','/','g','i','t','h','u','b','.','c','o','m','/','m','a','r','c','h','4','2','/','T','O','R','S','O','_','Z','i','g','B','e','e'},	/* https://github.com/march42/TORSO_ZigBee */
 	.ManufacturerVersionDetails	= {0xFF},	/* 0xFF =none */
-	.SerialNumber		= {0xFF},
+	.SerialNumber		= {9,'M','i','n','e','l','a','u','v','a'},	/* Minelauva, Ankaa, Ancha */
 	.ProductLabel		= {0xFF},
 #	endif
 };
@@ -364,47 +343,49 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.options						= 0x00,
 	.enhancedColorMode				= ZCL_COLOR_MODE_CURRENT_X_Y,
 	.colorCapabilities				= 0x0000
-#	if defined(__LIGHT__MARCH42_TORSO__)
-		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	// EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle
-#	endif
 #	if (COLOR_RGB_SUPPORT)
 		| ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
-		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP
 		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
+#		if (EXTENDED_COLOR_LIGHT)
+		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	/* EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle */
+		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP		/* ENHANCED_HUE must also be supported */
+#		endif
 #	endif
-#	if (COLOR_CCT_SUPPORT)
-		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE
+#	if (COLOR_CCT_SUPPORT) || (EXTENDED_COLOR_LIGHT)
+		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_TEMPERATURE		/* we will calculate temperature to RGB(W) without CCT LEDs */
 #	endif
 		,
 	.numOfPrimaries					= 0,
-#if (COLOR_RGB_SUPPORT)
+#	if (COLOR_RGB_SUPPORT)
 	.currentHue						= 0x00,
 	.currentSaturation				= 0x00,
 	.currentX						= 0x616b,
 	.currentY						= 0x607d,
+#		if (EXTENDED_COLOR_LIGHT)
 	.enhancedCurrentHue				= 0x0000,
 	.colorLoopActive				= 0x00,
 	.colorLoopDirection				= 0x00,
 	.colorLoopTime					= 0x0019,
 	.colorLoopStartEnhancedHue		= 0x2300,
 	.colorLoopStoredEnhancedHue		= 0x0000,
-#endif
-#if (COLOR_CCT_SUPPORT)
+#		endif
+#	endif
+#	if (COLOR_CCT_SUPPORT) || (EXTENDED_COLOR_LIGHT)
 	.colorTemperatureMireds				= COLOR_TEMPERATURE_PHYSICAL_MAX,
 	.colorTempPhysicalMinMireds			= COLOR_TEMPERATURE_PHYSICAL_MIN,
 	.colorTempPhysicalMaxMireds			= COLOR_TEMPERATURE_PHYSICAL_MAX,
-#	if (COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS)
+#		if (COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS)
 	.coupleColorTempToLevelMinMireds	= COLOR_TEMPERATURE_4000K,	/* 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑃ℎ𝑦𝑠𝑖𝑐𝑎𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑢𝑝𝑙𝑒𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑇𝑜𝐿𝑒𝑣𝑒𝑙𝑀𝑖𝑛𝑀𝑖𝑟𝑒𝑑𝑠 ≤ 𝐶𝑜𝑙𝑜𝑟𝑇𝑒𝑚𝑝𝑒𝑟𝑎𝑡𝑢𝑟𝑒𝑀𝑖𝑟𝑒𝑑𝑠 */
-#	endif
+#		endif
 	.startUpColorTemperatureMireds		= ZCL_START_UP_COLOR_TEMPERATURE_MIREDS_TO_PREVIOUS,
-#endif
+#	endif
 };
 
 const zclAttrInfo_t lightColorCtrl_attrTbl[] =
 {
-    { ZCL_ATTRID_COLOR_MODE,              			ZCL_DATA_TYPE_ENUM8,   	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.colorMode },
+    { ZCL_ATTRID_COLOR_MODE,              			ZCL_DATA_TYPE_ENUM8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.colorMode },
     { ZCL_ATTRID_COLOR_OPTIONS,           			ZCL_DATA_TYPE_BITMAP8, 	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE, (u8*)&g_zcl_colorCtrlAttrs.options },
-    { ZCL_ATTRID_ENHANCED_COLOR_MODE,     			ZCL_DATA_TYPE_ENUM8,   	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.enhancedColorMode },
+    { ZCL_ATTRID_ENHANCED_COLOR_MODE,     			ZCL_DATA_TYPE_ENUM8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.enhancedColorMode },
     { ZCL_ATTRID_COLOR_CAPABILITIES,       			ZCL_DATA_TYPE_BITMAP16, ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.colorCapabilities },
     { ZCL_ATTRID_NUMBER_OF_PRIMARIES,     			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ,     					(u8*)&g_zcl_colorCtrlAttrs.numOfPrimaries },
 
@@ -413,19 +394,21 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
     { ZCL_ATTRID_CURRENT_SATURATION,      			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentSaturation },
     { ZCL_ATTRID_CURRENT_X,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentX },
     { ZCL_ATTRID_CURRENT_Y,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentY },
+#	if (EXTENDED_COLOR_LIGHT)
     { ZCL_ATTRID_ENHANCED_CURRENT_HUE,             	ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.enhancedCurrentHue },
     { ZCL_ATTRID_COLOR_LOOP_ACTIVE,       			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopActive },
     { ZCL_ATTRID_COLOR_LOOP_DIRECTION,    			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopDirection },
     { ZCL_ATTRID_COLOR_LOOP_TIME,         			ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopTime },
     { ZCL_ATTRID_COLOR_LOOP_START_ENHANCED_HUE,   	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStartEnhancedHue },
     { ZCL_ATTRID_COLOR_LOOP_STORED_ENHANCED_HUE,  	ZCL_DATA_TYPE_UINT16,   ACCESS_CONTROL_READ,     						 (u8*)&g_zcl_colorCtrlAttrs.colorLoopStoredEnhancedHue },
+#	endif
 #endif
-#if (COLOR_CCT_SUPPORT)
+#if (COLOR_CCT_SUPPORT) || (EXTENDED_COLOR_LIGHT)
     { ZCL_ATTRID_COLOR_TEMPERATURE_MIREDS,				ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.colorTemperatureMireds },
-    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
-    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
+    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MIN_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE | ACCESS_CONTROL_WRITE,	(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMinMireds },
+    { ZCL_ATTRID_COLOR_TEMP_PHYSICAL_MAX_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE | ACCESS_CONTROL_WRITE,	(u8*)&g_zcl_colorCtrlAttrs.colorTempPhysicalMaxMireds },
 #	if (COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS)
-	{ ZCL_ATTRID_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS,	ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE,	(u8*)&g_zcl_colorCtrlAttrs.coupleColorTempToLevelMinMireds },
+	{ ZCL_ATTRID_COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS,	ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE | ACCESS_CONTROL_WRITE,	(u8*)&g_zcl_colorCtrlAttrs.coupleColorTempToLevelMinMireds },
 #	endif
 	{ ZCL_ATTRID_START_UP_COLOR_TEMPERATURE_MIREDS,		ZCL_DATA_TYPE_UINT16,	ACCESS_CONTROL_READ | ACCESS_CONTROL_WRITE,			(u8*)&g_zcl_colorCtrlAttrs.startUpColorTemperatureMireds },
 #endif

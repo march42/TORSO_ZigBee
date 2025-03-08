@@ -53,6 +53,7 @@ extern "C" {
 #define DEBUG_KEYHANDLER				0
 #define DEBUG_LEDCOLOR					1
 #define DEBUG_LEDEFFECT					1
+#define DEBUG_LED_PWM					1
 
 /* HCI interface */
 #define	ZBHCI_UART						0
@@ -190,6 +191,34 @@ extern "C" {
 #endif
 
 
+/* firmware configuration */
+/* these are currently set via Makefile, TODO:obsolete
+#if !defined(LED_SUPPORT_WHITE) && (SINGLE_WHITE_SUPPORT)
+#	define	LED_SUPPORT_WHITE	1
+#endif
+#if !defined(LED_SUPPORT_RGB) && (COLOR_RGB_SUPPORT)
+#	define	LED_SUPPORT_RGB	1
+#endif
+#if !defined(LED_SUPPORT_CCT) && (COLOR_CCT_SUPPORT)
+#	define	LED_SUPPORT_CCT	1
+#endif
+*/
+#ifndef EXTENDED_COLOR_LIGHT
+/*	EXTENDED_COLOR_LIGHT==1 enables extended color light features
+**	Color Temperature setting on RGB and RGBW lights
+**	Extended Hue support
+**	Color Loop support
+*/
+#	define EXTENDED_COLOR_LIGHT			0
+#endif
+/*	extended feature for later
+#define COUPLE_COLOR_TEMP_TO_LEVEL_MIN_MIREDS	1
+*/
+/*	setting COLD and WARM white color temperature
+#define COLD_LIGHT_TEMPERATURE			6500
+#define WARM_LIGHT_TEMPERATURE			2200
+*/
+
 /* Voltage detect module */
 /* If VOLTAGE_DETECT_ENABLE is set,
  * 1) if MCU_CORE_826x is defined, the DRV_ADC_VBAT_MODE mode is used by default,
@@ -227,8 +256,6 @@ extern "C" {
  */
 #define ZCL_ON_OFF_SUPPORT							1
 #define ZCL_LEVEL_CTRL_SUPPORT						1
-//#	define EXTENDED_COLOR_LIGHT_DEVICE				0	// TODO: currently unused and still untested
-//#	define COLOR_TEMPERATURE_LIGHT_DEVICE			0	// TODO: currently unused and still untested
 #if (COLOR_RGB_SUPPORT) || (COLOR_CCT_SUPPORT)
 #	define ZCL_LIGHT_COLOR_CONTROL_SUPPORT			1
 #endif

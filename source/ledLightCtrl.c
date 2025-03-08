@@ -36,6 +36,7 @@
 #include "zcl_include.h"
 #include "ledLight.h"
 #include "ledLightCtrl.h"
+#include "color_calculations.h"
 
 
 /**********************************************************************
@@ -49,18 +50,10 @@
 /**********************************************************************
  * TYPEDEFS
  */
-typedef struct {
-	u16	CH1_CycleTick;
-	u16	CH2_CycleTick;
-	u16	CH3_CycleTick;
-	u16	CH4_CycleTick;
-	u16	CH5_CycleTick;
-} ledLight_PwmChannels_t;
 
 /**********************************************************************
  * GLOBAL VARIABLES
  */
-ledLight_PwmChannels_t	g_PwmChannels;
 
 /**********************************************************************
  * FUNCTIONS
@@ -122,8 +115,8 @@ void hwLight_init(void)
 	drv_pwm_init();
 
 #if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
-	COOL_LIGHT_PWM_SET();
-	pwmInit(COOL_LIGHT_PWM_CHANNEL, 20);
+	COLD_LIGHT_PWM_SET();
+	pwmInit(COLD_LIGHT_PWM_CHANNEL, 20);
 #endif
 #if (COLOR_RGB_SUPPORT)
 	R_LIGHT_PWM_SET();
@@ -150,32 +143,34 @@ void hwLight_init(void)
  */
 void hwLight_onOffUpdate(u8 onOff)
 {
-	DEBUG(DEBUG_TRACE, "hwLight_onOffUpdate(%x)\r", onOff);
+	DEBUG(DEBUG_TRACE, "onOffUpdate(%x)\r", onOff);
 
 	if(onOff){
+		DEBUG(DEBUG_LED_PWM, "pwmStart\r");
 #if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
-		drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
+		drv_pwm_start(COLD_LIGHT_PWM_CHANNEL);
+#endif
+#if (COLOR_CCT_SUPPORT)
+		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
 #endif
 #if (COLOR_RGB_SUPPORT)
 		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
 #endif
-#if (COLOR_CCT_SUPPORT)
-		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
-#endif
 
 	}else{
+		DEBUG(DEBUG_LED_PWM, "pwmStopp\r");
 #if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
-		drv_pwm_stop(COOL_LIGHT_PWM_CHANNEL);
+		drv_pwm_stop(COLD_LIGHT_PWM_CHANNEL);
+#endif
+#if (COLOR_CCT_SUPPORT)
+		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
 #endif
 #if (COLOR_RGB_SUPPORT)
 		drv_pwm_stop(R_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
 		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
-#endif
-#if (COLOR_CCT_SUPPORT)
-		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
 #endif
 	}
 }
@@ -191,37 +186,15 @@ void hwLight_onOffUpdate(u8 onOff)
  */
 void hwLight_levelUpdate(u8 level)
 {
-	DEBUG(DEBUG_TRACE, "hwLight_levelUpdate(%x)\r", level);
+	DEBUG(DEBUG_TRACE, "levelUpdate(%x)\r", level);
 
-#if (SINGLE_WHITE_SUPPORT) /* && (!COLOR_RGB_SUPPORT) && (!COLOR_CCT_SUPPORT) */
+#if (SINGLE_WHITE_SUPPORT) && (!COLOR_RGB_SUPPORT) /* && (!COLOR_CCT_SUPPORT) */
 	level = (level < 0x10) ? 0x10 : level;
 
-	u16 gammaCorrectLevel = ((u16)level * level) / ZCL_LEVEL_ATTR_MAX_LEVEL;
-
-	g_PwmChannels.CH1_CycleTick = gammaCorrectLevel * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
-#endif
-}
-
-/*********************************************************************
- * @fn      temperatureToCW
- *
- * @brief
- *
- * @param   [in]colorTemperatureMireds	-	colorTemperatureMireds attribute value
- * 			[in]level					-	level attribute value
- * 			[out]C						-	cool light PWM
- * 			[out]W						-	warm light PWM
- *
- * @return  None
- */
-void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
-{
-#if (COLOR_CCT_SUPPORT)
-	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
-
-	*W = (u8)(((temperatureMireds - pColor->colorTempPhysicalMinMireds) * level) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds));
-	*C = level - (*W);
+	LEDLIGHT_WHITE->OnOff	= (LEDLIGHT_WHITE->Value != 0);
+	u16 tick = (LEDLIGHT_WHITE->Value * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL, tick);
+	DEBUG(DEBUG_LED_PWM, "WHITE(%x)\r", level);
 #endif
 }
 
@@ -237,93 +210,128 @@ void temperatureToCW(u16 temperatureMireds, u8 level, u8 *C, u8 *W)
  */
 void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 {
-#if (COLOR_CCT_SUPPORT)
-	u8 C = 0;
-	u8 W = 0;
-
+	DEBUG(DEBUG_LEDCOLOR, "CCT mired=%x, level=%x\r", colorTemperatureMireds, level);
 	level = (level < 0x10) ? 0x10 : level;
 
-	temperatureToCW(colorTemperatureMireds, level, &C, &W);
+#if (COLOR_RGB_SUPPORT) && (COLOR_CCT_SUPPORT) && (COLD_LIGHT_TEMPERATURE) && (WARM_LIGHT_TEMPERATURE)
+	u16 RGB_CT = colorTemperatureMireds;
+	float RGB_correct = 1;
 
-	u16 gammaCorrectC = ((u16)C * C) / ZCL_LEVEL_ATTR_MAX_LEVEL;
-	u16 gammaCorrectW = ((u16)W * W) / ZCL_LEVEL_ATTR_MAX_LEVEL;
+	TODO("ensure min/max of LEDLIGHT_setMired function");
+	if (colorTemperatureMireds < COLOR_TEMPERATURE_12000K) {				// LEDLIGHT_setMired minimum
+		RGB_CT = COLOR_TEMPERATURE_12000K;
+		LEDLIGHT_COLD->Value = (float)(((colorTemperatureMireds - RGB_CT)) / (COLD_LIGHT_TEMPERATURE - RGB_CT));
+		RGB_correct = 1 - LEDLIGHT_COLD->Value;
+	} else if (colorTemperatureMireds > COLOR_TEMPERATURE_1000K) {			// LEDLIGHT_setMired maximum
+		RGB_CT = COLOR_TEMPERATURE_1000K;
+		LEDLIGHT_WARM->Value = (float)(((RGB_CT - colorTemperatureMireds)) / (RGB_CT - WARM_LIGHT_TEMPERATURE));
+		RGB_correct = 1 - LEDLIGHT_WARM->Value;
+	} else
 
-	g_PwmChannels.CH1_CycleTick = gammaCorrectC * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
-	g_PwmChannels.CH5_CycleTick = gammaCorrectW * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL, g_PwmChannels.CH5_CycleTick);
-#endif
-}
-
-/*********************************************************************
- * @fn      hsvToRGB
- *
- * @brief
- *
- * @param   [in]hue			-	hue attribute value
- * 			[in]saturation	-	saturation attribute value
- * 			[in]level		-	level attribute value
- * 			[out]R			-	R light PWM
- * 			[out]G			-	G light PWM
- * 			[out]B			-	B light PWM
- *
- * @return  None
- */
-void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
-{
-#if (COLOR_RGB_SUPPORT)
-    u8 region;
-    u8 remainder;
-    u8 p, q, t;
-
-	u16 rHue = (u16)hue * 360 / ZCL_COLOR_ATTR_HUE_MAX;
-	u8 rS = saturation;
-	u8 rV = level;
-
-	if(saturation == 0){
-		*R = rV;
-		*G = rV;
-		*B = rV;
-		return;
+	if (colorTemperatureMireds <= COLD_LIGHT_TEMPERATURE)
+	{
+		RGB_CT -= (COLD_LIGHT_TEMPERATURE - colorTemperatureMireds);
+		// 50% COLD + 50% RGB
+		LEDLIGHT_COLD->Value = 1;
+	} else
+	if (colorTemperatureMireds >= WARM_LIGHT_TEMPERATURE)
+	{
+		RGB_CT += (colorTemperatureMireds - WARM_LIGHT_TEMPERATURE);
+		// 50% WARM + 50% RGB
+		LEDLIGHT_WARM->Value = 1;
+	} else
+	{
+		// RGB_CT = colorTemperatureMireds
+		// 50% RGB + W*50% WARM + C=50% COLD
+		if (temperatureMireds >= WARM_LIGHT_TEMPERATURE) {
+			LEDLIGHT_WARM->Value = 1;			// catch out of boundary values
+		} else if (temperatureMireds <= COLD_LIGHT_TEMPERATURE) {
+			LEDLIGHT_WARM->Value = 0;			// catch out of boundary values
+		} else {
+			LEDLIGHT_WARM->Value = (float)(((temperatureMireds - COLD_LIGHT_TEMPERATURE)) / (WARM_LIGHT_TEMPERATURE - COLD_LIGHT_TEMPERATURE));
+		}
+		LEDLIGHT_COLD->Value = 1 - LEDLIGHT_WARM->Value;
 	}
 
-	if(rHue < 360){
-		region = rHue / 60;
-	}else{
-		region = 0;
+	LEDLIGHT_setMired (RGB_CT);
+	// (level / 2) to split 50% on RGB and 50% on CCT
+	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL,	((u16)(LEDLIGHT_COLD->Value                * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL,	((u16)(LEDLIGHT_WARM->Value                * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_RED->Value   * RGB_correct * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_GREEN->Value * RGB_correct * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_BLUE->Value  * RGB_correct * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_COLD->OnOff	= (LEDLIGHT_COLD->Value != 0);
+	LEDLIGHT_WARM->OnOff	= (LEDLIGHT_WARM->Value != 0);
+	LEDLIGHT_RED->OnOff		= (LEDLIGHT_RED->Value != 0);
+	LEDLIGHT_GREEN->OnOff	= (LEDLIGHT_GREEN->Value != 0);
+	LEDLIGHT_BLUE->OnOff	= (LEDLIGHT_BLUE->Value != 0);
+
+#elif (COLOR_RGB_SUPPORT) && (SINGLE_WHITE_SUPPORT)
+
+#	if (COLD_LIGHT_TEMPERATURE)
+#		define WHITE_CT		COLD_LIGHT_TEMPERATURE
+#	else /* just using COLOR_TEMPERATURE_NEUTRAL as assumed default, because not defined */
+#		define WHITE_CT		COLOR_TEMPERATURE_NEUTRAL
+#	endif
+
+	LEDLIGHT_WHITE->Value = 1;
+	float RGB_correct = 1;
+	u16 RGB_CT = colorTemperatureMireds;
+	if (colorTemperatureMireds < WHITE_CT) {				// colder WHITE
+		RGB_CT -= (WHITE_CT - colorTemperatureMireds);
+	} else if (colorTemperatureMireds > WHITE_CT) {			//	warmer WHITE
+		RGB_CT += (colorTemperatureMireds - WHITE_CT);
 	}
 
-	remainder = (rHue - (region * 60)) * 4;
+	// fix range limits
+	if (RGB_CT < COLOR_TEMPERATURE_12000K) {				// LEDLIGHT_setMired minimum
+		RGB_CT = COLOR_TEMPERATURE_12000K;
+		LEDLIGHT_WHITE->Value = (float)(((colorTemperatureMireds - RGB_CT)) / (WHITE_CT - RGB_CT));
+	} else if (RGB_CT > COLOR_TEMPERATURE_1000K) {			// LEDLIGHT_setMired maximum
+		RGB_CT = COLOR_TEMPERATURE_1000K;
+		LEDLIGHT_WHITE->Value = (float)(((RGB_CT - colorTemperatureMireds)) / (RGB_CT - WHITE_CT));
+	}
+	if (LEDLIGHT_WHITE->Value > 1) {
+		LEDLIGHT_WHITE->Value = 1;
+	} else if (LEDLIGHT_WHITE->Value != 1) {
+		RGB_correct = 1 - LEDLIGHT_WHITE->Value;
+	}
 
-    p = (rV * (255 - rS)) >> 8;
-    q = (rV * (255 - ((rS * remainder) >> 8))) >> 8;
-    t = (rV * (255 - ((rS * (255 - remainder)) >> 8))) >> 8;
+	// (level / 2) to split 50% on RGB and 50% on WHITE
+	LEDLIGHT_setMired (RGB_CT);
+	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL,	((u16)(LEDLIGHT_WHITE->Value               * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_RED->Value   * RGB_correct * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_GREEN->Value * RGB_correct * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_BLUE->Value  * RGB_correct * PMW_MAX_TICK * (level / 2) / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_WHITE->OnOff	= (LEDLIGHT_WHITE->Value != 0);
+	LEDLIGHT_RED->OnOff		= (LEDLIGHT_RED->Value != 0);
+	LEDLIGHT_GREEN->OnOff	= (LEDLIGHT_GREEN->Value != 0);
+	LEDLIGHT_BLUE->OnOff	= (LEDLIGHT_BLUE->Value != 0);
 
-    if (region == 0) {
-    	*R = rV;
-    	*G = t;
-    	*B = p;
-    } else if (region == 1) {
-    	*R = q;
-    	*G = rV;
-    	*B = p;
-    } else if (region == 2) {
-    	*R = p;
-    	*G = rV;
-    	*B = t;
-    } else if (region == 3) {
-    	*R = p;
-    	*G = q;
-    	*B = rV;
-    } else if (region == 4) {
-    	*R = t;
-    	*G = p;
-    	*B = rV;
-    } else {
-    	*R = rV;
-    	*G = p;
-    	*B = q;
-    }
+#elif (COLOR_CCT_SUPPORT)
+	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
+	if (temperatureMireds >= pColor->colorTempPhysicalMaxMireds) {
+		LEDLIGHT_WARM->Value = 1;			// catch out of boundary values
+	} else if (temperatureMireds <= pColor->colorTempPhysicalMinMireds) {
+		LEDLIGHT_WARM->Value = 0;			// catch out of boundary values
+	} else {
+		LEDLIGHT_WARM->Value = (float)(((temperatureMireds - pColor->colorTempPhysicalMinMireds)) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds)) ;
+	}
+	LEDLIGHT_COLD->Value = 1 - LEDLIGHT_WARM->Value;
+	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL,	((u16)(LEDLIGHT_COLD->Value  * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL,	((u16)(LEDLIGHT_WARM->Value  * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_COLD->OnOff	= (LEDLIGHT_COLD->Value != 0);
+	LEDLIGHT_WARM->OnOff	= (LEDLIGHT_WARM->Value != 0);
+
+#elif (COLOR_RGB_SUPPORT)
+	LEDLIGHT_setMired (colorTemperatureMireds);
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_RED->Value   * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_GREEN->Value * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_BLUE->Value  * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_RED->OnOff		= (LEDLIGHT_RED->Value != 0);
+	LEDLIGHT_GREEN->OnOff	= (LEDLIGHT_GREEN->Value != 0);
+	LEDLIGHT_BLUE->OnOff	= (LEDLIGHT_BLUE->Value != 0);
+
 #endif
 }
 
@@ -341,24 +349,65 @@ void hsvToRGB(u8 hue, u8 saturation, u8 level, u8 *R, u8 *G, u8 *B)
 void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 {
 #if (COLOR_RGB_SUPPORT)
-	u8 R = 0;
-	u8 G = 0;
-	u8 B = 0;
-
 	level = (level < 0x10) ? 0x10 : level;
+	LEDLIGHT_setHSV (hue, saturation, ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_RED->Value   * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_GREEN->Value * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_BLUE->Value  * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_RED->OnOff		= (LEDLIGHT_RED->Value != 0);
+	LEDLIGHT_GREEN->OnOff	= (LEDLIGHT_GREEN->Value != 0);
+	LEDLIGHT_BLUE->OnOff	= (LEDLIGHT_BLUE->Value != 0);
+#endif
+}
 
-	hsvToRGB(hue, saturation, level, &R, &G, &B);
+/*********************************************************************
+ * @fn      hwLight_colorUpdate_enhancedHSV2RGB
+ *
+ * @brief
+ *
+ * @param   [in]enhancedHue		-	hue attribute value
+ * 			[in]saturation		-	saturation attribute value
+ * 			[in]level			-	level attribute value
+ * 			[out]hue			-	hue attribute value
+ *
+ * @return  None
+ */
+void hwLight_colorUpdate_enhancedHSV2RGB(u16 enhancedHue, u8 saturation, u8 level, u8 *hue)
+{
+#if (COLOR_RGB_SUPPORT)
+	level = (level < 0x10) ? 0x10 : level;
+	LEDLIGHT_setEnhancedHSV (enhancedHue, saturation, ZCL_LEVEL_ATTR_MAX_LEVEL, hue);
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_RED->Value   * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_GREEN->Value * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_BLUE->Value  * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_RED->OnOff		= (LEDLIGHT_RED->Value != 0);
+	LEDLIGHT_GREEN->OnOff	= (LEDLIGHT_GREEN->Value != 0);
+	LEDLIGHT_BLUE->OnOff	= (LEDLIGHT_BLUE->Value != 0);
+#endif
+}
 
-	u16 gammaCorrectR = ((u16)R * R) / ZCL_LEVEL_ATTR_MAX_LEVEL;
-	u16 gammaCorrectG = ((u16)G * G) / ZCL_LEVEL_ATTR_MAX_LEVEL;
-	u16 gammaCorrectB = ((u16)B * B) / ZCL_LEVEL_ATTR_MAX_LEVEL;
-
-	g_PwmChannels.CH2_CycleTick = gammaCorrectR * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL, g_PwmChannels.CH2_CycleTick);
-	g_PwmChannels.CH3_CycleTick = gammaCorrectG * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL, g_PwmChannels.CH3_CycleTick);
-	g_PwmChannels.CH4_CycleTick = gammaCorrectB * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL, g_PwmChannels.CH4_CycleTick);
+/*********************************************************************
+ * @fn      hwLight_colorUpdate_xyY2RGB
+ *
+ * @brief	set PWM cycle for RGB LEDs from CIE xyY color value
+ *
+ * @param   X			-	X attribute value		ZCL_COLOR_ATTR_XY_MIN ... ZCL_COLOR_ATTR_XY_MAX
+ * 			Y			-	Y attribute value		ZCL_COLOR_ATTR_XY_MIN ... ZCL_COLOR_ATTR_XY_MAX
+ * 			level		-	level attribute value	ZCL_LEVEL_ATTR_MIN_LEVEL ... ZCL_LEVEL_ATTR_MAX_LEVEL
+ *
+ * @return  None
+ */
+void hwLight_colorUpdate_xyY2RGB(u16 x, u16 y, u8 level)
+{
+#if (COLOR_RGB_SUPPORT)
+	level = (level < 0x10) ? 0x10 : level;
+	LEDLIGHT_setXY (x, y);
+	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_RED->Value   * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_GREEN->Value * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		((u16)(LEDLIGHT_BLUE->Value  * PMW_MAX_TICK * level / ZCL_LEVEL_ATTR_MAX_LEVEL)));
+	LEDLIGHT_RED->OnOff		= (LEDLIGHT_RED->Value != 0);
+	LEDLIGHT_GREEN->OnOff	= (LEDLIGHT_GREEN->Value != 0);
+	LEDLIGHT_BLUE->OnOff	= (LEDLIGHT_BLUE->Value != 0);
 #endif
 }
 
@@ -405,7 +454,7 @@ void light_fresh(void)
 #else
 	// always set LED_CH1 to maximum, without ZCL_LEVEL_CTRL and ZCL_LIGHT_COLOR_CONTROL
 	g_PwmChannels.CH1_CycleTick = ZCL_LEVEL_ATTR_MAX_LEVEL * PWM_FULL_DUTYCYCLE;
-	pwmSetDuty(COOL_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
+	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL, g_PwmChannels.CH1_CycleTick);
 #endif
 	ledLight_updateOnOff();
 
@@ -423,7 +472,7 @@ void light_fresh(void)
  */
 void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u8 minLevel, u8 maxLevel, bool wrap)
 {
-	DEBUG(DEBUG_LEDCOLOR, "light_applyUpdate\r");
+	DEBUG(DEBUG_LEDCOLOR, "applUpd\r");
 	if((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel)){
 		*curLevel256 = (wrap) ? ((u16)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u16)maxLevel * 256) - 256)
 							  : ((u16)maxLevel * 256);
@@ -461,7 +510,7 @@ void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *r
  */
 void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)
 {
-	DEBUG(DEBUG_LEDCOLOR, "light_applyUpdate_16\r");
+	DEBUG(DEBUG_LEDCOLOR, "applUpd16\r");
 	if((*stepLevel256 > 0) && ((((s32)*curLevel256 + *stepLevel256) / 256) > maxLevel)){
 		*curLevel256 = (wrap) ? ((u32)minLevel * 256 + ((*curLevel256 + *stepLevel256) - (u32)maxLevel * 256) - 256)
 							  : ((u32)maxLevel * 256);

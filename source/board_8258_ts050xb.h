@@ -149,8 +149,8 @@ extern "C" {
 										gpio_set_func(LED_WW, AS_PWM0); 		\
 									}while(0)
 	// LED_W
-#	define COOL_LIGHT_PWM_CHANNEL	LED_CH1_PWM
-#	define COOL_LIGHT_PWM_SET()		LED_CH1_PWM_SET()
+#	define COLD_LIGHT_PWM_CHANNEL	LED_CH1_PWM
+#	define COLD_LIGHT_PWM_SET()		LED_CH1_PWM_SET()
 	// LED_R
 #	define R_LIGHT_PWM_CHANNEL		LED_CH2_PWM
 #	define R_LIGHT_PWM_SET()		LED_CH2_PWM_SET()

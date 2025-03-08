@@ -295,9 +295,9 @@ static void ledLightSysException(void)
 #	elif defined(LED_PERMIT)
 	led_on(LED_PERMIT);
 #	endif
-#	if defined(COOL_LIGHT_PWM_CHANNEL)
-	drv_pwm_cfg(COOL_LIGHT_PWM_CHANNEL, 400, 4000);
-	drv_pwm_start(COOL_LIGHT_PWM_CHANNEL);
+#	if defined(COLD_LIGHT_PWM_CHANNEL)
+	drv_pwm_cfg(COLD_LIGHT_PWM_CHANNEL, 400, 4000);
+	drv_pwm_start(COLD_LIGHT_PWM_CHANNEL);
 #	endif
 #	if defined(R_LIGHT_PWM_CHANNEL)
 	drv_pwm_cfg(R_LIGHT_PWM_CHANNEL, 400, 4000);

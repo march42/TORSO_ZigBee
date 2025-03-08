@@ -10,3 +10,9 @@ build/
 
 # firmware images
 ./*.bin
+
+# Visual Studio Code
+.vscode/
+
+# open office lock files
+*.ods\#

@@ -128,8 +128,95 @@ source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defin
 - [ ] handle enhanced hue color setting
 - [ ] split TORSO_LIGHT to multiple end points handling main, background, extra light
 - [ ] ZCL BASIC cluster ProductCode attribute (0x00 =none) wird auf HomeAssistant falsch angezeigt
+- [ ] store serialNumber and productCode in NV (maybe with MAC or in F_Cfg)
+
+### color calculations
+
+For the correct calculations, there are a few technical details to be known.
+The exact values should be available from the LED manufacturers datasheet.
+
+- emiting wavelength of 5050 RGB LED is red=630nm, green=525nm, blue=465nm
+- intensity of 5050 RGB LED is red=1000mcd, green=1500mcd, blue=800mcd
+
+Kelvin and Mired used for specification of color temperature.
+Color temperature is achieved by mixing cold and warm white light.
+The color temperature of LED should be available from the manufacturers datasheet.
+
+- typical color temperature of CCT LED is cold=6,000K-6,500K, warm=2,700K-3,000K
+- injection LED module build with 5730 SMD LEDs are mostly sold as warm 3,000K, neutral 6,500K, cold 10,000K
+
+Hue is an angle between 0 and 360. CurrentHue attribute is an integer value between 0 and 254, because 255 is don't change value.
+`Hue(degrees) = CurrentHue x 360 / 254`
+`CurrentHue = Hue x 254 / 360`
+
+#### PWM Cycle
+
+The PWM cycle is defined by giving a cycle counter and a maximum cycle.
+- on starting the state is HI and the clock ticks are counted
+- on reaching the cycle counter the state switches to LO
+- on reaching the maximum the counter is reset and the cycle starts again
+
+The maximum is defined by the PWM clock and the PWM frequency `MAXIMUM = CLOCK / FREQUENCY`
+
+```
+CPU clock = 48MHz
+PWM frequency = 4kHz
+MAXIMUM = 48MHz / 4kHz = 12,000
+```
+
+The intensity is `INTENSITY = COUNTER / MAXIMUM`
+
+#### Level Attribute
+
+ZigBee LEVEL is fractions of 254 (ZCL_LEVEL_ATTR_MAX_LEVEL)
+
+The level attribute is 8bit ranging from 1 (ZCL_LEVEL_ATTR_MIN_LEVEL) to 254 (ZCL_LEVEL_ATTR_MAX_LEVEL).
+
+#### HSV Color Space
+
+Typical H is 0-360°, S and V are each 0%-100%
+
+ZigBee Hue is fractions of 254 (ZCL_COLOR_ATTR_HUE_MAX)
+ZigBee Saturation is fractions of 254 (ZCL_COLOR_ATTR_SATURATION_MAX)
+ZigBee Value is LEVEL, Value/LEVEL is fractions of 254 (ZCL_LEVEL_ATTR_MAX_LEVEL)
+
+#### Enhanced Hue Color Space
+
+ZigBee Enhanced Hue is fractions of 65535 (ZCL_COLOR_ATTR_ENHANCED_HUE_MAX)
+ZigBee Saturation is fractions of 254 (ZCL_COLOR_ATTR_SATURATION_MAX)
+ZigBee Value is LEVEL, Value/LEVEL is fractions of 254 (ZCL_LEVEL_ATTR_MAX_LEVEL)
+
+#### XY Color Space
+
+ZigBee X is fractions of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ZigBee Y is fractions of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ZigBee LEVEL, LEVEL is fractions of 254 (ZCL_LEVEL_ATTR_MAX_LEVEL)
+
+#### RGB Color Space
+
+Typical RGB values are 0-255
+
+#### xyY Color Space
+
+#### XYZ Color Space
+
+#### Color Temperature
+
+Color Temperature given in Mired or Kelvin.
+`1 Mired = 1,000,000 / 1 Kelvin  <==> 1 Kelvin = 1,000,000 / 1 Mired`
+
+ZigBee Mired maximum is 65279 (ZCL_COLOR_ATTR_TEMPERATURE_MIRDES_MAX)
 
 ### firmware functions
+
+#### light_applyUpdate
+
+`void light_applyUpdate(u8 *curLevel, u16 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u8 minLevel, u8 maxLevel, bool wrap)`
+
+
+#### light_applyUpdate_16
+
+`void light_applyUpdate_16(u16 *curLevel, u32 *curLevel256, s32 *stepLevel256, u16 *remainingTime, u16 minLevel, u16 maxLevel, bool wrap)`
 
 #### ZCL clusters and commands
 
@@ -137,6 +224,41 @@ source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defin
 - OnOff cluster
 - Level cluster
 - ColorControl cluster
+
+##### ZCL cluster command handling
+
+The command handling functions are set in `source\ledLightEpCfg.c`
+
+###### ledLight_sceneCb
+
+###### ledLight_onOffCb
+
+###### ledLight_levelCb
+
+###### ledLight_colorCtrlCb
+
+Setting `EXTENDED_COLOR_LIGHT=1` will activate additional features and synchronization.
+
+- ColorTemperature on RGB LEDs
+- Color Loop function
+- enhanced Hue capability
+
+- ZCL command MOVE_TO_HUE
+  - ledLight_moveToHueProcess
+- ZCL command MOVE_TO_SATURATION
+  - ledLight_moveToSaturationProcess
+- ZCL command MOVE_TO_HUE_AND_SATURATION
+  - ledLight_moveToHueAndSaturationProcess
+    - ledLight_moveToHueProcess
+    - ledLight_moveToSaturationProcess
+
+- ZCL command MOVE_TO_COLOR
+  - ledLight_moveToColorProcess X,Y ,t
+
+- ZCL command ENHANCED_MOVE_TO_HUE_AND_SATURATION
+  - ledLight_enhancedMoveToHueAndSaturationProcess
+    - ledLight_enhancedMoveToHueProcess
+    - ledLight_moveToSaturationProcess
 
 #### ZCL cluster support setting
 

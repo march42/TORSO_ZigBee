@@ -100,8 +100,8 @@ extern "C" {
 #	define PWM_W_CHANNEL_SET()		do{	\
 										gpio_set_func(LED_W, AS_PWM1); 	\
 									}while(0)
-#	define COOL_LIGHT_PWM_CHANNEL	PWM_W_CHANNEL
-#	define COOL_LIGHT_PWM_SET()		PWM_W_CHANNEL_SET()
+#	define COLD_LIGHT_PWM_CHANNEL	PWM_W_CHANNEL
+#	define COLD_LIGHT_PWM_SET()		PWM_W_CHANNEL_SET()
 	// LED_WW
 #	define PWM_WW_CHANNEL			2
 #	define PWM_WW_CHANNEL_SET()		do{	\

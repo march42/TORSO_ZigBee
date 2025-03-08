@@ -35,7 +35,7 @@
 /**********************************************************************
  * CONSTANT
  */
-#define LEDLIGHT_ENDPOINT   0x01
+#define LEDLIGHT_ENDPOINT		0x01
 #define SAMPLE_TEST_ENDPOINT	0x02
 
 /**********************************************************************
@@ -149,14 +149,16 @@ typedef struct{
 	u8	currentSaturation;
 	u16	currentX;
 	u16	currentY;
+#	if (EXTENDED_COLOR_LIGHT)
 	u16	enhancedCurrentHue;
 	u8	colorLoopActive;
 	u8	colorLoopDirection;
 	u16	colorLoopTime;
 	u16 colorLoopStartEnhancedHue;
 	u16 colorLoopStoredEnhancedHue;
+#	endif
 #endif
-#if COLOR_CCT_SUPPORT
+#if (COLOR_CCT_SUPPORT) || (EXTENDED_COLOR_LIGHT)
 	u16 colorTemperatureMireds;
 	u16 colorTempPhysicalMinMireds;
 	u16 colorTempPhysicalMaxMireds;
