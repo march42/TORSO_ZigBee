@@ -247,18 +247,31 @@ void led_synch(void)
 
 	zcl_onOffAttr_t *pOnOff = zcl_onoffAttrGet();
 	if (pOnOff->onOff == ZCL_ONOFF_STATUS_OFF) {
+		// POWER_LED on if LED off
 #if defined(POWER_PWM_CHANNEL)
+		drv_pwm_cfg(POWER_PWM_CHANNEL, 4, 4000);	// set brightness level
 		drv_pwm_start(POWER_PWM_CHANNEL);			// set LED on
 #elif defined(LED_POWER)
 		drv_gpio_write(LED_POWER, LED_ON);			// set LED on
 #endif
 
 	} else {
+
+		// POWER_LED on if network joined
+		if (zb_isDeviceJoinedNwk()) {
 #if defined(POWER_PWM_CHANNEL)
-		drv_pwm_stop(POWER_PWM_CHANNEL);			// set LED off
+			drv_pwm_cfg(POWER_PWM_CHANNEL, 10, 4000);	// set brightness level
+			drv_pwm_start(POWER_PWM_CHANNEL);			// set LED on
 #elif defined(LED_POWER)
-		drv_gpio_write(LED_POWER, LED_OFF);			// set LED off
+			drv_gpio_write(LED_POWER, LED_ON);			// set LED on
 #endif
+		} else {
+#if defined(POWER_PWM_CHANNEL)
+			drv_pwm_stop(POWER_PWM_CHANNEL);			// set LED off
+#elif defined(LED_POWER)
+			drv_gpio_write(LED_POWER, LED_OFF);			// set LED off
+#endif
+		}
 	}
 }
 
@@ -282,7 +295,7 @@ void app_task(void)
 static void ledLightSysException(void)
 {
 #if (UART_PRINTF_MODE) || (USB_PRINTF_MODE)
-	TRACE("ledLightSysException\r");
+	TRACE("EXCEPTION\r");
 #	if defined(POWER_PWM_CHANNEL)
 	drv_pwm_cfg(POWER_PWM_CHANNEL, 400, 4000);	// set brightness level
 	drv_pwm_start(POWER_PWM_CHANNEL);			// set LED on

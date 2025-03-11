@@ -109,7 +109,7 @@ void localPermitJoinState(void){
 
 		// TODO: implement PERMIT_SIGNALLING effect
 		if(assocPermit){
-			light_blink_start(90, 700, 1300);
+			light_blink_start(90, 300, 1700);
 		}else{
 			light_blink_stop();
 		}
