@@ -260,6 +260,7 @@ void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 					u8 duration = zb_getMacAssocPermit() ? 0 : 180;
 					zb_nlmePermitJoiningRequest(duration);
 					gpsCommissionModeInvork();
+					TRACE("JOIN started\r");
 				}
 				else {
 					TRACE("IS joined\r");
@@ -276,6 +277,7 @@ void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 						.rejoin			= false,
 					};
 					zb_nlmeLeaveReq(&leaveReq);
+					TRACE("LEAVE requested\r");
 				}
 				else {
 					TRACE("NOT joined\r");
@@ -286,6 +288,7 @@ void app_key_pressed(u8 pressed_keyCode, u8 pressed_count)
 				DEBUG(DEBUG_BUTTONS, "BUTTON Factory Reset\r");
 				sleep_ms(100);
 				// factory reset
+				TRACE("factoryReset\r");
 				gLightCtx.state = APP_FACTORY_NEW_DOING;
 				zb_factoryReset();
 				return;

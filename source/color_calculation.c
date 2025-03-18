@@ -26,6 +26,36 @@
 
 #include "color_calculations.h"
 
+/*	global variables
+**	for channel handling
+*/
+#	if (COLOR_CCT_SUPPORT) || (SINGLE_WHITE_SUPPORT)
+	ts_LED_Channel		g_ledChannel_COLD		= { .Value=COLORCHANNEL_MAX, .OnOff=COLORONOFF_MAX, };
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+	ts_LED_Channel		g_ledChannel_WARM		= { .Value=COLORCHANNEL_MAX, .OnOff=COLORONOFF_MAX, };
+#	endif
+#	if (COLOR_RGB_SUPPORT)
+	ts_LED_Channel		g_ledChannel_RED		= { .Value=COLORCHANNEL_MAX, .OnOff=COLORONOFF_MAX, };
+	ts_LED_Channel		g_ledChannel_GREEN		= { .Value=COLORCHANNEL_MAX, .OnOff=COLORONOFF_MAX, };
+	ts_LED_Channel		g_ledChannel_BLUE		= { .Value=COLORCHANNEL_MAX, .OnOff=COLORONOFF_MAX, };
+#	endif
+
+void LEDLIGHT_setOnOff_fromValue (void)
+{
+#	if (COLOR_CCT_SUPPORT) || (SINGLE_WHITE_SUPPORT)
+	g_ledChannel_COLD.OnOff		= (g_ledChannel_COLD.Value  > 0 ?COLORONOFF_MAX :0);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+	g_ledChannel_WARM.OnOff		= (g_ledChannel_WARM.Value  > 0 ?COLORONOFF_MAX :0);
+#	endif
+#	if (COLOR_RGB_SUPPORT)
+	g_ledChannel_RED.OnOff		= (g_ledChannel_RED.Value   > 0 ?COLORONOFF_MAX :0);
+	g_ledChannel_GREEN.OnOff	= (g_ledChannel_GREEN.Value > 0 ?COLORONOFF_MAX :0);
+	g_ledChannel_BLUE.OnOff		= (g_ledChannel_BLUE.Value  > 0 ?COLORONOFF_MAX :0);
+#	endif
+}
+
 /*	set from HSV (ZigBee values)
 **	ZigBee Hue				is fractions of 254 (ZCL_COLOR_ATTR_HUE_MAX)
 **		Hue = CurrentHue x 360 / 254
@@ -35,57 +65,64 @@
 */
 void LEDLIGHT_setHSV (u8 hue, u8 saturation, u8 value)
 {
-	float HSV_H, HSV_S, HSV_V;
-	HSV_V = ((float)value / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	s32 HSV_V = value * COLORCHANNEL_MAX / ZCL_LEVEL_ATTR_MAX_LEVEL;				// value 0...COLORCHANNEL_MAX ==100%
 	if (saturation == 0) {		// short-cut for optimization
 		// no saturation means achromatic, ergo white
-		LEDLIGHT_RED->Value		= LEDLIGHT_GREEN->Value	= LEDLIGHT_BLUE->Value	= HSV_V;
+		g_ledChannel_RED.Value = g_ledChannel_GREEN.Value = g_ledChannel_BLUE.Value		= HSV_V;
 		return;
 	}
-	HSV_H = ((float)hue * 360 / ZCL_COLOR_ATTR_HUE_MAX);
-	HSV_S = ((float)saturation / ZCL_COLOR_ATTR_SATURATION_MAX);
+	s16 HSV_H	= hue * 360 / ZCL_COLOR_ATTR_HUE_MAX;								// value 0...360 degrees
+	s32 HSV_S	= saturation * COLORCHANNEL_MAX / ZCL_COLOR_ATTR_SATURATION_MAX;	// value 0...COLORCHANNEL_MAX ==100%
 
-	u16   sector   = hue / (ZCL_COLOR_ATTR_HUE_MAX / 6);		// circle sector
-	float fraction = hue % (ZCL_COLOR_ATTR_HUE_MAX / 6);		// fractional part
-
-	float p = (float)(HSV_V * (1.0 - HSV_S));
-	float q = (float)(HSV_V * (1.0 - HSV_S * fraction / 60));
-	float t = (float)(HSV_V * (1.0 - HSV_S * (1 - fraction / 60)));
-
-	switch (sector) {
-	case 0:
-		LEDLIGHT_RED->Value		= HSV_V;
-		LEDLIGHT_GREEN->Value	= t;
-		LEDLIGHT_BLUE->Value	= p;
-		break;
-	case 1:
-		LEDLIGHT_RED->Value		= q;
-		LEDLIGHT_GREEN->Value	= HSV_V;
-		LEDLIGHT_BLUE->Value	= p;
-		break;
-	case 2:
-		LEDLIGHT_RED->Value		= p;
-		LEDLIGHT_GREEN->Value	= HSV_V;
-		LEDLIGHT_BLUE->Value	= t;
-		break;
-	case 3:
-		LEDLIGHT_RED->Value		= p;
-		LEDLIGHT_GREEN->Value	= q;
-		LEDLIGHT_BLUE->Value	= HSV_V;
-		break;
-	case 4:
-		LEDLIGHT_RED->Value		= t;
-		LEDLIGHT_GREEN->Value	= p;
-		LEDLIGHT_BLUE->Value	= HSV_V;
-		break;
-	case 5:
-	default:
-		LEDLIGHT_RED->Value		= HSV_V;
-		LEDLIGHT_GREEN->Value	= p;
-		LEDLIGHT_BLUE->Value	= q;
-		break;
+	u8  sector;							// sector of full circle
+	u8  fraction;						// fraction of sector
+	if (HSV_H < 360)
+	{
+		sector		= HSV_H / 60;		// 0 <= H < 360
+		fraction	= HSV_H % 60;		// 0..59
+	} else {
+		sector		= 0;				// H==360 =0
+		fraction	= 0;
 	}
 
+	s32 _P		= (COLORCHANNEL_MAX - HSV_S                         ) * HSV_V / COLORCHANNEL_MAX;
+	s32 _Q		= (COLORCHANNEL_MAX - HSV_S * (      fraction  / 60)) * HSV_V / COLORCHANNEL_MAX;
+	s32 _T		= (COLORCHANNEL_MAX - HSV_S * ((60 - fraction) / 60)) * HSV_V / COLORCHANNEL_MAX;
+
+	switch (sector) {
+		case 0:
+			g_ledChannel_RED.Value		= HSV_V;
+			g_ledChannel_GREEN.Value	= _T;
+			g_ledChannel_BLUE.Value		= _P;
+			break;
+		case 1:
+			g_ledChannel_RED.Value		= _Q;
+			g_ledChannel_GREEN.Value	= HSV_V;
+			g_ledChannel_BLUE.Value		= _P;
+			break;
+		case 2:
+			g_ledChannel_RED.Value		= _P;
+			g_ledChannel_GREEN.Value	= HSV_V;
+			g_ledChannel_BLUE.Value		= _T;
+			break;
+		case 3:
+			g_ledChannel_RED.Value		= _P;
+			g_ledChannel_GREEN.Value	= _Q;
+			g_ledChannel_BLUE.Value		= HSV_V;
+			break;
+		case 4:
+			g_ledChannel_RED.Value		= _T;
+			g_ledChannel_GREEN.Value	= _P;
+			g_ledChannel_BLUE.Value		= HSV_V;
+			break;
+		case 5:
+			g_ledChannel_RED.Value		= HSV_V;
+			g_ledChannel_GREEN.Value	= _P;
+			g_ledChannel_BLUE.Value		= _Q;
+			break;
+	}
+
+	LEDLIGHT_setOnOff_fromValue();
 	return;
 }
 
@@ -115,39 +152,58 @@ void LEDLIGHT_setEnhancedHSV (u16 enhancedHue, u8 saturation, u8 level, u8 *derr
 	LEDLIGHT_setHSV (hue, saturation, level);	// for now just use the stripped value
 }
 
-/*	set from XYZ (fraction of 1 values)
-**	Y=1 setting full on brightness
+/*	set from XYZ (fraction of 0xFFFF values)
+**	X/Y/Z	0 ... 0xFFFF==1.0
+**	Y=0xFFFF setting full on brightness
 */
-void LEDLIGHT_setXYZ (float XYZ_X, float XYZ_Y, float XYZ_Z)
+void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
 {
-	LEDLIGHT_RED->Value		= (float)( 3.2404542 * XYZ_X - 1.5371385 * XYZ_Y - 0.4985314 * XYZ_Z);
-	LEDLIGHT_GREEN->Value	= (float)(-0.969266  * XYZ_X + 1.8760108 * XYZ_Y + 0.041556  * XYZ_Z);
-	LEDLIGHT_BLUE->Value	= (float)( 0.0556434 * XYZ_X - 0.2040259 * XYZ_Y + 1.0572252 * XYZ_Z);
-	if (LEDLIGHT_RED->Value > 1) { 
-		LEDLIGHT_RED->Value = 1; 
-	}
-	if (LEDLIGHT_GREEN->Value > 1) { 
-		LEDLIGHT_GREEN->Value = 1; 
-	}
-	if (LEDLIGHT_BLUE->Value > 1) { 
-		LEDLIGHT_BLUE->Value = 1; 
-	}
+	/*	calculate with floating point
+	**	RGB_R	= (float)( 3.2404542 * XYZ_X - 1.5371385 * XYZ_Y - 0.4985314 * XYZ_Z);
+	**	RGB_G	= (float)(-0.969266  * XYZ_X + 1.8760108 * XYZ_Y + 0.041556  * XYZ_Z);
+	**	RGB_B	= (float)( 0.0556434 * XYZ_X - 0.2040259 * XYZ_Y + 1.0572252 * XYZ_Z);
+	**	converted to integer 1.0==0xFFFF
+	*/
+	s32 RGB_R	= 0x33D8B * XYZ_X  -  0x18980 * XYZ_Y  -   0x7F9F * XYZ_Z;
+	s32 RGB_G	=  0xF820 * XYZ_X  +  0x1E040 * XYZ_Y  +   0x0AA3 * XYZ_Z;
+	s32 RGB_B	=  0x0E3E * XYZ_X  -   0x343A * XYZ_Y  +  0x10EA5 * XYZ_Z;
+
+	g_ledChannel_RED.Value		= ((RGB_R >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_R * COLORCHANNEL_MAX / 0xFFFF));
+	g_ledChannel_GREEN.Value	= ((RGB_G >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_G * COLORCHANNEL_MAX / 0xFFFF));
+	g_ledChannel_BLUE.Value		= ((RGB_B >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_B * COLORCHANNEL_MAX / 0xFFFF));
+	LEDLIGHT_setOnOff_fromValue();
 	return;
 }
 
-/*	set from XY (ZigBee values)
-**	ZigBee x	is fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
-**	ZigBee y	is fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
-**	this is xyY with Y=1 full on brightness
-*/
-void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y)
+/*********************************************************************
+ * @fn      LEDLIGHT_setXY
+ *
+ * @brief	set RGB from XY (ZigBee values)
+ * 
+ * @param   [in]ZigBee_X	- X value, fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ * 			[in]ZigBee_Y	- Y value, fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ * 			[in]level		- level attribute value (0 - ZCL_LEVEL_ATTR_MAX_LEVEL)
+ *
+ * @return  None
+ */
+void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 {
-	float xyY_X		= ZigBee_X / ZCL_COLOR_ATTR_XY_MAX;
-	float xyY_Y	= ZigBee_Y / ZCL_COLOR_ATTR_XY_MAX;
-	
-	float XYZ_X	= xyY_X / xyY_Y;
-	float XYZ_Z = (1 - xyY_X - xyY_Y) / xyY_Y;
-	LEDLIGHT_setXYZ (XYZ_X, 1, XYZ_Z);
+	s32 XYZ_X	=                          ZigBee_X             * ZCL_COLOR_ATTR_XY_MAX / ZigBee_Y;
+	s32 XYZ_Y	=                                                 ZCL_COLOR_ATTR_XY_MAX           ;		// full on brightness
+	s32 XYZ_Z	= (ZCL_COLOR_ATTR_XY_MAX - ZigBee_X - ZigBee_Y) * ZCL_COLOR_ATTR_XY_MAX / ZigBee_Y;
+	// now X/Y/Z is fraction of ZCL_COLOR_ATTR_XY_MAX
+
+	//	converted to integer 1.0==0xFFFF
+	s32 RGB_R	= 0x33D8B * XYZ_X  -  0x18980 * XYZ_Y  -   0x7F9F * XYZ_Z;
+	s32 RGB_G	=  0xF820 * XYZ_X  +  0x1E040 * XYZ_Y  +   0x0AA3 * XYZ_Z;
+	s32 RGB_B	=  0x0E3E * XYZ_X  -   0x343A * XYZ_Y  +  0x10EA5 * XYZ_Z;
+
+	__LED_RED_SETVALUE   (RGB_R, 0xFFFF);
+	__LED_RED_SETONOFF   (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
+	__LED_GREEN_SETVALUE (RGB_G, 0xFFFF);
+	__LED_GREEN_SETONOFF (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
+	__LED_BLUE_SETVALUE  (RGB_B, 0xFFFF);
+	__LED_BLUE_SETONOFF  (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
 	return;
 }
 
@@ -160,31 +216,24 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y)
  * 				see https://andi-siess.de/rgb-to-color-temperature/
  * 				A. Siess, "Kelvin (color temperature) to RGB conversion table". Zenodo, Nov. 27, 2024. doi: 10.5281/zenodo.14230959
  * 
- * @param   [in]kelvin		- color temperature value in Kelvin
+ * @param   [in]kelvin			- color temperature value in Kelvin
+ * 			[out]derrivedKelvin	- actual color temperature value in Kelvin, WITHIN limited range
  *
  * @return  None
  */
-void LEDLIGHT_setKelvin (u16 kelvin)
+void LEDLIGHT_setKelvin (u16 kelvin, u16 *derrivedKelvin)
 {
 	u8	RGB_R, RGB_G, RGB_B;
 
-	// range limitation
-#if (1) // (EXTENDED_COLOR_LIGHT)
-	if (kelvin < 1000) {
-		kelvin = 1000;
-	} else if (kelvin > 12000) {
-		kelvin = 12000;
-	}
-#else
-	if (kelvin < 1700) {
-		kelvin = 1700;
-	} else if (kelvin > 7500) {
-		kelvin = 7500;
-	}
-#endif
+	u16 colorTemp = kelvin / 100;
+	/* range limitation should not be necessary with default in switch case structure
+	if (colorTemp < 10) {
+		colorTemp = 10;
+	} else if (colorTemp > 120) {
+		colorTemp = 120;
+	} */
 
-	switch (kelvin/100) {	// use 100 Kelvin steps
-#if (1) // (EXTENDED_COLOR_LIGHT)
+	switch (colorTemp) {	// use 100 Kelvin steps
 		case 10:	RGB_R=255;	RGB_G=56;	RGB_B=0;	break;
 		case 11:	RGB_R=255;	RGB_G=71;	RGB_B=0;	break;
 		case 12:	RGB_R=255;	RGB_G=83;	RGB_B=0;	break;
@@ -192,7 +241,7 @@ void LEDLIGHT_setKelvin (u16 kelvin)
 		case 14:	RGB_R=255;	RGB_G=101;	RGB_B=0;	break;
 		case 15:	RGB_R=255;	RGB_G=109;	RGB_B=0;	break;
 		case 16:	RGB_R=255;	RGB_G=115;	RGB_B=0;	break;
-#endif
+
 		case 17:	RGB_R=255;	RGB_G=121;	RGB_B=0;	break;
 		case 18:	RGB_R=255;	RGB_G=126;	RGB_B=0;	break;
 		case 19:	RGB_R=255;	RGB_G=131;	RGB_B=0;	break;
@@ -214,8 +263,10 @@ void LEDLIGHT_setKelvin (u16 kelvin)
 		case 35:	RGB_R=255;	RGB_G=196;	RGB_B=137;	break;
 		case 36:	RGB_R=255;	RGB_G=199;	RGB_B=143;	break;
 		case 37:	RGB_R=255;	RGB_G=201;	RGB_B=148;	break;
-		default:
+
+		default:	colorTemp = 38;			// neutral white
 		case 38:	RGB_R=255;	RGB_G=204;	RGB_B=153;	break;
+
 		case 39:	RGB_R=255;	RGB_G=206;	RGB_B=159;	break;
 		case 40:	RGB_R=255;	RGB_G=209;	RGB_B=163;	break;
 		case 41:	RGB_R=255;	RGB_G=211;	RGB_B=168;	break;
@@ -253,7 +304,7 @@ void LEDLIGHT_setKelvin (u16 kelvin)
 		case 73:	RGB_R=239;	RGB_G=240;	RGB_B=255;	break;
 		case 74:	RGB_R=237;	RGB_G=239;	RGB_B=255;	break;
 		case 75:	RGB_R=235;	RGB_G=238;	RGB_B=255;	break;
-#if (1) // (EXTENDED_COLOR_LIGHT)
+
 		case 76:	RGB_R=233;	RGB_G=237;	RGB_B=255;	break;
 		case 77:	RGB_R=231;	RGB_G=236;	RGB_B=255;	break;
 		case 78:	RGB_R=230;	RGB_G=235;	RGB_B=255;	break;
@@ -299,20 +350,207 @@ void LEDLIGHT_setKelvin (u16 kelvin)
 		case 118:	RGB_R=196;	RGB_G=210;	RGB_B=255;	break;
 		case 119:	RGB_R=195;	RGB_G=210;	RGB_B=255;	break;
 		case 120:	RGB_R=195;	RGB_G=209;	RGB_B=255;	break;
-#endif
 	}
 
-	LEDLIGHT_RED->Value		= (float)(RGB_R / 255);
-	LEDLIGHT_GREEN->Value	= (float)(RGB_G / 255);
-	LEDLIGHT_BLUE->Value	= (float)(RGB_B / 255);
+	if (derrivedKelvin != NULL) {
+		*derrivedKelvin = colorTemp * 100;		// set after loop, to catch changed default
+	}
 
+	g_ledChannel_RED.Value		= ((RGB_R >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_R * COLORCHANNEL_MAX / 0xFF));
+	g_ledChannel_GREEN.Value	= ((RGB_G >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_G * COLORCHANNEL_MAX / 0xFF));
+	g_ledChannel_BLUE.Value		= ((RGB_B >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_B * COLORCHANNEL_MAX / 0xFF));
+	LEDLIGHT_setOnOff_fromValue();
 	return;
+}
+
+/*********************************************************************
+ * @fn      LEDLIGHT_setMired_RGBW
+ *
+ * @brief	set RGB from color temperature in mired (ZigBee values)
+ * 
+ * @param   [in]ZigBee_Mireds	- color temperature value in mired, 1...65279 (ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MIN...ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MAX)
+ *          [in]whiteMireds		- color temperature of the white LED channel
+ *
+ * @return  None
+ */
+void LEDLIGHT_setMired_RGBW (u16 ZigBee_Mireds, const u16 whiteMireds)
+{
+#if (COLOR_RGB_SUPPORT) && (SINGLE_WHITE_SUPPORT)
+
+	// fix range limits
+	if (ZigBee_Mireds < COLOR_TEMPERATURE_CONVERT(12000)) {				// LEDLIGHT_setMired minimum
+		ZigBee_Mireds = COLOR_TEMPERATURE_CONVERT(12000);
+	} else if (ZigBee_Mireds > COLOR_TEMPERATURE_CONVERT(1000)) {		// LEDLIGHT_setMired maximum
+		ZigBee_Mireds = COLOR_TEMPERATURE_CONVERT(1000);
+	}
+	u16 RGB_CT = ZigBee_Mireds;
+	if (ZigBee_Mireds <= (whiteMireds / 2)) {							// CT < (WHITE / 2) results in RGB_CT < 0
+		RGB_CT	= COLOR_TEMPERATURE_CONVERT(12000);
+	} else
+	if (ZigBee_Mireds < whiteMireds) {									// colder WHITE
+		RGB_CT -= (whiteMireds - ZigBee_Mireds);						// double the distance
+		if (RGB_CT < COLOR_TEMPERATURE_CONVERT(12000)) {				// LEDLIGHT_setMired minimum
+			RGB_CT = COLOR_TEMPERATURE_CONVERT(12000);
+		}
+	} else if (ZigBee_Mireds > whiteMireds) {							// warmer WHITE
+		RGB_CT += (ZigBee_Mireds - whiteMireds);						// double the distance
+		if (RGB_CT > COLOR_TEMPERATURE_CONVERT(1000)) {					// LEDLIGHT_setMired maximum
+			RGB_CT = COLOR_TEMPERATURE_CONVERT(1000);
+		}
+	}
+	__LED_COLD_SETVALUE (255,255);
+	LEDLIGHT_setKelvin (COLOR_TEMPERATURE_CONVERT(RGB_CT), NULL);
+
+	s32 TMP;
+	if (ZigBee_Mireds < whiteMireds) {							// colder WHITE
+		// WARM = (mireds - min) / (max - min)
+		TMP = (((ZigBee_Mireds - RGB_CT) * COLORONOFF_MAX) / (whiteMireds - RGB_CT));
+		printf ("\tWARM=%d", TMP);
+	} else if (ZigBee_Mireds > whiteMireds) {							// warmer WHITE
+		TMP = (((RGB_CT - ZigBee_Mireds) * COLORONOFF_MAX) / (RGB_CT - whiteMireds));
+		printf ("\tCOLD=%d", TMP);
+	} else
+	/* if neither lesser nor greater it should be equal
+	if (ZigBee_Mireds == whiteMireds) */
+	{
+		TMP = COLORONOFF_MAX / 2;
+		printf ("\tWHITE=%d", TMP);
+	}
+	__LED_COLD_SETONOFF  (TMP,COLORONOFF_MAX);
+	__LED_RED_SETONOFF   (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+	__LED_GREEN_SETONOFF (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+	__LED_BLUE_SETONOFF  (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+#endif /* (COLOR_RGB_SUPPORT) && (SINGLE_WHITE_SUPPORT) */
+}
+
+/*********************************************************************
+ * @fn      LEDLIGHT_setMired_RGBCCT
+ *
+ * @brief	set RGB from color temperature in mired (ZigBee values)
+ * 
+ * @param   [in]ZigBee_Mireds	- color temperature value in mired, 1...65279 (ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MIN...ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MAX)
+ *          [in]coldMireds		- color temperature of the cold white LED channel
+ *          [in]warmMireds		- color temperature of the warm white LED channel
+ *
+ * @return  None
+ */
+void LEDLIGHT_setMired_RGBCCT (u16 ZigBee_Mireds, const u16 coldMireds, const u16 warmMireds)
+{
+#if (COLOR_RGB_SUPPORT) && (COLOR_CCT_SUPPORT)
+	u16 RGB_minCT	= COLOR_TEMPERATURE_CONVERT(12000);
+	u16 RGB_maxCT	= COLOR_TEMPERATURE_CONVERT(1000);
+	// fix range limits
+	if (ZigBee_Mireds < RGB_minCT) {				// LEDLIGHT_setMired minimum
+		ZigBee_Mireds = RGB_minCT;
+	} else if (ZigBee_Mireds > RGB_maxCT) {			// LEDLIGHT_setMired maximum
+		ZigBee_Mireds = RGB_maxCT;
+	}
+	u16 RGB_CT = ZigBee_Mireds;
+	s32 TMP = 0;
+/*	color temperature range limits
+**	***
+**	  RGB minimum =   83 mired, 12000 Kelvin (hard limit, RGB conversion table)
+**	WHITE minimum =  154 mired,  6500 Kelvin (cold white LED)
+**	WHITE single  =  263 mired,  3800 Kelvin (neutral)
+**	WHITE maximum =  455 mired,  2200 Kelvin (warm white LED)
+**	  RGB maximum = 1000 mired,  1000 Kelvin (hard limit, RGB conversion table)
+**	***
+**	COLDer = (mireds - min) / (max - min)
+**	WARMer = (max - mireds) / (max - min)
+*/
+	if (ZigBee_Mireds < RGB_minCT || ZigBee_Mireds < (coldMireds / 2)) {
+		// conversion table ends at 12,000K so this is hard limit
+		// for doubled distance CT < (WHITE / 2) results in RGB_CT < 0
+		RGB_CT	= RGB_minCT;										// coldest color supported by RGB table
+		//	RGB_CT=RGB_minCT	<= ZigBee_Mireds	<= coldMireds
+		TMP		= ((ZigBee_Mireds - coldMireds) * COLORONOFF_MAX / (RGB_CT - coldMireds));	// COLD = 1 - WARM
+		printf ("OUT COLD=%d\t", TMP);
+		// set COLD level
+		__LED_COLD_SETVALUE  (255,255);
+		__LED_COLD_SETONOFF  (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+		// set WARM to 0/4 off
+		__LED_WARM_SETVALUE  (  0,255);
+		__LED_WARM_SETONOFF  (  0,COLORONOFF_MAX);
+		// set RGB to 4/4 full brightness
+		__LED_RED_SETONOFF   (TMP,COLORONOFF_MAX);
+		__LED_GREEN_SETONOFF (TMP,COLORONOFF_MAX);
+		__LED_BLUE_SETONOFF  (TMP,COLORONOFF_MAX);
+	}
+	else if (ZigBee_Mireds < coldMireds) {							// colder WHITE
+		RGB_CT -= (coldMireds - ZigBee_Mireds);						// double the distance
+		if (RGB_CT < RGB_minCT) {
+			RGB_CT	= RGB_minCT;									// range limit
+		}
+		TMP = (((ZigBee_Mireds - coldMireds) * COLORONOFF_MAX) / (RGB_CT - coldMireds));
+		printf ("colder =%d\t", TMP);
+		__LED_COLD_SETVALUE  (255,255);
+		__LED_COLD_SETONOFF  (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+		__LED_WARM_SETVALUE  (  0,255);
+		__LED_WARM_SETONOFF  (  0,COLORONOFF_MAX);
+		__LED_RED_SETONOFF   (TMP,COLORONOFF_MAX);
+		__LED_GREEN_SETONOFF (TMP,COLORONOFF_MAX);
+		__LED_BLUE_SETONOFF  (TMP,COLORONOFF_MAX);
+	}
+	else if (ZigBee_Mireds == coldMireds) {			// on the edge of cold
+		RGB_CT = ZigBee_Mireds;
+		TMP = COLORONOFF_MAX / 2;
+		printf ("COLD =%d\t", TMP);
+		__LED_COLD_SETVALUE  (255,255);
+		__LED_COLD_SETONOFF  (TMP,COLORONOFF_MAX);
+		__LED_WARM_SETVALUE  (  0,255);
+		__LED_WARM_SETONOFF  (  0,COLORONOFF_MAX);
+		__LED_RED_SETONOFF   (TMP,COLORONOFF_MAX);
+		__LED_GREEN_SETONOFF (TMP,COLORONOFF_MAX);
+		__LED_BLUE_SETONOFF  (TMP,COLORONOFF_MAX);
+	}
+	else if (ZigBee_Mireds == warmMireds) {			// on the edge of warm
+		RGB_CT = ZigBee_Mireds;
+		TMP = COLORONOFF_MAX / 2;
+		printf ("WARM =%d\t", TMP);
+		__LED_COLD_SETVALUE  (  0,255);
+		__LED_COLD_SETONOFF  (  0,COLORONOFF_MAX);
+		__LED_WARM_SETVALUE  (255,255);
+		__LED_WARM_SETONOFF  (TMP,COLORONOFF_MAX);
+		__LED_RED_SETONOFF   (TMP,COLORONOFF_MAX);
+		__LED_GREEN_SETONOFF (TMP,COLORONOFF_MAX);
+		__LED_BLUE_SETONOFF  (TMP,COLORONOFF_MAX);
+	}
+	else if (warmMireds < ZigBee_Mireds) {							// warmer WHITE
+		RGB_CT += (ZigBee_Mireds - warmMireds);						// double the distance
+		if (RGB_CT > RGB_maxCT) {
+			RGB_CT	= RGB_maxCT;									// range limit
+		}
+		TMP = (((warmMireds - ZigBee_Mireds) * COLORONOFF_MAX) / (warmMireds - RGB_CT));
+		printf ("warmer =%d\t", TMP);
+		__LED_COLD_SETVALUE  (  0,255);
+		__LED_COLD_SETONOFF  (  0,COLORONOFF_MAX);
+		__LED_WARM_SETVALUE  (255,255);
+		__LED_WARM_SETONOFF  (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+		__LED_RED_SETONOFF   (TMP,COLORONOFF_MAX);
+		__LED_GREEN_SETONOFF (TMP,COLORONOFF_MAX);
+		__LED_BLUE_SETONOFF  (TMP,COLORONOFF_MAX);
+	}
+	else /*if (ZigBee_Mireds < warmMireds && ZigBee_Mireds > coldMireds)*/ {
+		// in between
+		RGB_CT = ZigBee_Mireds;
+		TMP = (((ZigBee_Mireds - coldMireds) * COLORONOFF_MAX) / (warmMireds - coldMireds));
+		printf ("in-between =%d\t", TMP);
+		__LED_COLD_SETVALUE  (255,255);
+		__LED_COLD_SETONOFF  (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
+		__LED_WARM_SETVALUE  (255,255);
+		__LED_WARM_SETONOFF  (TMP,COLORONOFF_MAX);
+		__LED_RED_SETONOFF   (4,4);
+		__LED_GREEN_SETONOFF (4,4);
+		__LED_BLUE_SETONOFF  (4,4);
+	}
+	LEDLIGHT_setKelvin (COLOR_TEMPERATURE_CONVERT(RGB_CT), NULL);
+#endif /* (COLOR_RGB_SUPPORT) && (COLOR_CCT_SUPPORT) */
 }
 
 /*	set from Color Temperature Mireds (ZigBee values)
 **	1...65279
-**	ColorTemperatureMireds = 0x0000 indicates an undefined value
-**	ColorTemperatureMireds = 0xffff indicates an invalid value
+**	ZigBee_Mireds = 0x0000 indicates an undefined value
+**	ZigBee_Mireds = 0xffff indicates an invalid value
 */
 void LEDLIGHT_setMired (u16 ZigBee_Mireds)
 {
@@ -351,7 +589,7 @@ void LEDLIGHT_setMired (u16 ZigBee_Mireds)
 	}
 */
 	u16 colorTemperature	= COLOR_TEMPERATURE_CONVERT(ZigBee_Mireds);
-	LEDLIGHT_setKelvin (colorTemperature);
+	LEDLIGHT_setKelvin (colorTemperature, NULL);
 }
 
 

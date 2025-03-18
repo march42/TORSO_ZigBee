@@ -29,6 +29,7 @@
 /*	some useful values */
 #	define COLOR_TEMPERATURE_12000K			0x0053
 #	define COLOR_TEMPERATURE_10000K			0x0064
+#	define COLOR_TEMPERATURE_7500K			0x0085
 #	define COLOR_TEMPERATURE_6500K			0x0099	// blue sky daylight
 #	define COLOR_TEMPERATURE_6000K			0x00A6
 #	define COLOR_TEMPERATURE_5500K			0x00B5	// cold white
@@ -81,22 +82,64 @@ typedef struct {
 **	used to convert and store the desired lighting
 */
 typedef struct {
-	float	Value;		// current value in 1 fraction (0...1)
-	bool	OnOff;		// state On/Off
+	u16		Value;		// current value in 16 bit precision
+	s8		OnOff;		// state On/Off (-1==undefined, 0==off, 1...100==percentage)
 }	ts_LED_Channel;
-static volatile ts_LED_Channel	g_ledLight_Channel[5];	// 5 channels = cold white, RGB, warm white
 
-#if (SINGLE_WHITE_SUPPORT)
-#	define LEDLIGHT_WHITE	(&g_ledLight_Channel[0])
-#elif (COLOR_CCT_SUPPORT)
-#	define LEDLIGHT_COLD	(&g_ledLight_Channel[0])
-#	define LEDLIGHT_WARM	(&g_ledLight_Channel[4])
-#endif
-#if (COLOR_RGB_SUPPORT)
-#	define LEDLIGHT_RED		(&g_ledLight_Channel[1])
-#	define LEDLIGHT_GREEN	(&g_ledLight_Channel[2])
-#	define LEDLIGHT_BLUE	(&g_ledLight_Channel[3])
-#endif
+/*	TODO("find the best practice for maximum value, reflecting fractions of 1")
+**	maybe it would be best, to use PMW_MAX_TICK; this will ensure direct reflection of the PWM clock tick values
+**	maybe try with 0xFEFF, like used in ZigBee
+**	using 0xFF should be sufficient; 8bit channel * 8bit level = 16bit PWM granularity
+*/
+#define COLORCHANNEL_MAX				PWM_MAX_TICK
+#define COLORONOFF_MAX					100
+
+#	if (COLORCHANNEL_MAX==PWM_MAX_TICK)
+#	else
+#	endif
+#	if (COLOR_CCT_SUPPORT) || (SINGLE_WHITE_SUPPORT)
+		extern	ts_LED_Channel		g_ledChannel_COLD;
+#		define __LED_COLD_SETONOFF(v,f)				do { g_ledChannel_COLD.OnOff	= (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_COLD_SETVALUE(v,f)				do { g_ledChannel_COLD.Value	= (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		if (COLORCHANNEL_MAX==PWM_MAX_TICK)
+#			define __LED_COLD_PWMCOUNT				((s32)(g_ledChannel_COLD.Value * g_ledChannel_COLD.OnOff *                                 / COLORONOFF_MAX))
+#		else
+#			define __LED_COLD_PWMCOUNT				((s32)(g_ledChannel_COLD.Value * g_ledChannel_COLD.OnOff * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
+#		endif
+#		if (!SINGLE_WHITE_SUPPORT)
+			extern	ts_LED_Channel		g_ledChannel_WARM;
+#			define __LED_WARM_SETONOFF(v,f)			do { g_ledChannel_WARM.OnOff	= (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#			define __LED_WARM_SETVALUE(v,f)			do { g_ledChannel_WARM.Value	= (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#			if (COLORCHANNEL_MAX==PWM_MAX_TICK)
+#				define __LED_WARM_PWMCOUNT			((s32)(g_ledChannel_WARM.Value * g_ledChannel_WARM.OnOff *                                 / COLORONOFF_MAX))
+#			else
+#				define __LED_WARM_PWMCOUNT			((s32)(g_ledChannel_WARM.Value * g_ledChannel_WARM.OnOff * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
+#			endif
+#		endif
+#	endif
+#	if (COLOR_RGB_SUPPORT)
+		extern	ts_LED_Channel		g_ledChannel_RED;
+#		define __LED_RED_SETONOFF(v,f)				do { g_ledChannel_RED.OnOff   = (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_RED_SETVALUE(v,f)				do { g_ledChannel_RED.Value   = (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+		extern	ts_LED_Channel		g_ledChannel_GREEN;
+#		define __LED_GREEN_SETONOFF(v,f)			do { g_ledChannel_GREEN.OnOff = (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_GREEN_SETVALUE(v,f)			do { g_ledChannel_GREEN.Value = (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+		extern	ts_LED_Channel		g_ledChannel_BLUE;
+#		define __LED_BLUE_SETONOFF(v,f)				do { g_ledChannel_BLUE.OnOff  = (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_BLUE_SETVALUE(v,f)				do { g_ledChannel_BLUE.Value  = (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		if (COLORCHANNEL_MAX==PWM_MAX_TICK)
+#			define __LED_RED_PWMCOUNT				((s32)(g_ledChannel_RED.Value   * g_ledChannel_RED.OnOff                                     / COLORONOFF_MAX))
+#			define __LED_GREEN_PWMCOUNT				((s32)(g_ledChannel_GREEN.Value * g_ledChannel_GREEN.OnOff                                   / COLORONOFF_MAX))
+#			define __LED_BLUE_PWMCOUNT				((s32)(g_ledChannel_BLUE.Value  * g_ledChannel_BLUE.OnOff                                    / COLORONOFF_MAX))
+#		else
+#			define __LED_RED_PWMCOUNT				((s32)(g_ledChannel_RED.Value   * g_ledChannel_RED.OnOff   * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
+#			define __LED_GREEN_PWMCOUNT				((s32)(g_ledChannel_GREEN.Value * g_ledChannel_GREEN.OnOff * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
+#			define __LED_BLUE_PWMCOUNT				((s32)(g_ledChannel_BLUE.Value  * g_ledChannel_BLUE.OnOff  * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
+#		endif
+#	endif
+
+
+void LEDLIGHT_setOnOff_fromValue (void);
 
 /*********************************************************************
  * @fn      LEDLIGHT_setHSV
@@ -143,19 +186,20 @@ void LEDLIGHT_setEnhancedHSV (u16 enhancedHue, u8 saturation, u8 level, u8 *derr
  *
  * @return  None
  */
-void LEDLIGHT_setXYZ (float XYZ_X, float XYZ_Y, float XYZ_Z);
+void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z);
 
 /*********************************************************************
  * @fn      LEDLIGHT_setXY
  *
  * @brief	set RGB from XY (ZigBee values)
  * 
- * @param   [in]ZigBee_X	- X value, fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
- * 			[in]ZigBee_Y	- Y value, fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ * @param   [in]ZigBee_X		- X value, fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ * 			[in]ZigBee_Y		- Y value, fraction of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ * 			[in]ZigBee_Level	- level attribute value (0 - ZCL_LEVEL_ATTR_MAX_LEVEL)
  *
  * @return  None
  */
-void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y);
+void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level);
 
 /*********************************************************************
  * @fn      LEDLIGHT_setKelvin
@@ -163,10 +207,11 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y);
  * @brief	set RGB from color temperature in kelvin
  * 
  * @param   [in]kelvin		- color temperature value in Kelvin
+ * 			[out]derrivedKelvin	- actual color temperature value in Kelvin, WITHIN limited range
  *
  * @return  None
  */
-void LEDLIGHT_setKelvin (u16 kelvin);
+void LEDLIGHT_setKelvin (u16 kelvin, u16 *derrivedKelvin);
 
 /*********************************************************************
  * @fn      LEDLIGHT_setMired
@@ -178,6 +223,31 @@ void LEDLIGHT_setKelvin (u16 kelvin);
  * @return  None
  */
 void LEDLIGHT_setMired (u16 ZigBee_Mireds);
+
+/*********************************************************************
+ * @fn      LEDLIGHT_setMired_RGBW
+ *
+ * @brief	set RGB from color temperature in mired (ZigBee values)
+ * 
+ * @param   [in]ZigBee_Mireds	- color temperature value in mired, 1...65279 (ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MIN...ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MAX)
+ *          [in]whiteMireds		- color temperature of the white LED channel
+ *
+ * @return  None
+ */
+void LEDLIGHT_setMired_RGBW (u16 ZigBee_Mireds, u16 whiteMireds);
+
+/*********************************************************************
+ * @fn      LEDLIGHT_setMired_RGBCCT
+ *
+ * @brief	set RGB from color temperature in mired (ZigBee values)
+ * 
+ * @param   [in]ZigBee_Mireds	- color temperature value in mired, 1...65279 (ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MIN...ZCL_COLOR_ATTR_TEMPERATURE_MIREDS_MAX)
+ *          [in]coldMireds		- color temperature of the cold white LED channel
+ *          [in]warmMireds		- color temperature of the warm white LED channel
+ *
+ * @return  None
+ */
+void LEDLIGHT_setMired_RGBCCT (u16 ZigBee_Mireds, const u16 coldMireds, const u16 warmMireds);
 
 
 #endif /* _COLOR_CALCULATIONS_H_ */

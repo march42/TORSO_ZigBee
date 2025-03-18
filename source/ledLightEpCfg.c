@@ -717,6 +717,7 @@ void zcl_ledLightAttrsInit(void)
 	zcl_onOffAttr_restore();
 	zcl_levelAttr_restore();
 	zcl_colorCtrlAttr_restore();
+	gLightCtx.lightAttrsChanged = true;		// make sure synchronization and reporting are triggered
 }
 
 #endif	/* __PROJECT_TL_DIMMABLE_LIGHT__ */

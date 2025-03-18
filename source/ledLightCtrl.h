@@ -34,6 +34,9 @@
 /**********************************************************************
  * CONSTANT
  */
+#define PWM_FREQUENCY					6000
+#define PWM_FULL_DUTYCYCLE				100
+#define PWM_MAX_TICK					(PWM_CLOCK_SOURCE / PWM_FREQUENCY)
 
 
 /**********************************************************************
