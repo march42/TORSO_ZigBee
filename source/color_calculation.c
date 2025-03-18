@@ -122,6 +122,14 @@ void LEDLIGHT_setHSV (u8 hue, u8 saturation, u8 value)
 			break;
 	}
 
+#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+	TODO("use saturation for white channel")
+	__LED_COLD_SETVALUE(0,COLORCHANNEL_MAX);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+	__LED_WARM_SETVALUE(0,COLORCHANNEL_MAX);
+#	endif
+
 	LEDLIGHT_setOnOff_fromValue();
 	return;
 }
@@ -171,6 +179,15 @@ void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
 	g_ledChannel_RED.Value		= ((RGB_R >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_R * COLORCHANNEL_MAX / 0xFFFF));
 	g_ledChannel_GREEN.Value	= ((RGB_G >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_G * COLORCHANNEL_MAX / 0xFFFF));
 	g_ledChannel_BLUE.Value		= ((RGB_B >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_B * COLORCHANNEL_MAX / 0xFFFF));
+
+#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+	TODO("use saturation for white channel")
+	__LED_COLD_SETVALUE(0,COLORCHANNEL_MAX);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+	__LED_WARM_SETVALUE(0,COLORCHANNEL_MAX);
+#	endif
+
 	LEDLIGHT_setOnOff_fromValue();
 	return;
 }
@@ -204,6 +221,17 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 	__LED_GREEN_SETONOFF (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
 	__LED_BLUE_SETVALUE  (RGB_B, 0xFFFF);
 	__LED_BLUE_SETONOFF  (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
+
+#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+	TODO("use saturation for white channel")
+	__LED_COLD_SETVALUE (0,COLORCHANNEL_MAX);
+	__LED_COLD_SETONOFF (0,ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+	__LED_WARM_SETVALUE (0,COLORCHANNEL_MAX);
+	__LED_WARM_SETONOFF (0,ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+
 	return;
 }
 

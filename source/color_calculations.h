@@ -99,17 +99,17 @@ typedef struct {
 #	endif
 #	if (COLOR_CCT_SUPPORT) || (SINGLE_WHITE_SUPPORT)
 		extern	ts_LED_Channel		g_ledChannel_COLD;
-#		define __LED_COLD_SETONOFF(v,f)				do { g_ledChannel_COLD.OnOff	= (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
-#		define __LED_COLD_SETVALUE(v,f)				do { g_ledChannel_COLD.Value	= (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		define __LED_COLD_SETONOFF(v,f)				do { g_ledChannel_COLD.OnOff	= ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_COLD_SETVALUE(v,f)				do { g_ledChannel_COLD.Value	= ((v==0 || f==COLORCHANNEL_MAX) ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
 #		if (COLORCHANNEL_MAX==PWM_MAX_TICK)
-#			define __LED_COLD_PWMCOUNT				((s32)(g_ledChannel_COLD.Value * g_ledChannel_COLD.OnOff *                                 / COLORONOFF_MAX))
+#			define __LED_COLD_PWMCOUNT				((s32)(g_ledChannel_COLD.Value * g_ledChannel_COLD.OnOff                                   / COLORONOFF_MAX))
 #		else
 #			define __LED_COLD_PWMCOUNT				((s32)(g_ledChannel_COLD.Value * g_ledChannel_COLD.OnOff * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
 #		endif
 #		if (!SINGLE_WHITE_SUPPORT)
 			extern	ts_LED_Channel		g_ledChannel_WARM;
-#			define __LED_WARM_SETONOFF(v,f)			do { g_ledChannel_WARM.OnOff	= (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
-#			define __LED_WARM_SETVALUE(v,f)			do { g_ledChannel_WARM.Value	= (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#			define __LED_WARM_SETONOFF(v,f)			do { g_ledChannel_WARM.OnOff	= ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#			define __LED_WARM_SETVALUE(v,f)			do { g_ledChannel_WARM.Value	= ((v==0 || f==COLORCHANNEL_MAX) ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
 #			if (COLORCHANNEL_MAX==PWM_MAX_TICK)
 #				define __LED_WARM_PWMCOUNT			((s32)(g_ledChannel_WARM.Value * g_ledChannel_WARM.OnOff *                                 / COLORONOFF_MAX))
 #			else
@@ -119,14 +119,14 @@ typedef struct {
 #	endif
 #	if (COLOR_RGB_SUPPORT)
 		extern	ts_LED_Channel		g_ledChannel_RED;
-#		define __LED_RED_SETONOFF(v,f)				do { g_ledChannel_RED.OnOff   = (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
-#		define __LED_RED_SETVALUE(v,f)				do { g_ledChannel_RED.Value   = (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		define __LED_RED_SETONOFF(v,f)				do { g_ledChannel_RED.OnOff   = ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_RED_SETVALUE(v,f)				do { g_ledChannel_RED.Value   = ((v==0 || f==COLORCHANNEL_MAX) ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
 		extern	ts_LED_Channel		g_ledChannel_GREEN;
-#		define __LED_GREEN_SETONOFF(v,f)			do { g_ledChannel_GREEN.OnOff = (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
-#		define __LED_GREEN_SETVALUE(v,f)			do { g_ledChannel_GREEN.Value = (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		define __LED_GREEN_SETONOFF(v,f)			do { g_ledChannel_GREEN.OnOff = ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_GREEN_SETVALUE(v,f)			do { g_ledChannel_GREEN.Value = ((v==0 || f==COLORCHANNEL_MAX) ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
 		extern	ts_LED_Channel		g_ledChannel_BLUE;
-#		define __LED_BLUE_SETONOFF(v,f)				do { g_ledChannel_BLUE.OnOff  = (f==  COLORONOFF_MAX ?v :(  COLORONOFF_MAX * v / f)); } while (0);
-#		define __LED_BLUE_SETVALUE(v,f)				do { g_ledChannel_BLUE.Value  = (f==COLORCHANNEL_MAX ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		define __LED_BLUE_SETONOFF(v,f)				do { g_ledChannel_BLUE.OnOff  = ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
+#		define __LED_BLUE_SETVALUE(v,f)				do { g_ledChannel_BLUE.Value  = ((v==0 || f==COLORCHANNEL_MAX) ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
 #		if (COLORCHANNEL_MAX==PWM_MAX_TICK)
 #			define __LED_RED_PWMCOUNT				((s32)(g_ledChannel_RED.Value   * g_ledChannel_RED.OnOff                                     / COLORONOFF_MAX))
 #			define __LED_GREEN_PWMCOUNT				((s32)(g_ledChannel_GREEN.Value * g_ledChannel_GREEN.OnOff                                   / COLORONOFF_MAX))

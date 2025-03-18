@@ -46,7 +46,7 @@ extern "C" {
 /* Debug mode config */
 #define	UART_PRINTF_MODE				1
 #define UART_PRINTF_DISABLE_IRQ			1
-#define UART_PRINTF_HARDWARE			0	// TODO("implement hardware tl_printf, drv_putchar for hardware UART
+#define UART_PRINTF_HARDWARE			0	// TODO("implement drv_putchar, tl_printf for hardware UART
 #define USB_PRINTF_MODE         		0
 #define BAUDRATE						115200
 #define DEBUG_TRACE						0

@@ -159,32 +159,37 @@ void hwLight_init(void)
 void hwLight_onOffUpdate(u8 onOff)
 {
 	DEBUG((DEBUG_TRACE), "onOff(%x)\r", onOff);
-	if(onOff){
 #if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+	if (onOff && g_ledChannel_COLD.OnOff > 0) {
 		drv_pwm_start(COLD_LIGHT_PWM_CHANNEL);
-#endif
-#if (COLOR_CCT_SUPPORT)
-		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
-#endif
-#if (COLOR_RGB_SUPPORT)
-		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
-		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
-		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
-#endif
-
-	}else{
-#if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+	} else {
 		drv_pwm_stop(COLD_LIGHT_PWM_CHANNEL);
+	}
 #endif
 #if (COLOR_CCT_SUPPORT)
+	if (onOff && g_ledChannel_WARM.OnOff > 0) {
+		drv_pwm_start(WARM_LIGHT_PWM_CHANNEL);
+	} else {
 		drv_pwm_stop(WARM_LIGHT_PWM_CHANNEL);
+	}
 #endif
 #if (COLOR_RGB_SUPPORT)
+	if(onOff && g_ledChannel_RED.OnOff > 0){
+		drv_pwm_start(R_LIGHT_PWM_CHANNEL);
+	}else{
 		drv_pwm_stop(R_LIGHT_PWM_CHANNEL);
-		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
-		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
-#endif
 	}
+	if(onOff && g_ledChannel_GREEN.OnOff > 0){
+		drv_pwm_start(G_LIGHT_PWM_CHANNEL);
+	}else{
+		drv_pwm_stop(G_LIGHT_PWM_CHANNEL);
+	}
+	if(onOff && g_ledChannel_BLUE.OnOff > 0){
+		drv_pwm_start(B_LIGHT_PWM_CHANNEL);
+	}else{
+		drv_pwm_stop(B_LIGHT_PWM_CHANNEL);
+	}
+#endif
 }
 
 /*********************************************************************
@@ -237,14 +242,14 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 	} else {
 		warmCycle = (((temperatureMireds - pColor->colorTempPhysicalMinMireds) * PWM_MAX_TICK) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds));
 	}
-	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL,	(u16)((PWM_MAX_TICK - warmCycle) * level / ZCL_LEVEL_ATTR_MAX_LEVEL));
-	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL,	(u16)((               warmCycle) * level / ZCL_LEVEL_ATTR_MAX_LEVEL));
+	pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	(u16)((PWM_MAX_TICK - warmCycle) * level / ZCL_LEVEL_ATTR_MAX_LEVEL));
+	pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	(u16)((               warmCycle) * level / ZCL_LEVEL_ATTR_MAX_LEVEL));
 
 #elif (COLOR_RGB_SUPPORT) && (!COLOR_CCT_SUPPORT) && (!SINGLE_WHITE_SUPPORT)
 	LEDLIGHT_setMired (colorTemperatureMireds);
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		__LED_RED_PWMCOUNT);
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		__LED_GREEN_PWMCOUNT);
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		__LED_BLUE_PWMCOUNT);
+	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	__LED_RED_PWMCOUNT   * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	__LED_GREEN_PWMCOUNT * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 
 #elif (COLOR_RGB_SUPPORT) && (SINGLE_WHITE_SUPPORT)
 // RGB+W light
@@ -256,10 +261,10 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 #	endif
 
 	LEDLIGHT_setMired_RGBW (colorTemperatureMireds, WHITE_CT);
-	pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	(g_ledChannel_COLD.Value  * g_ledChannel_COLD.OnOff  * level / COLORCHANNEL_MAX / COLORONOFF_MAX / ZCL_LEVEL_ATTR_MAX_LEVEL));
-	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	(g_ledChannel_RED.Value   * g_ledChannel_RED.OnOff   * level / COLORCHANNEL_MAX / COLORONOFF_MAX / ZCL_LEVEL_ATTR_MAX_LEVEL));
-	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	(g_ledChannel_GREEN.Value * g_ledChannel_GREEN.OnOff * level / COLORCHANNEL_MAX / COLORONOFF_MAX / ZCL_LEVEL_ATTR_MAX_LEVEL));
-	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	(g_ledChannel_BLUE.Value  * g_ledChannel_BLUE.OnOff  * level / COLORCHANNEL_MAX / COLORONOFF_MAX / ZCL_LEVEL_ATTR_MAX_LEVEL));
+	pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	__LED_RED_PWMCOUNT   * level / (ZCL_LEVEL_ATTR_MAX_LEVEL));
+	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	__LED_GREEN_PWMCOUNT * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 
 #elif (COLOR_RGB_SUPPORT) && (COLOR_CCT_SUPPORT)
 	// RGB+CCT
@@ -272,11 +277,11 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 
 	LEDLIGHT_setMired_RGBCCT (RGB_CT, COLD_LIGHT_TEMPERATURE, WARM_LIGHT_TEMPERATURE);
 
-	pwmSetDuty(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT);
-	pwmSetDuty(WARM_LIGHT_PWM_CHANNEL,	__LED_WARM_PWMCOUNT);
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL,		__LED_RED_PWMCOUNT);
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL,		__LED_GREEN_PWMCOUNT);
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL,		__LED_BLUE_PWMCOUNT);
+	pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	__LED_WARM_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	__LED_RED_PWMCOUNT   * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	__LED_GREEN_PWMCOUNT * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 
 #endif
 }
@@ -296,11 +301,16 @@ void hwLight_colorUpdate_HSV2RGB(u8 hue, u8 saturation, u8 level)
 {
 #if (COLOR_RGB_SUPPORT)
 	level = (level < 0x10) ? 0x10 : level;
-	LEDLIGHT_setHSV (hue, saturation, level);	// use MAX level and apply actual level later
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL, g_ledChannel_RED.Value);
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL, g_ledChannel_GREEN.Value);
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL, g_ledChannel_BLUE.Value);
-	LEDLIGHT_setOnOff_fromValue();
+	LEDLIGHT_setHSV (hue, saturation, ZCL_LEVEL_ATTR_MAX_LEVEL);	// use MAX level and apply actual level later
+#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+		pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+		pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	__LED_WARM_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	__LED_RED_PWMCOUNT   * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	__LED_GREEN_PWMCOUNT * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 #endif
 }
 
@@ -320,11 +330,16 @@ void hwLight_colorUpdate_enhancedHSV2RGB(u16 enhancedHue, u8 saturation, u8 leve
 {
 #if (COLOR_RGB_SUPPORT)
 	level = (level < 0x10) ? 0x10 : level;
-	LEDLIGHT_setEnhancedHSV (enhancedHue, saturation, level, hue);
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL, g_ledChannel_RED.Value);
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL, g_ledChannel_GREEN.Value);
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL, g_ledChannel_BLUE.Value);
-	LEDLIGHT_setOnOff_fromValue();
+	LEDLIGHT_setEnhancedHSV (enhancedHue, saturation, ZCL_LEVEL_ATTR_MAX_LEVEL, hue);
+#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+		pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+		pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	__LED_WARM_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	__LED_RED_PWMCOUNT   * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	__LED_GREEN_PWMCOUNT * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 #endif
 }
 
@@ -343,11 +358,16 @@ void hwLight_colorUpdate_xyY2RGB(u16 x, u16 y, u8 level)
 {
 #if (COLOR_RGB_SUPPORT)
 	level = (level < 0x10) ? 0x10 : level;
-	LEDLIGHT_setXY (x, y, level);
-	pwmSetDuty(R_LIGHT_PWM_CHANNEL, g_ledChannel_RED.Value);
-	pwmSetDuty(G_LIGHT_PWM_CHANNEL, g_ledChannel_GREEN.Value);
-	pwmSetDuty(B_LIGHT_PWM_CHANNEL, g_ledChannel_BLUE.Value);
-	LEDLIGHT_setOnOff_fromValue();
+	LEDLIGHT_setXY (x, y, ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
+		pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+#	if (COLOR_CCT_SUPPORT)
+		pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	__LED_WARM_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+#	endif
+	pwmSetDutyCount(R_LIGHT_PWM_CHANNEL,	__LED_RED_PWMCOUNT   * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(G_LIGHT_PWM_CHANNEL,	__LED_GREEN_PWMCOUNT * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
+	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 #endif
 }
 
