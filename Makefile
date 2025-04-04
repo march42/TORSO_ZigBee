@@ -157,6 +157,16 @@ CFLAGS			+= -ffunction-sections -fdata-sections -Wall -O2 -fpack-struct -fshort-
 LDFLAGS			+= --gc-sections
 #bin_files		+= $(BUILDDIR)/torso-light.bin 
 
+#	floating point and math functions
+ifeq ($(__USE_FLOATING_POINT),)
+	__USE_FLOATING_POINT	= 0
+endif
+ifneq ($(__USE_FLOATING_POINT),0)
+	CPPFLAGS		+= -D__USE_FLOATING_POINT=$(__USE_FLOATING_POINT) -D__PRINTF_FLOAT=$(__USE_FLOATING_POINT)
+	LDLIBS			+= -lm -lc -lg
+	#	objcopy --redefine-sym rand=telink_rand ./telink_zigbee_sdk/tl_zigbee_sdk/platform/lib/libdrivers_8258.a libdrivers_826x.a libdrivers_8278.a
+endif
+
 ###
 # ZigBee SDK
 CPPFLAGS		+= -I$(TL_ZIGBEE_SDK)/zigbee/common/includes
@@ -179,9 +189,15 @@ ifdef MCU_CORE_8258
 	LDLIBS			+= -lsoft-fp -lfirmware_encrypt
 	sdk_DIRS		+= $(TL_ZIGBEE_SDK)/platform/boot/8258 $(TL_ZIGBEE_SDK)/platform/chip_8258 $(TL_ZIGBEE_SDK)/platform/chip_8258/flash
 	sdk_DIRS		+= $(TL_ZIGBEE_SDK)/platform/services/b85m
-#	sdk_LIBS		+= $(TL_ZIGBEE_SDK)/platform/lib
+#	sdk_DIRS		+= $(TL_ZIGBEE_SDK)/platform/lib
 	LDFLAGS			+= -L$(TL_ZIGBEE_SDK)/platform/lib
 	LDLIBS			+= -ldrivers_8258
+	extra_files		+= $(BUILDDIR)/sdk/platform/lib/libdrivers_8258.a.lst
+	extra_files		+= $(BUILDDIR)/sdk/platform/tc32/libsoft-fp.a.lst
+	extra_files		+= $(BUILDDIR)/sdk/platform/tc32/libfirmware_encrypt.a.lst
+	extra_files		+= $(BUILDDIR)/sdk/zigbee/lib/tc32/libzb_coordinator.a.lst
+	extra_files		+= $(BUILDDIR)/sdk/zigbee/lib/tc32/libzb_ed.a.lst
+	extra_files		+= $(BUILDDIR)/sdk/zigbee/lib/tc32/libzb_router.a.lst
 endif
 ifeq ($(ZB_ROLE),COORDINATOR)
 	LDFLAGS			+= -L$(TL_ZIGBEE_SDK)/zigbee/lib/tc32
@@ -198,6 +214,8 @@ sdk_HEADERS 	+= $(foreach dir,$(sdk_DIRS),$(wildcard $(dir)/*.h))
 sdk_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_SOURCES:.c=.c.o))
 sdk_ASMS		+= $(foreach dir,$(sdk_DIRS),$(wildcard $(dir)/*.S))
 sdk_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_ASMS:.S=.S.o))
+#sdk_LIBS		+= $(foreach dir,$(sdk_DIRS),$(wildcard $(dir)/*.a))
+#sdk_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(sdk_LIBS:.a=.a.lst))
 zigbee_SOURCES 	+= $(foreach dir,$(zigbee_DIRS),$(wildcard $(dir)/*.c))
 zigbee_HEADERS 	+= $(foreach dir,$(zigbee_DIRS),$(wildcard $(dir)/*.h))
 zigbee_OBJS		+= $(subst $(TL_ZIGBEE_SDK),$(BUILDDIR)/sdk,$(zigbee_SOURCES:.c=.c.o))
@@ -282,6 +300,9 @@ allclean:
 distclean: clean
 	$(info removing ALL built objects)
 	rm -fR $(BUILDDIR) config.mk $(bin_files)
+
+.PHONY: extra_files
+extra_files: $(extra_files)
 
 .PHONY: build_info
 build_info:
@@ -625,6 +646,11 @@ $(BUILDDIR)/sdk/%.S.o : $(TL_ZIGBEE_SDK)/%.S $(led_HEADERS)	| $(BUILDDIR)/sdk
 	$(info Compiling	$<)
 	mkdir -p $(dir $@)
 	$(CC) -DLED_MODE=$(LED_MODE_RGBCCT) $(ASFLAGS) $(led_ASFLAGS) $(led_CPPFLAGS) $(CPPFLAGS) $(led_CFLAGS) $(CFLAGS) -c $< -o $@
+
+$(BUILDDIR)/sdk/%.a.lst : $(TL_ZIGBEE_SDK)/%.a	| $(BUILDDIR)/sdk
+	$(info Creating	$@)
+	mkdir -p $(dir $@)
+	$(OBJDUMP) --all-headers --line-numbers $< >$@
 
 ###
 #	bootloader rules
