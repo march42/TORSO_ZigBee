@@ -697,6 +697,7 @@ static void ledLight_stepSaturationProcess(zcl_colorCtrlStepSaturationCmd_t *cmd
  */
 static void ledLight_moveToHueAndSaturationProcess(zcl_colorCtrlMoveToHueAndSaturationCmd_t *cmd)
 {
+	DEBUG(DEBUG_LEDCOLOR, "moveToHS H=%x, S=%x\r",cmd->hue,cmd->saturation);
 	zcl_colorCtrlMoveToHueCmd_t moveToHueCmd;
 	zcl_colorCtrlMoveToSaturationCmd_t moveToSaturationCmd;
 
@@ -722,14 +723,10 @@ static void ledLight_moveToHueAndSaturationProcess(zcl_colorCtrlMoveToHueAndSatu
  */
 static void ledLight_moveToColorProcess(zcl_colorCtrlMoveToColorCmd_t *cmd)
 {
-	DEBUG(DEBUG_LEDCOLOR, "moveToColor X=%x, Y=%x",cmd->colorX,cmd->colorY);
-
+	DEBUG(DEBUG_LEDCOLOR, "moveToColor X=%x, Y=%x\r",cmd->colorX,cmd->colorY);
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
 	ledLight_updateColorMode(ZCL_COLOR_MODE_CURRENT_X_Y);
-
-	pColor->colorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
-	pColor->enhancedColorMode = ZCL_COLOR_MODE_CURRENT_X_Y;
 
 	colorInfo.currentX			= (u32)(pColor->currentX) << 8;
 	colorInfo.currentY			= (u32)(pColor->currentY) << 8;
@@ -902,6 +899,7 @@ static void ledLight_enhancedStepHueProcess(zcl_colorCtrlEnhancedStepHueCmd_t *c
  */
 static void ledLight_enhancedMoveToHueAndSaturationProcess(zcl_colorCtrlEnhancedMoveToHueAndSaturationCmd_t *cmd)
 {
+	DEBUG(DEBUG_LEDCOLOR, "moveToEnhancedHS eH=%x, S=%x\r",cmd->enhancedHue,cmd->saturation);
 	zcl_colorCtrlEnhancedMoveToHueCmd_t enhancedMoveToHueCmd;
 	zcl_colorCtrlMoveToSaturationCmd_t moveToSaturationCmd;
 
@@ -979,6 +977,7 @@ static void ledLight_colorLoopSetProcess(zcl_colorCtrlColorLoopSetCmd_t *cmd)
  */
 static void ledLight_moveToColorTemperatureProcess(zcl_colorCtrlMoveToColorTemperatureCmd_t *cmd)
 {
+	DEBUG(DEBUG_LEDCOLOR, "moveToCT CT=%x\r",cmd->colorTemperature);
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 
 	ledLight_updateColorMode(ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS);	/* set currentColorMode and synchronize */

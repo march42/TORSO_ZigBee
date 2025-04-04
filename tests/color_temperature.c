@@ -6,63 +6,7 @@
 */
 #include <stdio.h>
 
-/*	test specifications
-*/
-#define EXTENDED_COLOR_LIGHT		1
-#define COLOR_RGB_SUPPORT			1
-#define COLOR_CCT_SUPPORT			0
-#define SINGLE_WHITE_SUPPORT		0
-
-/* type declerations
-*/
-typedef   signed char	s8;
-typedef unsigned char	u8;
-typedef   signed short	s16;
-typedef unsigned short	u16;
-typedef   signed int	s32;
-typedef unsigned int	u32;
-
-typedef struct {
-	u16		Value;		// current value in 16 bit precision
-	u8		OnOff;		// state On/Off (-1==undefined, 0==off, 1...100==percentage)
-}	ts_LED_Channel;
-
-/*	inline functions
-*/
-#	define COLOR_TEMPERATURE_CONVERT(kelvin_mired)	(1000000 / kelvin_mired)
-#	define COLOR_TEMPERATURE_NEUTRAL	COLOR_TEMPERATURE_CONVERT(3800)
-#	define WHITE_CT						COLOR_TEMPERATURE_NEUTRAL
-#	define COLD_LIGHT_TEMPERATURE		COLOR_TEMPERATURE_CONVERT(6500)
-#	define WARM_LIGHT_TEMPERATURE		COLOR_TEMPERATURE_CONVERT(2200)
-
-/*	definitions
-*/
-#define COLORCHANNEL_MAX				(48000000 / 6000)
-#define COLORONOFF_MAX					100
-
-#if (SINGLE_WHITE_SUPPORT)
-	ts_LED_Channel		g_ledChannel_WHITE;
-#	define __LED_WHITE_SETVALUE(v,f)			do { g_ledChannel_WHITE.Value	= COLORCHANNEL_MAX * (v) / (f); } while (0);
-#	define __LED_WHITE_SETONOFF(v,f)			do { g_ledChannel_WHITE.OnOff	=   COLORONOFF_MAX * (v) / (f); } while (0);
-#elif (COLOR_CCT_SUPPORT)
-	ts_LED_Channel		g_ledChannel_COLD;
-	ts_LED_Channel		g_ledChannel_WARM;
-#	define __LED_COLD_SETVALUE(v,f)				do { g_ledChannel_COLD.Value	= COLORCHANNEL_MAX * (v) / (f); } while (0);
-#	define __LED_WARM_SETVALUE(v,f)				do { g_ledChannel_WARM.Value	= COLORCHANNEL_MAX * (v) / (f); } while (0);
-#	define __LED_COLD_SETONOFF(v,f)				do { g_ledChannel_COLD.OnOff	=   COLORONOFF_MAX * (v) / (f); } while (0);
-#	define __LED_WARM_SETONOFF(v,f)				do { g_ledChannel_WARM.OnOff	=   COLORONOFF_MAX * (v) / (f); } while (0);
-#endif
-#if (COLOR_RGB_SUPPORT)
-	ts_LED_Channel		g_ledChannel_RED;
-	ts_LED_Channel		g_ledChannel_GREEN;
-	ts_LED_Channel		g_ledChannel_BLUE;
-#	define __LED_RED_SETVALUE(v,f)				do { g_ledChannel_RED.Value		= COLORCHANNEL_MAX * (v) / (f); } while (0);
-#	define __LED_GREEN_SETVALUE(v,f)			do { g_ledChannel_GREEN.Value	= COLORCHANNEL_MAX * (v) / (f); } while (0);
-#	define __LED_BLUE_SETVALUE(v,f)				do { g_ledChannel_BLUE.Value	= COLORCHANNEL_MAX * (v) / (f); } while (0);
-#	define __LED_RED_SETONOFF(v,f)				do { g_ledChannel_RED.OnOff		=   COLORONOFF_MAX * (v) / (f); } while (0);
-#	define __LED_GREEN_SETONOFF(v,f)			do { g_ledChannel_GREEN.OnOff	=   COLORONOFF_MAX * (v) / (f); } while (0);
-#	define __LED_BLUE_SETONOFF(v,f)				do { g_ledChannel_BLUE.OnOff	=   COLORONOFF_MAX * (v) / (f); } while (0);
-#endif
+#include "color.h"
 
 void LEDLIGHT_setKelvin (u16 kelvin, u16 *derrivedKelvin)
 {
@@ -206,10 +150,23 @@ void LEDLIGHT_setKelvin (u16 kelvin, u16 *derrivedKelvin)
 #endif
 	}
 
-	g_ledChannel_RED.Value		= ((RGB_R >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_R * COLORCHANNEL_MAX / 0xFF));
-	g_ledChannel_GREEN.Value	= ((RGB_G >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_G * COLORCHANNEL_MAX / 0xFF));
-	g_ledChannel_BLUE.Value		= ((RGB_B >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_B * COLORCHANNEL_MAX / 0xFF));
-	//LEDLIGHT_setOnOff_fromValue();
+	__LED_RED_SETVALUE		(RGB_R, 0xFF);
+	__LED_RED_SETONOFF		(COLORONOFF_MAX,COLORONOFF_MAX);
+	__LED_GREEN_SETVALUE	(RGB_G, 0xFF);
+	__LED_GREEN_SETONOFF	(COLORONOFF_MAX,COLORONOFF_MAX);
+	__LED_BLUE_SETVALUE		(RGB_B, 0xFF);
+	__LED_BLUE_SETONOFF		(COLORONOFF_MAX,COLORONOFF_MAX);
+
+/*	ignore COLD and WARM white
+	this function justs sets RGB LEDs
+#	if (COLOR_CCT_SUPPORT) || (SINGLE_WHITE_SUPPORT)
+		__LED_COLD_SETVALUE	(0,COLORCHANNEL_MAX);
+		__LED_COLD_SETONOFF	(0,COLORONOFF_MAX);
+#		if (!SINGLE_WHITE_SUPPORT)
+			__LED_WARM_SETVALUE	(0,COLORCHANNEL_MAX);
+			__LED_WARM_SETONOFF	(0,COLORONOFF_MAX);
+#		endif
+#	endif */
 	return;
 #endif
 }
@@ -238,7 +195,6 @@ void LEDLIGHT_setMireds_RGBW (u16 ZigBee_Mireds, u16 whiteMireds)
 			RGB_CT = COLOR_TEMPERATURE_CONVERT(1000);
 		}
 	}
-	__LED_WHITE_SETVALUE (255,255);
 	u16 kelvin;
 	LEDLIGHT_setKelvin (COLOR_TEMPERATURE_CONVERT(RGB_CT), &kelvin);
 	printf ("CT=%d, RGB_CT=%d, %dK", ZigBee_Mireds, RGB_CT, kelvin);
@@ -255,7 +211,8 @@ void LEDLIGHT_setMireds_RGBW (u16 ZigBee_Mireds, u16 whiteMireds)
 		TMP = (((RGB_CT - ZigBee_Mireds) * COLORONOFF_MAX) / (RGB_CT - whiteMireds));
 		printf ("\tCOLD=%d", TMP);
 	}
-	__LED_WHITE_SETONOFF (TMP,COLORONOFF_MAX);
+	__LED_COLD_SETVALUE (255,255);
+	__LED_COLD_SETONOFF (TMP,COLORONOFF_MAX);
 	__LED_RED_SETONOFF   (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
 	__LED_GREEN_SETONOFF (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
 	__LED_BLUE_SETONOFF  (COLORONOFF_MAX - TMP,COLORONOFF_MAX);
@@ -430,8 +387,17 @@ void LEDLIGHT_setMireds_CCT (u16 ZigBee_Mireds, const u16 coldMireds, const u16 
 
 void TEST_KELVIN (void)
 {
-	u16  kelvin;
-	for (kelvin=900; kelvin<=12100; kelvin+=100) {
+	u16  list[] = {
+		900, 1000, 1100, 1200,
+		COLOR_TEMPERATURE_CONVERT(COLOR_TEMPERATURE_NEUTRAL / 2), COLOR_TEMPERATURE_CONVERT(COLOR_TEMPERATURE_NEUTRAL), COLOR_TEMPERATURE_CONVERT(COLOR_TEMPERATURE_NEUTRAL * 2),
+		COLOR_TEMPERATURE_CONVERT(   WARM_LIGHT_TEMPERATURE / 2), COLOR_TEMPERATURE_CONVERT(   WARM_LIGHT_TEMPERATURE), COLOR_TEMPERATURE_CONVERT(   WARM_LIGHT_TEMPERATURE * 2),
+		COLOR_TEMPERATURE_CONVERT(   COLD_LIGHT_TEMPERATURE / 2), COLOR_TEMPERATURE_CONVERT(   COLD_LIGHT_TEMPERATURE), COLOR_TEMPERATURE_CONVERT(   COLD_LIGHT_TEMPERATURE * 2),
+		7000,8000,9000,10000,11000,12000,13500,
+		0	// end of list marker
+	};
+	u8	index;
+	for (index=0; list[index]!=0; ++index) {
+		u16	kelvin	= list[index];
 
 #if (COLOR_RGB_SUPPORT) && (!SINGLE_WHITE_SUPPORT) && (!COLOR_CCT_SUPPORT)
 		LEDLIGHT_setKelvin (kelvin, NULL);
@@ -439,21 +405,21 @@ void TEST_KELVIN (void)
 
 #elif (COLOR_CCT_SUPPORT) && (!COLOR_RGB_SUPPORT)
 		LEDLIGHT_setMireds_CCT (COLOR_TEMPERATURE_CONVERT(kelvin), COLD_LIGHT_TEMPERATURE, WARM_LIGHT_TEMPERATURE);
-		printf ("\t%5d Kelvin\tC=%4X/%2X\tW=%4X/%2X\r\n", kelvin
+		printf ("\t%5d Kelvin\tC=%4X/%3d\tW=%4X/%3d\r\n", kelvin
 			, g_ledChannel_COLD.Value,g_ledChannel_COLD.OnOff
 			, g_ledChannel_WARM.Value,g_ledChannel_WARM.OnOff );
 
 #elif (COLOR_RGB_SUPPORT) && (SINGLE_WHITE_SUPPORT)
 		LEDLIGHT_setMireds_RGBW (COLOR_TEMPERATURE_CONVERT(kelvin), WHITE_CT);
-		printf ("\t%5d Kelvin\tR=%4X/%2X\tG=%4X/%2X\tB=%4X/%2X\tC=%4X/%2X\r\n", kelvin
+		printf ("\t%5d Kelvin\tR=%4X/%3d\tG=%4X/%3d\tB=%4X/%3d\tC=%4X/%3d\r\n", kelvin
 			,  g_ledChannel_RED.Value,  g_ledChannel_RED.OnOff
 			,g_ledChannel_GREEN.Value,g_ledChannel_GREEN.OnOff
 			, g_ledChannel_BLUE.Value, g_ledChannel_BLUE.OnOff
-			,g_ledChannel_WHITE.Value,g_ledChannel_WHITE.OnOff );
+			, g_ledChannel_COLD.Value, g_ledChannel_COLD.OnOff );
 
 #elif (COLOR_CCT_SUPPORT) && (COLOR_RGB_SUPPORT)
 		LEDLIGHT_setMireds_RGBCCT (COLOR_TEMPERATURE_CONVERT(kelvin), COLD_LIGHT_TEMPERATURE, WARM_LIGHT_TEMPERATURE);
-		printf ("\t%5d Kelvin\tR=%4X/%2X\tG=%4X/%2X\tB=%4X/%2X\tC=%4X/%2X\tW=%4X/%2X\r\n", kelvin
+		printf ("\t%5d Kelvin\tR=%4X/%3d\tG=%4X/%3d\tB=%4X/%3d\tC=%4X/%3d\tW=%4X/%3d\r\n", kelvin
 			,  g_ledChannel_RED.Value,  g_ledChannel_RED.OnOff
 			,g_ledChannel_GREEN.Value,g_ledChannel_GREEN.OnOff
 			, g_ledChannel_BLUE.Value, g_ledChannel_BLUE.OnOff

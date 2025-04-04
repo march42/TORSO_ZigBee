@@ -25,6 +25,9 @@
 #include "ledLightCtrl.h"
 
 #include "color_calculations.h"
+#if (_COLOR_CALCULATIONS__USE_FLOAT_)
+#	include <math.h>
+#endif
 
 /*	global variables
 **	for channel handling
@@ -167,9 +170,9 @@ void LEDLIGHT_setEnhancedHSV (u16 enhancedHue, u8 saturation, u8 level, u8 *derr
 void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
 {
 	/*	calculate with floating point
-	**	RGB_R	= (float)( 3.2404542 * XYZ_X - 1.5371385 * XYZ_Y - 0.4985314 * XYZ_Z);
-	**	RGB_G	= (float)(-0.969266  * XYZ_X + 1.8760108 * XYZ_Y + 0.041556  * XYZ_Z);
-	**	RGB_B	= (float)( 0.0556434 * XYZ_X - 0.2040259 * XYZ_Y + 1.0572252 * XYZ_Z);
+	**	RGB_R	= ( 3.2404542 * XYZ_X - 1.5371385 * XYZ_Y - 0.4985314 * XYZ_Z);
+	**	RGB_G	= (-0.969266  * XYZ_X + 1.8760108 * XYZ_Y + 0.041556  * XYZ_Z);
+	**	RGB_B	= ( 0.0556434 * XYZ_X - 0.2040259 * XYZ_Y + 1.0572252 * XYZ_Z);
 	**	converted to integer 1.0==0xFFFF
 	*/
 	s32 RGB_R	= 0x33D8B * XYZ_X  -  0x18980 * XYZ_Y  -   0x7F9F * XYZ_Z;
@@ -205,15 +208,68 @@ void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
  */
 void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 {
+#if (_COLOR_CALCULATIONS__USE_FLOAT_)
+	float xyY_x	= 1.0 / 65535 * ZigBee_X;							// change fraction
+	float xyY_y	= 1.0 / 65535 * ZigBee_Y;							// change fraction
+	float xyY_Y	= 1.0 / ZCL_LEVEL_ATTR_MAX_LEVEL * ZigBee_Level;	// change fraction
+	DEBUG(DEBUG_LEDCOLOR, "x=%f, y=%f, Y=%f\r", xyY_x,xyY_y,xyY_Y);
+
+	/*	xyY to XYZ */
+	float XYZ_X	=        xyY_x          * xyY_Y / xyY_y;
+	float XYZ_Y =                         xyY_Y;
+	float XYZ_Z	= (1.0 - xyY_x - xyY_y) * xyY_Y / xyY_y;
+	DEBUG(DEBUG_LEDCOLOR, "X=%f, Y=%f, Z=%f\r", XYZ_X,XYZ_Y,XYZ_Z);
+
+	/*	XYZ to RGB conversion using wide gamut matrix, with D50 reference white */
+	float RGB_r	=  1.4628067 * XYZ_X - 0.1840623 * XYZ_Y - 0.2743606 * XYZ_Z;
+	float RGB_g	= -0.5217933 * XYZ_X + 1.4472381 * XYZ_Y + 0.0677227 * XYZ_Z;
+	float RGB_b	=  0.0349342 * XYZ_X - 0.0968930 * XYZ_Y + 1.2884099 * XYZ_Z;
+
+	/*	reverse gamma correction */
+	RGB_r	= RGB_r <= 0.0031308f ? 12.92f * RGB_r : (1.0f + 0.055f) * powf(RGB_r, (1.0f / 2.4f)) - 0.055f;
+	RGB_g	= RGB_g <= 0.0031308f ? 12.92f * RGB_g : (1.0f + 0.055f) * powf(RGB_g, (1.0f / 2.4f)) - 0.055f;
+	RGB_b	= RGB_b <= 0.0031308f ? 12.92f * RGB_b : (1.0f + 0.055f) * powf(RGB_b, (1.0f / 2.4f)) - 0.055f;
+
+	/*	change scaling to PWM counter */
+	RGB_r	*= COLORCHANNEL_MAX;
+	RGB_g	*= COLORCHANNEL_MAX;
+	RGB_b	*= COLORCHANNEL_MAX;
+	/*	set LED channels */
+	__LED_RED_SETVALUE   (RGB_r, COLORCHANNEL_MAX);
+	__LED_GREEN_SETVALUE (RGB_g, COLORCHANNEL_MAX);
+	__LED_BLUE_SETVALUE  (RGB_b, COLORCHANNEL_MAX);
+	/*	set OnOff to full on, level is computed into RGB channel values */
+	__LED_RED_SETONOFF   (ZCL_LEVEL_ATTR_MAX_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL);
+	__LED_GREEN_SETONOFF (ZCL_LEVEL_ATTR_MAX_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL);
+	__LED_BLUE_SETONOFF  (ZCL_LEVEL_ATTR_MAX_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL);
+
+#else
 	s32 XYZ_X	=                          ZigBee_X             * ZCL_COLOR_ATTR_XY_MAX / ZigBee_Y;
 	s32 XYZ_Y	=                                                 ZCL_COLOR_ATTR_XY_MAX           ;		// full on brightness
 	s32 XYZ_Z	= (ZCL_COLOR_ATTR_XY_MAX - ZigBee_X - ZigBee_Y) * ZCL_COLOR_ATTR_XY_MAX / ZigBee_Y;
 	// now X/Y/Z is fraction of ZCL_COLOR_ATTR_XY_MAX
+	DEBUG(DEBUG_LEDCOLOR, "X=%x, Y=%x, Z=%x\r", XYZ_X,XYZ_Y,XYZ_Z);
 
 	//	converted to integer 1.0==0xFFFF
-	s32 RGB_R	= 0x33D8B * XYZ_X  -  0x18980 * XYZ_Y  -   0x7F9F * XYZ_Z;
-	s32 RGB_G	=  0xF820 * XYZ_X  +  0x1E040 * XYZ_Y  +   0x0AA3 * XYZ_Z;
-	s32 RGB_B	=  0x0E3E * XYZ_X  -   0x343A * XYZ_Y  +  0x10EA5 * XYZ_Z;
+	s32 RGB_R	= 0x33D8B * XYZ_X / 0xFFFF  -  0x18980 * XYZ_Y / 0xFFFF  -   0x7F9F * XYZ_Z / 0xFFFF;
+	s32 RGB_G	=  0xF820 * XYZ_X / 0xFFFF  +  0x1E040 * XYZ_Y / 0xFFFF  +   0x0AA3 * XYZ_Z / 0xFFFF;
+	s32 RGB_B	=  0x0E3E * XYZ_X / 0xFFFF  -   0x343A * XYZ_Y / 0xFFFF  +  0x10EA5 * XYZ_Z / 0xFFFF;
+	if (RGB_R < 0) {
+		RGB_R	= 0;
+	} else if (RGB_R > 0xFFFF) {
+		RGB_R	= 0xFFFF;
+	}
+	if (RGB_G < 0) {
+		RGB_G	= 0;
+	} else if (RGB_G > 0xFFFF) {
+		RGB_G	= 0xFFFF;
+	}
+	if (RGB_B < 0) {
+		RGB_B	= 0;
+	} else if (RGB_B > 0xFFFF) {
+		RGB_B	= 0xFFFF;
+	}
+	DEBUG(DEBUG_LEDCOLOR, "R=%x, G=%x, B=%x\r", RGB_R,RGB_G,RGB_B);
 
 	__LED_RED_SETVALUE   (RGB_R, 0xFFFF);
 	__LED_RED_SETONOFF   (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
@@ -221,15 +277,16 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 	__LED_GREEN_SETONOFF (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
 	__LED_BLUE_SETVALUE  (RGB_B, 0xFFFF);
 	__LED_BLUE_SETONOFF  (ZigBee_Level, ZCL_LEVEL_ATTR_MAX_LEVEL);
+#endif
 
 #	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
-	TODO("use saturation for white channel")
-	__LED_COLD_SETVALUE (0,COLORCHANNEL_MAX);
-	__LED_COLD_SETONOFF (0,ZCL_LEVEL_ATTR_MAX_LEVEL);
-#	endif
+	s32 RGB_lightness	= __LED_RGB_LIGHTNESS;
+	__LED_COLD_SETVALUE (RGB_lightness,COLORCHANNEL_MAX);
+	__LED_COLD_SETONOFF (g_ledChannel_RED.OnOff,COLORONOFF_MAX);
 #	if (COLOR_CCT_SUPPORT)
-	__LED_WARM_SETVALUE (0,COLORCHANNEL_MAX);
-	__LED_WARM_SETONOFF (0,ZCL_LEVEL_ATTR_MAX_LEVEL);
+	__LED_WARM_SETVALUE (RGB_lightness,COLORCHANNEL_MAX);
+	__LED_WARM_SETONOFF (g_ledChannel_RED.OnOff,COLORONOFF_MAX);
+#	endif
 #	endif
 
 	return;

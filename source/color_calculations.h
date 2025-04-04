@@ -19,6 +19,12 @@
 #ifndef _COLOR_CALCULATIONS_H_
 #define _COLOR_CALCULATIONS_H_
 
+/*	using floating point routines for calculations
+**	needs math.h and libm
+*/
+#if (__USE_FLOATING_POINT)
+#	define _COLOR_CALCULATIONS__USE_FLOAT_		1
+#endif
 
 /*	color temperature calculation
 **	mired = 1,000,000 / kelvin
@@ -77,6 +83,10 @@ typedef struct {
 	u16 intensity;		// color brightness in milli-candela
 }	ts_LED_Color_TechData;
 
+/*	compute lightness from RGB values
+**	approximation formula, sufficiently accurate and considerably fast
+*/
+#	define RGB_LIGHTNESS(R,G,B)			(((R << 1) + R + (G << 2) + B) >> 3)
 
 /*	LED channel levels
 **	used to convert and store the desired lighting
@@ -91,16 +101,13 @@ typedef struct {
 **	maybe try with 0xFEFF, like used in ZigBee
 **	using 0xFF should be sufficient; 8bit channel * 8bit level = 16bit PWM granularity
 */
-#define COLORCHANNEL_MAX				PWM_MAX_TICK
+#define COLORCHANNEL_MAX				255
 #define COLORONOFF_MAX					100
 
-#	if (COLORCHANNEL_MAX==PWM_MAX_TICK)
-#	else
-#	endif
 #	if (COLOR_CCT_SUPPORT) || (SINGLE_WHITE_SUPPORT)
 		extern	ts_LED_Channel		g_ledChannel_COLD;
-#		define __LED_COLD_SETONOFF(v,f)				do { g_ledChannel_COLD.OnOff	= ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
 #		define __LED_COLD_SETVALUE(v,f)				do { g_ledChannel_COLD.Value	= ((v==0 || f==COLORCHANNEL_MAX) ?v :(COLORCHANNEL_MAX * v / f)); } while (0);
+#		define __LED_COLD_SETONOFF(v,f)				do { g_ledChannel_COLD.OnOff	= ((v==0 || f==  COLORONOFF_MAX) ?v :(  COLORONOFF_MAX * v / f)); } while (0);
 #		if (COLORCHANNEL_MAX==PWM_MAX_TICK)
 #			define __LED_COLD_PWMCOUNT				((s32)(g_ledChannel_COLD.Value * g_ledChannel_COLD.OnOff                                   / COLORONOFF_MAX))
 #		else
@@ -136,6 +143,7 @@ typedef struct {
 #			define __LED_GREEN_PWMCOUNT				((s32)(g_ledChannel_GREEN.Value * g_ledChannel_GREEN.OnOff * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
 #			define __LED_BLUE_PWMCOUNT				((s32)(g_ledChannel_BLUE.Value  * g_ledChannel_BLUE.OnOff  * PWM_MAX_TICK / COLORCHANNEL_MAX / COLORONOFF_MAX))
 #		endif
+#		define __LED_RGB_LIGHTNESS					RGB_LIGHTNESS(g_ledChannel_RED.Value, g_ledChannel_GREEN.Value, g_ledChannel_BLUE.Value)
 #	endif
 
 
