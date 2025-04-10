@@ -61,6 +61,21 @@ ZigBee 3.0 LED controller
 
 ### firmware
 
+#### modules and processor
+
+##### ZT3L (TLSR8258, 1MB)
+
+##### ZYZB010 (TLSR8258, 512kB)
+
+- without bootloader, application offset 0x00000, maximum size 208kB (0x34000)
+- without bootloader, OTA image offset 0x40000
+- with bootloader, bootloader offset 0x00000, maximum size 32kB (0x08000)
+- with bootloader, application offset 0x08000, maximum size 196kB (0x31000)
+- with bootloader, OTA image offset 0x39000
+- MAC address offset 0x76000
+
+##### EVK12 (TLSR8258, 512kB, eval board v1.2)
+
 #### LED Channels
 
 - LED channel level set by `cmp_tick = (dutycycle * PMW_MAX_TICK) / (ZCL_LEVEL_ATTR_MAX_LEVEL * PWM_FULL_DUTYCYCLE)`
@@ -72,7 +87,7 @@ ZigBee 3.0 LED controller
 ### building firmware
 
 ```
-/d/development/TelinkIoTStudio/bin/make BOARD=ZT3L TC32DIR=/d/development/TelinkIoTStudio/opt/tc32 TOOLSPATH=/d/development/TelinkIoTStudio/mingw/bin:/d/development/TelinkIoTStudio/bin
+/d/development/TelinkIoTStudio/bin/make MODULE=ZT3L TC32DIR=/d/development/TelinkIoTStudio/opt/tc32 TOOLSPATH=/d/development/TelinkIoTStudio/mingw/bin:/d/development/TelinkIoTStudio/bin
 
 ```
 
@@ -88,7 +103,8 @@ ZigBee 3.0 LED controller
 | TL_ZIGBEE_SDK     | path to the ZigBee SDK $(PROJECTDIR)/telink_zigbee_sdk/tl_zigbee_sdk  |
 | BUILDDIR          | directory for building binaries $(PROJECTDIR)/build/$(MODULE)         |
 | ----------------- | --------------------------------------------------------------------- |
-| MODULE            | target hardware module (ZT3L,ZYZB010)                                 |
+| MODULE            | target hardware module (ZT3L,ZYZB010, EVK12)                          |
+| TARGET            | firmware target (TORSO, TS0501B,TS0502B,TS0503B,TS0504B,TS0505B)      |
 | ZB_ROLE           | ZigBee device role (COORDINATOR, ROUTER, END_DEVICE)                  |
 | FLASHER           | SWire writer settings (--port COM10 --tact 300 --run)                 |
 | ----------------- | --------------------------------------------------------------------- |
@@ -116,18 +132,19 @@ ZigBee 3.0 LED controller
 
 #### TODO
 
-- [ ] colorLoop feature
-
-source/zcl_colorCtrlCb.c:303:12: warning: 'sampleLight_colorLoopTimerEvtCb' defined but not used
-source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defined but not used
-
-- [ ] fix debug output (maybe interrupt problem)
+- [x] colorLoop feature
+ - source/zcl_colorCtrlCb.c:303:12: warning: 'sampleLight_colorLoopTimerEvtCb' defined but not used
+ - source/zcl_colorCtrlCb.c:326:13: warning: 'sampleLight_colorLoopTimerStop' defined but not used
+ - fixed by depending code on `#if (EXTENDED_COLOR_LIGHT)`
+- [x] fix debug output (maybe interrupt problem)
+ - fixed by adding `#if (UART_PRINTF_DISABLE_IRQ)` and disabling IRQ in tl_printf
 - [ ] fix the color controll handling (RGB, CCT or RGB and white or RGB and CCT)
 - [ ] switching main/backlight with power on/off
 - [ ] handle X/Y color setting
 - [ ] handle enhanced hue color setting
 - [ ] split TORSO_LIGHT to multiple end points handling main, background, extra light
-- [ ] ZCL BASIC cluster ProductCode attribute (0x00 =none) wird auf HomeAssistant falsch angezeigt
+- [x] ZCL BASIC cluster ProductCode attribute (0x00 =none) wird auf HomeAssistant falsch angezeigt
+ - not a bug, `b''` means empty binary and is correct
 - [ ] store serialNumber and productCode in NV (maybe with MAC or in F_Cfg)
 
 ### color calculations

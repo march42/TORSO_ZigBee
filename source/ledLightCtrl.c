@@ -235,12 +235,12 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 #if (COLOR_CCT_SUPPORT) && (!COLOR_RGB_SUPPORT)
 	zcl_lightColorCtrlAttr_t *pColor = zcl_colorAttrGet();
 	s32 warmCycle = 0;
-	if (temperatureMireds >= pColor->colorTempPhysicalMaxMireds) {
+	if (colorTemperatureMireds >= pColor->colorTempPhysicalMaxMireds) {
 		warmCycle = PWM_MAX_TICK;			// catch out of boundary values
-	} else if (temperatureMireds <= pColor->colorTempPhysicalMinMireds) {
+	} else if (colorTemperatureMireds <= pColor->colorTempPhysicalMinMireds) {
 		warmCycle = 0;						// catch out of boundary values
 	} else {
-		warmCycle = (((temperatureMireds - pColor->colorTempPhysicalMinMireds) * PWM_MAX_TICK) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds));
+		warmCycle = (((colorTemperatureMireds - pColor->colorTempPhysicalMinMireds) * PWM_MAX_TICK) / (pColor->colorTempPhysicalMaxMireds - pColor->colorTempPhysicalMinMireds));
 	}
 	pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	(u16)((PWM_MAX_TICK - warmCycle) * level / ZCL_LEVEL_ATTR_MAX_LEVEL));
 	pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	(u16)((               warmCycle) * level / ZCL_LEVEL_ATTR_MAX_LEVEL));
@@ -267,15 +267,14 @@ void hwLight_colorUpdate_colorTemperature(u16 colorTemperatureMireds, u8 level)
 	pwmSetDutyCount(B_LIGHT_PWM_CHANNEL,	__LED_BLUE_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 
 #elif (COLOR_RGB_SUPPORT) && (COLOR_CCT_SUPPORT)
-	// RGB+CCT
+	// RGB+CCT	using defined values instead of the min/max temperature from ZigBee attributes
 #	ifndef COLD_LIGHT_TEMPERATURE
 #		define COLD_LIGHT_TEMPERATURE		COLOR_TEMPERATURE_6500K
 #	endif
 #	ifndef WARM_LIGHT_TEMPERATURE
 #		define WARM_LIGHT_TEMPERATURE		COLOR_TEMPERATURE_2200K
 #	endif
-
-	LEDLIGHT_setMired_RGBCCT (RGB_CT, COLD_LIGHT_TEMPERATURE, WARM_LIGHT_TEMPERATURE);
+	LEDLIGHT_setMired_RGBCCT (colorTemperatureMireds, COLD_LIGHT_TEMPERATURE, WARM_LIGHT_TEMPERATURE);
 
 	pwmSetDutyCount(COLD_LIGHT_PWM_CHANNEL,	__LED_COLD_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);
 	pwmSetDutyCount(WARM_LIGHT_PWM_CHANNEL,	__LED_WARM_PWMCOUNT  * level / ZCL_LEVEL_ATTR_MAX_LEVEL);

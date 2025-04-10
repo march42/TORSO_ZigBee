@@ -68,6 +68,7 @@ void LEDLIGHT_setOnOff_fromValue (void)
 */
 void LEDLIGHT_setHSV (u8 hue, u8 saturation, u8 value)
 {
+#	if (COLOR_RGB_SUPPORT)
 	s32 HSV_V = value * COLORCHANNEL_MAX / ZCL_LEVEL_ATTR_MAX_LEVEL;				// value 0...COLORCHANNEL_MAX ==100%
 	if (saturation == 0) {		// short-cut for optimization
 		// no saturation means achromatic, ergo white
@@ -124,12 +125,13 @@ void LEDLIGHT_setHSV (u8 hue, u8 saturation, u8 value)
 			g_ledChannel_BLUE.Value		= _Q;
 			break;
 	}
+#	endif
 
-#	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
-	TODO("use saturation for white channel")
-	__LED_COLD_SETVALUE(0,COLORCHANNEL_MAX);
+#	if (SINGLE_WHITE_SUPPORT)
+	__LED_COLD_SETVALUE((u16)(ZCL_COLOR_ATTR_SATURATION_MAX - saturation) * value, (u16)(ZCL_COLOR_ATTR_SATURATION_MAX * ZCL_LEVEL_ATTR_MAX_LEVEL));
 #	endif
 #	if (COLOR_CCT_SUPPORT)
+	__LED_COLD_SETVALUE(0,COLORCHANNEL_MAX);
 	__LED_WARM_SETVALUE(0,COLORCHANNEL_MAX);
 #	endif
 
@@ -169,6 +171,7 @@ void LEDLIGHT_setEnhancedHSV (u16 enhancedHue, u8 saturation, u8 level, u8 *derr
 */
 void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
 {
+#	if (COLOR_RGB_SUPPORT)
 	/*	calculate with floating point
 	**	RGB_R	= ( 3.2404542 * XYZ_X - 1.5371385 * XYZ_Y - 0.4985314 * XYZ_Z);
 	**	RGB_G	= (-0.969266  * XYZ_X + 1.8760108 * XYZ_Y + 0.041556  * XYZ_Z);
@@ -182,6 +185,7 @@ void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
 	g_ledChannel_RED.Value		= ((RGB_R >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_R * COLORCHANNEL_MAX / 0xFFFF));
 	g_ledChannel_GREEN.Value	= ((RGB_G >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_G * COLORCHANNEL_MAX / 0xFFFF));
 	g_ledChannel_BLUE.Value		= ((RGB_B >= 0xFFFF) ?(COLORCHANNEL_MAX) :(RGB_B * COLORCHANNEL_MAX / 0xFFFF));
+#	endif
 
 #	if (SINGLE_WHITE_SUPPORT) || (COLOR_CCT_SUPPORT)
 	TODO("use saturation for white channel")
@@ -208,6 +212,7 @@ void LEDLIGHT_setXYZ (u16 XYZ_X, u16 XYZ_Y, u16 XYZ_Z)
  */
 void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 {
+#if (COLOR_RGB_SUPPORT)
 #if (_COLOR_CALCULATIONS__USE_FLOAT_)
 	float xyY_x	= 1.0 / 65535 * ZigBee_X;							// change fraction
 	float xyY_y	= 1.0 / 65535 * ZigBee_Y;							// change fraction
@@ -294,6 +299,7 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 	__LED_WARM_SETONOFF (g_ledChannel_RED.OnOff,COLORONOFF_MAX);
 #	endif
 #	endif
+#endif
 
 	return;
 }
@@ -314,6 +320,7 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
  */
 void LEDLIGHT_setKelvin (u16 kelvin, u16 *derrivedKelvin)
 {
+#if (COLOR_RGB_SUPPORT)
 	u8	RGB_R, RGB_G, RGB_B;
 
 	u16 colorTemp = kelvin / 100;
@@ -451,6 +458,7 @@ void LEDLIGHT_setKelvin (u16 kelvin, u16 *derrivedKelvin)
 	g_ledChannel_GREEN.Value	= ((RGB_G >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_G * COLORCHANNEL_MAX / 0xFF));
 	g_ledChannel_BLUE.Value		= ((RGB_B >= 0xFF) ?(COLORCHANNEL_MAX) :(RGB_B * COLORCHANNEL_MAX / 0xFF));
 	LEDLIGHT_setOnOff_fromValue();
+#endif
 	return;
 }
 
