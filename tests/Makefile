@@ -32,21 +32,25 @@ light_CCT		= -DCOLOR_RGB_SUPPORT=0 -DCOLOR_CCT_SUPPORT=1 -DSINGLE_WHITE_SUPPORT=
 
 BUILDDIR	?= ../build/tests
 SOURCES		+= $(wildcard ./*.c)
+HEADERS		+= $(wildcard ./*.h)
 PROGRAMS	+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=))
-PROGRAMS	+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-RGB))
-PROGRAMS	+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-RGBW))
-PROGRAMS	+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-RGBCCT))
-PROGRAMS	+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-CCT))
+EXTRAS		+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-RGB))
+EXTRAS		+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-RGBW))
+EXTRAS		+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-RGBCCT))
+EXTRAS		+= $(subst ./,$(BUILDDIR)/,$(SOURCES:.c=-CCT))
 
-.PHONY: info all clean allclean distclean
-.DEFAULT: all
+.PHONY: all extras info clean allclean distclean
+# doesn't work	.DEFAULT: all
+# the first rule will be used if no specified
+all: info $(OBJS) $(PROGRAMS)
 
-info:
+extras: $(HEADERS) $(EXTRAS)
+
+info:	$(SOURCES)
 	$(info build_info)
 	$(info SOURCES 	$(SOURCES))
+	$(info HEADERS 	$(HEADERS))
 	$(info PROGRAMS	$(PROGRAMS))
-
-all: info $(OBJS) $(PROGRAMS)
 
 clean:
 	$(info removing built objects)
@@ -61,27 +65,27 @@ distclean: clean
 	rm -f $(OBJS) $(PROGRAMS)
 	rm -fR $(BUILDDIR)
 
-$(BUILDDIR)/%: %.c
+$(BUILDDIR)/%: %.c $(HEADERS)
 	@mkdir -p $(@D)
 	$(info building $@)
 	$(CC) $(CPPFLAGS) $(lighttype) $(CFLAGS) $< $(LDLIBS) -o $@
 
-$(BUILDDIR)/%-RGB: %.c
+$(BUILDDIR)/%-RGB: %.c $(BUILDDIR)/%
 	@mkdir -p $(@D)
 	$(info building $@)
 	$(CC) $(CPPFLAGS) $(light_RGB) $(CFLAGS) $< $(LDLIBS) -o $@
 
-$(BUILDDIR)/%-RGBW: %.c
+$(BUILDDIR)/%-RGBW: %.c $(BUILDDIR)/%
 	@mkdir -p $(@D)
 	$(info building $@)
 	$(CC) $(CPPFLAGS) $(light_RGBW) $(CFLAGS) $< $(LDLIBS) -o $@
 
-$(BUILDDIR)/%-RGBCCT: %.c
+$(BUILDDIR)/%-RGBCCT: %.c $(BUILDDIR)/%
 	@mkdir -p $(@D)
 	$(info building $@)
 	$(CC) $(CPPFLAGS) $(light_RGBCCT) $(CFLAGS) $< $(LDLIBS) -o $@
 
-$(BUILDDIR)/%-CCT: %.c
+$(BUILDDIR)/%-CCT: %.c $(BUILDDIR)/%
 	@mkdir -p $(@D)
 	$(info building $@)
 	$(CC) $(CPPFLAGS) $(light_CCT) $(CFLAGS) $< $(LDLIBS) -o $@

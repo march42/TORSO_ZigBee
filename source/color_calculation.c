@@ -244,6 +244,12 @@ void LEDLIGHT_setXY (u16 ZigBee_X, u16 ZigBee_Y, u8 ZigBee_Level)
 	__LED_BLUE_SETONOFF  (ZCL_LEVEL_ATTR_MAX_LEVEL, ZCL_LEVEL_ATTR_MAX_LEVEL);
 
 #else
+	// ensure x+y=1
+	if (ZigBee_X + ZigBee_Y > ZCL_COLOR_ATTR_XY_MAX) {
+		ZigBee_X	= ZigBee_X / (ZigBee_X + ZigBee_Y);
+		ZigBee_Y	= ZCL_COLOR_ATTR_XY_MAX - ZigBee_X;
+	}
+	// project into XYZ
 	s32 XYZ_X	=                          ZigBee_X             * ZCL_COLOR_ATTR_XY_MAX / ZigBee_Y;
 	s32 XYZ_Y	=                                                 ZCL_COLOR_ATTR_XY_MAX           ;		// full on brightness
 	s32 XYZ_Z	= (ZCL_COLOR_ATTR_XY_MAX - ZigBee_X - ZigBee_Y) * ZCL_COLOR_ATTR_XY_MAX / ZigBee_Y;

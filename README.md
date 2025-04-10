@@ -188,8 +188,8 @@ ZigBee Value is LEVEL, Value/LEVEL is fractions of 254 (ZCL_LEVEL_ATTR_MAX_LEVEL
 
 #### XY Color Space
 
-ZigBee X is fractions of 65279 (ZCL_COLOR_ATTR_XY_MAX)
-ZigBee Y is fractions of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ZigBee X is fractions of 65535, maximum of 65279 (ZCL_COLOR_ATTR_XY_MAX)
+ZigBee Y is fractions of 65535, maximum of 65279 (ZCL_COLOR_ATTR_XY_MAX)
 ZigBee LEVEL, LEVEL is fractions of 254 (ZCL_LEVEL_ATTR_MAX_LEVEL)
 
 #### RGB Color Space

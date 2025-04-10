@@ -142,13 +142,20 @@ ifeq ($(MODULE),ZT3L)
 #	-DMCU_CORE_8258=1 -DTUYA_ZT3L=1 -D__PROJECT_TL_BOOT_LOADER__=1
 	MCU_CHIP			:= TLSR_8258
 	MCU_CORE_8258		:= 1
-	CPPFLAGS			+= -DMODULE_ZT3L=1 -DMCU_CORE_8258=1
+	CPPFLAGS			+= -DMCU_CORE_8258=1
 	CHIP_TYPE			:= TLSR_8258_1M
 	BOOT_LOADER_MODE	:= 1
 else ifeq ($(MODULE),ZYZB010)
 	MCU_CHIP			:= TLSR_8258
 	MCU_CORE_8258		:= 1
-	CPPFLAGS			+= -DMODULE_ZYZB010=1 -DMCU_CORE_8258=1
+	CPPFLAGS			+= -DMCU_CORE_8258=1
+	CHIP_TYPE			:= TLSR_8258_512K
+	BOOT_LOADER_MODE	:= 0
+else ifeq ($(MODULE),EVK12)
+	MCU_CHIP			:= TLSR_8258
+	MCU_CORE_8258		:= 1
+	CPPFLAGS			+= -DMCU_CORE_8258=1
+	CPPFLAGS			+= -DPRINTF_MODE=USB
 	CHIP_TYPE			:= TLSR_8258_512K
 	BOOT_LOADER_MODE	:= 0
 endif
@@ -164,6 +171,7 @@ endif
 ifneq ($(__USE_FLOATING_POINT),0)
 	CPPFLAGS		+= -D__USE_FLOATING_POINT=$(__USE_FLOATING_POINT) -D__PRINTF_FLOAT=$(__USE_FLOATING_POINT)
 	LDLIBS			+= -lm -lc -lg
+	#	function rand needed to be renamed
 	#	objcopy --redefine-sym rand=telink_rand ./telink_zigbee_sdk/tl_zigbee_sdk/platform/lib/libdrivers_8258.a libdrivers_826x.a libdrivers_8278.a
 endif
 

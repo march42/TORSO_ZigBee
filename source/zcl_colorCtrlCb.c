@@ -95,10 +95,10 @@ static zcl_colorInfo_t colorInfo = {
 	.stepY						= 0,
 	.currentY					= 0,
 	.XYRemainingTime			= 0,
-#endif
 
 #if (EXTENDED_COLOR_LIGHT)
 	.loopRemainingTime			= 0,
+#endif
 #endif
 
 #if (COLOR_CCT_SUPPORT) || (EXTENDED_COLOR_LIGHT)
@@ -357,6 +357,8 @@ static void ledLight_colorTimerStop(void)
 }
 
 #if (COLOR_RGB_SUPPORT)
+#	if (EXTENDED_COLOR_LIGHT)
+#warning this should not happen
 /*********************************************************************
  * @fn      ledLight_colorLoopTimerEvtCb
  *
@@ -372,7 +374,8 @@ static s32 ledLight_colorLoopTimerEvtCb(void *arg)
 
 	if(pColor->colorLoopActive){
 		/* TODO: colorLoop */
-	}else{
+	} else
+	{
 		colorLoopTimerEvt = NULL;
 		return -1;
 	}
@@ -396,6 +399,7 @@ static void ledLight_colorLoopTimerStop(void)
 	}
 	// TODO: ??? restore previous (before color loop) setting
 }
+#	endif /* (EXTENDED_COLOR_LIGHT) */
 
 
 /*********************************************************************
@@ -792,6 +796,7 @@ static void ledLight_stepColorProcess(zcl_colorCtrlStepColorCmd_t *cmd)
 
 }
 
+#	if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
  * @fn      ledLight_enhancedMoveToHueProcess
  *
@@ -825,7 +830,9 @@ static void ledLight_enhancedMoveToHueProcess(zcl_colorCtrlEnhancedMoveToHueCmd_
 
 
 }
+#	endif /* (EXTENDED_COLOR_LIGHT) */
 
+#	if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
  * @fn      ledLight_enhancedMoveHueProcess
  *
@@ -857,7 +864,9 @@ static void ledLight_enhancedMoveHueProcess(zcl_colorCtrlEnhancedMoveHueCmd_t *c
 
 
 }
+#	endif /* (EXTENDED_COLOR_LIGHT) */
 
+#	if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
  * @fn      ledLight_enhancedStepHueProcess
  *
@@ -887,7 +896,9 @@ static void ledLight_enhancedStepHueProcess(zcl_colorCtrlEnhancedStepHueCmd_t *c
 
 
 }
+#	endif /* (EXTENDED_COLOR_LIGHT) */
 
+#	if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
  * @fn      ledLight_enhancedMoveToHueAndSaturationProcess
  *
@@ -913,7 +924,9 @@ static void ledLight_enhancedMoveToHueAndSaturationProcess(zcl_colorCtrlEnhanced
 	ledLight_enhancedMoveToHueProcess(&enhancedMoveToHueCmd);
 	ledLight_moveToSaturationProcess(&moveToSaturationCmd);
 }
+#	endif /* (EXTENDED_COLOR_LIGHT) */
 
+#	if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
  * @fn      ledLight_colorLoopSetProcess
  *
@@ -962,6 +975,7 @@ static void ledLight_colorLoopSetProcess(zcl_colorCtrlColorLoopSetCmd_t *cmd)
 		ledLight_colorLoopTimerStop();
 	}
 }
+#	endif /* (EXTENDED_COLOR_LIGHT) */
 #endif
 
 #if (COLOR_CCT_SUPPORT) || (EXTENDED_COLOR_LIGHT)

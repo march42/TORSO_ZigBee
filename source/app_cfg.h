@@ -44,11 +44,20 @@ extern "C" {
  * Product Information
  */
 /* Debug mode config */
-#define	UART_PRINTF_MODE				1
-#define UART_PRINTF_DISABLE_IRQ			1
-#define UART_PRINTF_HARDWARE			0	// TODO("implement drv_putchar, tl_printf for hardware UART
-#define USB_PRINTF_MODE         		0
+#if (PRINTF_MODE == USB)
+#	define UART_PRINTF_MODE				0
+#	define USB_PRINTF_MODE				1
+#elif (PRINTF_MODE == UART)
+#	define UART_PRINTF_MODE				1
+#	define USB_PRINTF_MODE				0
+#else
+#	define UART_PRINTF_MODE				0
+#	define USB_PRINTF_MODE				0
+#endif
 #define BAUDRATE						115200
+#define UART_PRINTF_DISABLE_IRQ			1
+/*	currently unimplemented using hardware UART routines
+#define UART_PRINTF_HARDWARE			0 */
 #define DEBUG_TRACE						0
 #define DEBUG_TRACE_NV					0
 #define DEBUG_BUTTONS					0
@@ -122,11 +131,14 @@ extern "C" {
 #elif (MODULE == ZYZB010)
 #	define BOARD						BOARD_TS0505_ZYZB010	// I'd rather not use BOARD definition
 #	define CLOCK_SYS_CLOCK_HZ  			48000000
+#elif (MODULE == EVK12)
+#	define BOARD						BOARD_8258_EVK_V1P2
+#	define CLOCK_SYS_CLOCK_HZ  			48000000
 #elif defined(MCU_CORE_8258)
 #if (CHIP_TYPE == TLSR_8258_1M)
 	#define FLASH_CAP_SIZE_1M			1
 #endif
-	#define BOARD						BOARD_8258_DONGLE//BOARD_8258_EVK_V1P2
+#	define BOARD						BOARD_8258_DONGLE//BOARD_8258_EVK_V1P2
 	#define CLOCK_SYS_CLOCK_HZ  		48000000
 #elif defined(MCU_CORE_8278)
 	#define FLASH_CAP_SIZE_1M			1
