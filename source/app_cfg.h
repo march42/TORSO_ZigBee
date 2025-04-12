@@ -65,6 +65,10 @@ extern "C" {
 #define DEBUG_LEDCOLOR					1
 #define DEBUG_LEDEFFECT					1
 #define DEBUG_LED_PWM					1
+/*	hartbeat interval blinking
+**	defined locally in zb_appCb.c
+#define DEBUG_HEART						0
+*/
 
 /* HCI interface */
 #define	ZBHCI_UART						0

@@ -279,9 +279,10 @@ void app_task(void)
 {
 	app_key_handler();
 	localPermitJoinState();
-	led_synch();
 
 	if(BDB_STATE_GET() == BDB_STATE_IDLE){
+		led_synch();
+
 		factoryRst_handler();
 
 		report_handler();
