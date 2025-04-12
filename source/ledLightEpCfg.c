@@ -345,8 +345,8 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.colorCapabilities				= 0x0000
 #	if (COLOR_RGB_SUPPORT)
 		| ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
-		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
 #		if (EXTENDED_COLOR_LIGHT)
+		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES	/* xy conversion not working with current code as of 2025-04-12 */
 		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	/* EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle */
 		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP		/* ENHANCED_HUE must also be supported */
 #		endif
