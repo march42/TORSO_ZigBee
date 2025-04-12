@@ -253,7 +253,7 @@ extern "C" {
 */
 /*	setting COLD and WARM white color temperature
 #define COLD_LIGHT_TEMPERATURE			6500
-#define WARM_LIGHT_TEMPERATURE			2200
+#define WARM_LIGHT_TEMPERATURE			2700
 */
 
 /* Voltage detect module */

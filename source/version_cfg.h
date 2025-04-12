@@ -59,7 +59,7 @@
 #endif
 
 #define APP_RELEASE							0x11//app release 1.1
-#define APP_BUILD							0x03//app build 03
+#define APP_BUILD							0x04//app build 04
 #define STACK_RELEASE						0x30//stack release 3.0
 #define STACK_BUILD							0x01//stack build 01
 
@@ -68,7 +68,21 @@
  * Refer to ZCL OTA specification for details.
  */
 #define MANUFACTURER_CODE_TELINK           	0x1141//Telink ID
-#define	IMAGE_TYPE							((CHIP_TYPE << 8) | IMAGE_TYPE_LIGHT)
+#if defined(__TARGET_TORSO__)
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | IMAGE_TYPE_TORSO)
+#elif defined(__TARGET_TS0501B__)
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | 0x11)
+#elif defined(__TARGET_TS0502B__)
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | 0x12)
+#elif defined(__TARGET_TS0503B__)
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | 0x13)
+#elif defined(__TARGET_TS0504B__)
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | 0x14)
+#elif defined(__TARGET_TS0505B__)
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | 0x15)
+#else
+#	define	IMAGE_TYPE							((CHIP_TYPE << 8) | IMAGE_TYPE_LIGHT)
+#endif
 #define	FILE_VERSION					  	((APP_RELEASE << 24) | (APP_BUILD << 16) | (STACK_RELEASE << 8) | STACK_BUILD)
 
 #define ZCL_BASIC_MFG_NAME     		{7,'m','a','r','c','h','4','2'}

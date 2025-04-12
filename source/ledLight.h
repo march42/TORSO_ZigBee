@@ -147,9 +147,9 @@ typedef struct{
 #if COLOR_RGB_SUPPORT
 	u8	currentHue;
 	u8	currentSaturation;
+#	if (EXTENDED_COLOR_LIGHT)
 	u16	currentX;
 	u16	currentY;
-#	if (EXTENDED_COLOR_LIGHT)
 	u16	enhancedCurrentHue;
 	u8	colorLoopActive;
 	u8	colorLoopDirection;

@@ -138,7 +138,10 @@ ZigBee 3.0 LED controller
  - fixed by depending code on `#if (EXTENDED_COLOR_LIGHT)`
 - [x] fix debug output (maybe interrupt problem)
  - fixed by adding `#if (UART_PRINTF_DISABLE_IRQ)` and disabling IRQ in tl_printf
-- [ ] fix the color controll handling (RGB, CCT or RGB and white or RGB and CCT)
+- [ ] fix the color control handling (RGB, CCT or RGB and white or RGB and CCT)
+ - [ ] rely/depend on __LED_MODE__DIMMER__, __LED_MODE__CCT__, __LED_MODE__RGB__, __LED_MODE__RGBW__, __LED_MODE__RGBCCT__´
+ - [ ] check COLOR_RGB_SUPPORT, COLOR_CCT_SUPPORT, SINGLE_WHITE_SUPPORT
+ - [ ] remove LED_SUPPORT_WHITE, LED_SUPPORT_RGB, LED_SUPPORT_CCT
 - [ ] switching main/backlight with power on/off
 - [ ] handle X/Y color setting
 - [ ] handle enhanced hue color setting

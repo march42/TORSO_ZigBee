@@ -140,8 +140,8 @@ void ledLight_colorInit(void)
 	pColor->colorCapabilities = 0x0000
 #if (COLOR_RGB_SUPPORT)
 		| ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
-		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
 #	if (EXTENDED_COLOR_LIGHT)
+		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
 		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE
 		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP
 #	endif
@@ -255,9 +255,6 @@ void ledLight_updateColor(void)
 	if (pColor->colorMode == ZCL_COLOR_MODE_CURRENT_HUE_SATURATION) {
 		hwLight_colorUpdate_HSV2RGB(pColor->currentHue, pColor->currentSaturation, pLevel->curLevel);
 
-	} else if (pColor->colorMode == ZCL_COLOR_MODE_CURRENT_X_Y) {
-		hwLight_colorUpdate_xyY2RGB(pColor->currentX, pColor->currentY, pLevel->curLevel);
-
 	} else
 #endif
 
@@ -268,6 +265,10 @@ void ledLight_updateColor(void)
 #endif
 
 #if (EXTENDED_COLOR_LIGHT)
+	if (pColor->colorMode == ZCL_COLOR_MODE_CURRENT_X_Y) {
+		hwLight_colorUpdate_xyY2RGB(pColor->currentX, pColor->currentY, pLevel->curLevel);
+
+	} else
 	if (pColor->colorMode == ZCL_ENHANCED_COLOR_MODE_CURRENT_HUE_SATURATION) {
 		pColor->colorMode = ZCL_COLOR_MODE_CURRENT_HUE_SATURATION;		/* for compatibility reasons (ZCL rev.8) */
 		hwLight_colorUpdate_enhancedHSV2RGB(pColor->enhancedCurrentHue, pColor->currentSaturation, pLevel->curLevel, &pColor->currentHue);
@@ -306,6 +307,7 @@ static s32 ledLight_colorTimerEvtCb(void *arg)
 									ZCL_COLOR_ATTR_HUE_MIN, ZCL_COLOR_ATTR_HUE_MAX, TRUE);
 		}
 	}
+#	if (EXTENDED_COLOR_LIGHT)
 	if (pColor->enhancedColorMode == ZCL_COLOR_MODE_CURRENT_X_Y) {
 		if(colorInfo.XYRemainingTime){
 			light_applyUpdate_16(&pColor->currentX, &colorInfo.currentX, &colorInfo.stepX, &colorInfo.XYRemainingTime,
@@ -314,6 +316,7 @@ static s32 ledLight_colorTimerEvtCb(void *arg)
 				ZCL_COLOR_ATTR_XY_MIN, ZCL_COLOR_ATTR_XY_MAX, FALSE);
 		}
 	}
+#	endif
 #endif
 #if (COLOR_CCT_SUPPORT)
 	if(pColor->enhancedColorMode == ZCL_COLOR_MODE_COLOR_TEMPERATURE_MIREDS){
@@ -716,6 +719,7 @@ static void ledLight_moveToHueAndSaturationProcess(zcl_colorCtrlMoveToHueAndSatu
 	ledLight_moveToSaturationProcess(&moveToSaturationCmd);
 }
 
+#if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
  * @fn      ledLight_moveToColorProcess
  *
@@ -795,6 +799,7 @@ static void ledLight_stepColorProcess(zcl_colorCtrlStepColorCmd_t *cmd)
 
 
 }
+#endif
 
 #	if (EXTENDED_COLOR_LIGHT)
 /*********************************************************************
@@ -1202,6 +1207,7 @@ status_t ledLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_HUE_AND_SATURATION:
 				ledLight_moveToHueAndSaturationProcess((zcl_colorCtrlMoveToHueAndSaturationCmd_t *)cmdPayload);
 				break;
+#	if (EXTENDED_COLOR_LIGHT)
 			/* X/Y supported */
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_MOVE_TO_COLOR:
 				ledLight_moveToColorProcess((zcl_colorCtrlMoveToColorCmd_t *)cmdPayload);
@@ -1212,7 +1218,6 @@ status_t ledLight_colorCtrlCb(zclIncomingAddrInfo_t *pAddrInfo, u8 cmdId, void *
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_STEP_COLOR:
 				ledLight_stepColorProcess((zcl_colorCtrlStepColorCmd_t *)cmdPayload);
 				break;
-#	if (EXTENDED_COLOR_LIGHT)
 			/* Enhanced hue supported */
 			case ZCL_CMD_LIGHT_COLOR_CONTROL_ENHANCED_MOVE_TO_HUE:
 				ledLight_enhancedMoveToHueProcess((zcl_colorCtrlEnhancedMoveToHueCmd_t *)cmdPayload);

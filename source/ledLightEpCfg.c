@@ -343,10 +343,13 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 	.options						= 0x00,
 	.enhancedColorMode				= ZCL_COLOR_MODE_CURRENT_X_Y,
 	.colorCapabilities				= 0x0000
+	/* xy conversion not working with current code as of 2025-04-12
+	** value will be changed in zcl_colorCtrlCb.c ledLight_colorInit
+	*/
 #	if (COLOR_RGB_SUPPORT)
 		| ZCL_COLOR_CAPABILITIES_BIT_HUE_SATURATION
 #		if (EXTENDED_COLOR_LIGHT)
-		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES	/* xy conversion not working with current code as of 2025-04-12 */
+		| ZCL_COLOR_CAPABILITIES_BIT_X_Y_ATTRIBUTES
 		| ZCL_COLOR_CAPABILITIES_BIT_ENHANCED_HUE	/* EnhancedCurrentHue attribute represents non-equidistant steps along the CIE 1931 color triangle */
 		| ZCL_COLOR_CAPABILITIES_BIT_COLOR_LOOP		/* ENHANCED_HUE must also be supported */
 #		endif
@@ -359,9 +362,9 @@ zcl_lightColorCtrlAttr_t g_zcl_colorCtrlAttrs =
 #	if (COLOR_RGB_SUPPORT)
 	.currentHue						= 0x00,
 	.currentSaturation				= 0x00,
+#		if (EXTENDED_COLOR_LIGHT)
 	.currentX						= 0x616b,
 	.currentY						= 0x607d,
-#		if (EXTENDED_COLOR_LIGHT)
 	.enhancedCurrentHue				= 0x0000,
 	.colorLoopActive				= 0x00,
 	.colorLoopDirection				= 0x00,
@@ -392,9 +395,9 @@ const zclAttrInfo_t lightColorCtrl_attrTbl[] =
 #if (COLOR_RGB_SUPPORT)
     { ZCL_ATTRID_CURRENT_HUE,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentHue },
     { ZCL_ATTRID_CURRENT_SATURATION,      			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentSaturation },
+#	if (EXTENDED_COLOR_LIGHT)
     { ZCL_ATTRID_CURRENT_X,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentX },
     { ZCL_ATTRID_CURRENT_Y,             			ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.currentY },
-#	if (EXTENDED_COLOR_LIGHT)
     { ZCL_ATTRID_ENHANCED_CURRENT_HUE,             	ZCL_DATA_TYPE_UINT8,   	ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.enhancedCurrentHue },
     { ZCL_ATTRID_COLOR_LOOP_ACTIVE,       			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopActive },
     { ZCL_ATTRID_COLOR_LOOP_DIRECTION,    			ZCL_DATA_TYPE_UINT8,    ACCESS_CONTROL_READ | ACCESS_CONTROL_REPORTABLE, (u8*)&g_zcl_colorCtrlAttrs.colorLoopDirection },
