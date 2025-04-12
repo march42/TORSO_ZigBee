@@ -70,26 +70,23 @@ extern "C" {
 #define	ZBHCI_UART						0
 
 /* RGB or CCT */
-#ifndef LED_MODE_DIMMER
-#	define LED_MODE_DIMMER				0x01
+#if (defined(__LED_MODE__DIMMER__) || defined(__LED_MODE__RGBW__))
+#	define SINGLE_WHITE_SUPPORT			1
+#else
+#	define SINGLE_WHITE_SUPPORT			0
 #endif
-#ifndef LED_MODE_CCT
-#	define LED_MODE_CCT					0x03
+#if (defined(__LED_MODE__RGB__) || defined(__LED_MODE__RGBW__) || defined(__LED_MODE__RGBCCT__))
+#	define COLOR_RGB_SUPPORT				1
+#else
+#	define COLOR_RGB_SUPPORT				0
 #endif
-#ifndef LED_MODE_RGB
-#	define LED_MODE_RGB					0x70
+#if (defined(__LED_MODE__CCT__) || defined(__LED_MODE__RGBCCT__))
+#	define COLOR_CCT_SUPPORT				1
+#else
+#	define COLOR_CCT_SUPPORT				0
 #endif
-#ifndef LED_MODE_RGBW
-#	define LED_MODE_RGBW				0x71
-#endif
-#ifndef LED_MODE_RGBCCT
-#	define LED_MODE_RGBCCT				0x73
-#endif
-#define SINGLE_WHITE_SUPPORT			((LED_MODE==LED_MODE_DIMMER) || (LED_MODE==LED_MODE_RGBW))
-#define COLOR_RGB_SUPPORT				((LED_MODE==LED_MODE_RGB) || (LED_MODE==LED_MODE_RGBW) || (LED_MODE==LED_MODE_RGBCCT))
-#define COLOR_CCT_SUPPORT				((LED_MODE==LED_MODE_CCT) || (LED_MODE==LED_MODE_RGBCCT))
 #if (!SINGLE_WHITE_SUPPORT) && (!COLOR_RGB_SUPPORT) && (!COLOR_CCT_SUPPORT)
-#	warning	MISSING configured LED mode and support
+#	error	MISSING configured LED mode and support
 #endif
 
 /* save current values after change */
@@ -124,14 +121,14 @@ extern "C" {
 #if defined(MCU_CORE_826x)
 	#define BOARD						BOARD_826x_DONGLE
 	#define CLOCK_SYS_CLOCK_HZ  		32000000
-#elif (MODULE == ZT3L)
+#elif defined(__MODULE_ZT3L__)
 #	define BOARD						BOARD_TS0505_ZT3L	// I'd rather not use BOARD definition
 #	define FLASH_CAP_SIZE_1M			1
 #	define CLOCK_SYS_CLOCK_HZ  			48000000
-#elif (MODULE == ZYZB010)
+#elif defined(__MODULE_ZYZB010__)
 #	define BOARD						BOARD_TS0505_ZYZB010	// I'd rather not use BOARD definition
 #	define CLOCK_SYS_CLOCK_HZ  			48000000
-#elif (MODULE == EVK12)
+#elif defined(__MODULE_EVK12__)
 #	define BOARD						BOARD_8258_EVK_V1P2
 #	define CLOCK_SYS_CLOCK_HZ  			48000000
 #elif defined(MCU_CORE_8258)
@@ -172,9 +169,9 @@ extern "C" {
 //#elif defined(__LIGHT__TS050xB__) && (__LIGHT__TS050xB__)
 //	handle in ZT3L and ZYZB010 header
 //#	include "board_8258_TS050xB.h"
-#elif (MODULE == ZT3L)
+#elif (BOARD == BOARD_TS0505_ZT3L) || defined(__MODULE_ZT3L__)
 #	include "board_8258_zt3l.h"
-#elif (MODULE == ZYZB010)
+#elif (BOARD == BOARD_TS0505_ZYZB010) || defined(__MODULE_ZYZB010__)
 #	include "board_8258_zyzb010.h"
 #elif(BOARD == BOARD_8258_DONGLE)
 	#include "board_8258_dongle.h"
@@ -204,6 +201,32 @@ extern "C" {
 	#include "board_tl321x_dongle.h"
 #endif
 
+
+/*	check needed definitions of the PWM channels */
+#if defined(SINGLE_WHITE_SUPPORT) && (SINGLE_WHITE_SUPPORT == 1)
+#	if !defined(COOL_LIGHT_PWM_SET)
+#		error	SINGLE_WHITE_SUPPORT needs COOL_LIGHT_PWM_SET
+#	endif
+#endif
+#if defined(COLOR_CCT_SUPPORT) && (COLOR_CCT_SUPPORT == 1)
+#	if !defined(COOL_LIGHT_PWM_SET)
+#		error	COLOR_CCT_SUPPORT needs COOL_LIGHT_PWM_SET
+#	endif
+#	if !defined(WARM_LIGHT_PWM_SET)
+#		error	COLOR_CCT_SUPPORT needs WARM_LIGHT_PWM_SET
+#	endif
+#endif
+#if defined(COLOR_RGB_SUPPORT) && (COLOR_RGB_SUPPORT == 1)
+#	if !defined(R_LIGHT_PWM_SET)
+#		error	COLOR_RGB_SUPPORT needs R_LIGHT_PWM_SET
+#	endif
+#	if !defined(G_LIGHT_PWM_SET)
+#		error	COLOR_RGB_SUPPORT needs G_LIGHT_PWM_SET
+#	endif
+#	if !defined(B_LIGHT_PWM_SET)
+#		error	COLOR_RGB_SUPPORT needs B_LIGHT_PWM_SET
+#	endif
+#endif
 
 /* firmware configuration */
 /* these are currently set via Makefile, TODO:obsolete
